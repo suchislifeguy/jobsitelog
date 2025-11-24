@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Task } from '../types';
+import { Task } from '../types.ts';
 import { Download, Package, Wrench, Printer, FileText, Clock } from 'lucide-react';
 
 interface SummarySidebarProps {

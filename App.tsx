@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Task, Job, ViewMode } from './types';
-import { TaskCard } from './components/TaskCard';
-import { JobProjectCard } from './components/JobProjectCard';
-import { SummarySidebar } from './components/SummarySidebar';
+import { Task, Job, ViewMode } from './types.ts';
+import { TaskCard } from './components/TaskCard.tsx';
+import { JobProjectCard } from './components/JobProjectCard.tsx';
+import { SummarySidebar } from './components/SummarySidebar.tsx';
 import { Plus, Image as ImageIcon, X, Save, Hammer, Clipboard, ArrowLeft, MapPin, HardHat, Printer, AlertTriangle } from 'lucide-react';
 
 const App: React.FC = () => {

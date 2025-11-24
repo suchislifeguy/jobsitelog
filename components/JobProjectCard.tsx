@@ -1,5 +1,5 @@
 import React from 'react';
-import { Job } from '../types';
+import { Job } from '../types.ts';
 import { MapPin, Calendar, ChevronRight, ClipboardList, Trash2 } from 'lucide-react';
 
 interface JobProjectCardProps {
