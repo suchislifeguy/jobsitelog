@@ -1,5 +1,5 @@
 {
-  "name": "copy-of-jobsite-log",
+  "name": "jobsite-log",
   "private": true,
   "version": "0.0.0",
   "type": "module",

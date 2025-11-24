@@ -1,6 +1,6 @@
 {
-  "name": "Copy of JobSite Log",
-  "description": "A digital field notebook for handymen. Snap photos, record tasks, track materials and time estimates manually.",
+  "name": "JobSite Log",
+  "description": "A standalone, static web application for creating job estimates and logs. Runs entirely in the browser using LocalStorage.",
   "requestFramePermissions": [
     "camera"
   ]

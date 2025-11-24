@@ -1,20 +1,39 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# JobSite Log (Static Web App)
 
-# Run and deploy your AI Studio app
+A purely client-side web application for contractors and handymen to log tasks, estimate jobs, and generate PDF reports.
 
-This contains everything you need to run your app locally.
+## Features
+- **Zero Backend**: All data is saved to your browser's LocalStorage.
+- **Zero Build Step**: Uses Babel Standalone to run `.tsx` files directly in the browser.
+- **Offline Capable**: Installable as a PWA on mobile devices.
+- **Privacy Focused**: No API keys, no accounts, no tracking.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1bVAfqN4tEVWSe71yoNtaIfp5DObiBiKt
+## How to Deploy (GitHub Pages)
 
-## Run Locally
+Since this is a static site, you do not need Node.js or NPM.
 
-**Prerequisites:**  Node.js
+1. **Upload Files**: Upload all files in this folder to a GitHub Repository.
+2. **Settings**: Go to the Repository Settings > **Pages**.
+3. **Source**: Select `Deploy from a branch` and choose `main` (or `master`) and `/ (root)`.
+4. **Save**: Wait a moment, and GitHub will provide you with a website link (e.g., `yourname.github.io/jobsitelog`).
 
+## How to Run Locally (Computer)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Because this app uses ES Modules, you cannot simply double-click `index.html` (browsers block file system imports for security). You must serve it via a local web server.
+
+**Option A: VS Code (Easiest)**
+1. Open the folder in VS Code.
+2. Install the "Live Server" extension.
+3. Right-click `index.html` and choose "Open with Live Server".
+
+**Option B: Python**
+1. Open a terminal in this folder.
+2. Run: `python3 -m http.server`
+3. Open `http://localhost:8000` in your browser.
+
+## How to Install on Mobile
+
+1. Visit your deployed website link on your phone.
+2. Tap **Share** (iOS) or **Menu** (Android).
+3. Select **Add to Home Screen**.
+4. The app will install as a standalone icon and launch without the browser address bar.
