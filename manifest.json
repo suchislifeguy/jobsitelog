@@ -1,0 +1,16 @@
+{
+  "name": "JobSite Log",
+  "short_name": "JobLog",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://cdn.jsdelivr.net/npm/lucide-static@0.344.0/icons/hammer.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
