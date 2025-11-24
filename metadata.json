@@ -1,0 +1,7 @@
+{
+  "name": "Copy of JobSite Log",
+  "description": "A digital field notebook for handymen. Snap photos, record tasks, track materials and time estimates manually.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
