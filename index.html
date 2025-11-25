@@ -68,18 +68,67 @@
         Clock, Trash2, Package, Wrench, ImageIcon, 
         Download, Printer, FileText, 
         Plus, X, Save, Hammer, Clipboard, ArrowLeft, MapPin, HardHat, AlertTriangle, 
-        Calendar, ChevronRight, ClipboardList 
+        Calendar, ChevronRight, ClipboardList, Pencil
       } from 'lucide-react';
+
+      // --- HELPERS ---
+      const calculateStats = (tasks) => {
+        let totalMinutes = 0;
+        const allMaterials = [];
+        const toolsSet = new Set();
+
+        tasks.forEach(t => {
+          // Time
+          if (t.estimatedTime) {
+            const timeStr = t.estimatedTime.toLowerCase().trim();
+            let minutes = 0;
+            const hoursMatch = timeStr.match(/(\d+(\.\d+)?)\s*(h|hr|hour)/);
+            const minsMatch = timeStr.match(/(\d+)\s*(m|min)/);
+
+            if (hoursMatch) minutes += parseFloat(hoursMatch[1]) * 60;
+            if (minsMatch) minutes += parseInt(minsMatch[1], 10);
+            if (!hoursMatch && !minsMatch) {
+              const val = parseFloat(timeStr);
+              if (!isNaN(val)) minutes += val * 60;
+            }
+            totalMinutes += minutes;
+          }
+          // Materials (allow duplicates)
+          t.materials.forEach(m => allMaterials.push(m));
+          // Tools (unique)
+          t.tools.forEach(tool => toolsSet.add(tool));
+        });
+
+        return {
+          totalMinutes,
+          allMaterials: allMaterials.sort(),
+          allTools: Array.from(toolsSet).sort()
+        };
+      };
+
+      const formatTime = (minutes) => {
+        if (minutes === 0) return "0h";
+        const h = Math.floor(minutes / 60);
+        const m = Math.round(minutes % 60);
+        if (h > 0 && m > 0) return `${h}h ${m}m`;
+        if (h > 0) return `${h}h`;
+        return `${m}m`;
+      };
 
       // --- COMPONENTS ---
 
       // 1. TaskCard
-      const TaskCard = ({ task, index, onDelete }) => {
+      const TaskCard = ({ task, index, onDelete, onEdit }) => {
         const images = task.imageUrls || [];
 
         const handleDelete = (e) => {
           e.stopPropagation();
           onDelete(task.id);
+        };
+
+        const handleEdit = (e) => {
+          e.stopPropagation();
+          onEdit(task);
         };
 
         return (
@@ -129,13 +178,23 @@
                     </div>
                   </div>
                 </div>
-                <button 
-                  onClick={handleDelete}
-                  className="text-white bg-red-500 p-2 rounded-lg transition-colors print:hidden hover:bg-red-600 shadow-sm"
-                  title="Delete Item"
-                >
-                  <Trash2 size={20} />
-                </button>
+                
+                <div className="flex items-center gap-2 print:hidden">
+                  <button 
+                    onClick={handleEdit}
+                    className="text-white bg-blue-500 p-2 rounded-lg transition-colors hover:bg-blue-600 shadow-sm"
+                    title="Edit Item"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button 
+                    onClick={handleDelete}
+                    className="text-white bg-red-500 p-2 rounded-lg transition-colors hover:bg-red-600 shadow-sm"
+                    title="Delete Item"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
 
               {task.description && (
@@ -242,52 +301,13 @@
       // 3. SummarySidebar
       const SummarySidebar = ({ tasks, jobAddress, clientName }) => {
         
-        const allMaterials = useMemo(() => {
-          const mats = [];
-          tasks.forEach(t => t.materials.forEach(m => mats.push(m)));
-          return mats.sort();
-        }, [tasks]);
-
-        const allTools = useMemo(() => {
-          const tools = new Set();
-          tasks.forEach(t => t.tools.forEach(too => tools.add(too)));
-          return Array.from(tools).sort();
-        }, [tasks]);
-
-        const totalEstimatedTime = useMemo(() => {
-          let totalMinutes = 0;
-          tasks.forEach(t => {
-            if (!t.estimatedTime) return;
-            const timeStr = t.estimatedTime.toLowerCase().trim();
-            let minutes = 0;
-            const hoursMatch = timeStr.match(/(\d+(\.\d+)?)\s*(h|hr|hour)/);
-            const minsMatch = timeStr.match(/(\d+)\s*(m|min)/);
-
-            if (hoursMatch) minutes += parseFloat(hoursMatch[1]) * 60;
-            if (minsMatch) minutes += parseInt(minsMatch[1], 10);
-            if (!hoursMatch && !minsMatch) {
-              const val = parseFloat(timeStr);
-              if (!isNaN(val)) minutes += val * 60;
-            }
-            totalMinutes += minutes;
-          });
-          return totalMinutes;
-        }, [tasks]);
-
-        const formatTime = (minutes) => {
-          if (minutes === 0) return "0h";
-          const h = Math.floor(minutes / 60);
-          const m = Math.round(minutes % 60);
-          if (h > 0 && m > 0) return `${h}h ${m}m`;
-          if (h > 0) return `${h}h`;
-          return `${m}m`;
-        };
+        const { totalMinutes, allMaterials, allTools } = useMemo(() => calculateStats(tasks), [tasks]);
 
         const handleDownloadFullLog = () => {
           if (tasks.length === 0) return;
           let content = `JOBSITE ESTIMATE\nJob: ${jobAddress}\n`;
           if (clientName) content += `Client: ${clientName}\n`;
-          content += `Date: ${new Date().toLocaleDateString()}\nTotal Items: ${tasks.length}\nTotal Est. Time: ${formatTime(totalEstimatedTime)}\n==================================================\n\n`;
+          content += `Date: ${new Date().toLocaleDateString()}\nTotal Items: ${tasks.length}\nTotal Est. Time: ${formatTime(totalMinutes)}\n==================================================\n\n`;
           
           tasks.forEach((task, index) => {
             content += `ENTRY #${index + 1}: ${task.title.toUpperCase()}\n`;
@@ -353,7 +373,7 @@
                    <Clock size={16} className="text-orange-500" />
                    <span>Total Est. Time</span>
                 </div>
-                <span className="font-bold text-slate-900">{formatTime(totalEstimatedTime)}</span>
+                <span className="font-bold text-slate-900">{formatTime(totalMinutes)}</span>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -392,6 +412,47 @@
         );
       };
 
+      // 4. PrintJobSummary (Footer for Print)
+      const PrintJobSummary = ({ tasks }) => {
+        const { totalMinutes, allMaterials, allTools } = useMemo(() => calculateStats(tasks), [tasks]);
+        
+        if (tasks.length === 0) return null;
+
+        return (
+          <div className="hidden print:block mt-10 pt-8 border-t-4 border-slate-800 break-inside-avoid">
+             <h3 className="text-2xl font-bold mb-6">Job Totals & Requirements</h3>
+             
+             <div className="grid grid-cols-2 gap-10">
+                <div>
+                   <div className="mb-6">
+                      <h4 className="font-bold text-lg mb-2 border-b-2 border-gray-200 pb-1">Summary</h4>
+                      <p className="text-lg"><span className="font-semibold">Total Items:</span> {tasks.length}</p>
+                      <p className="text-lg"><span className="font-semibold">Total Est. Time:</span> {formatTime(totalMinutes)}</p>
+                   </div>
+                   
+                   <div>
+                      <h4 className="font-bold text-lg mb-2 border-b-2 border-gray-200 pb-1">Tools Required</h4>
+                      {allTools.length > 0 ? (
+                        <ul className="list-disc list-inside">
+                          {allTools.map((t, i) => <li key={i} className="text-sm">{t}</li>)}
+                        </ul>
+                      ) : <p className="text-sm italic">No tools listed.</p>}
+                   </div>
+                </div>
+
+                <div>
+                   <h4 className="font-bold text-lg mb-2 border-b-2 border-gray-200 pb-1">Materials List</h4>
+                   {allMaterials.length > 0 ? (
+                     <ul className="list-disc list-inside">
+                        {allMaterials.map((m, i) => <li key={i} className="text-sm">{m}</li>)}
+                     </ul>
+                   ) : <p className="text-sm italic">No materials listed.</p>}
+                </div>
+             </div>
+          </div>
+        );
+      };
+
       // --- MAIN APP COMPONENT ---
       const App = () => {
         const [jobs, setJobs] = useState([]);
@@ -401,6 +462,8 @@
         
         // Task Form
         const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+        const [editingTaskId, setEditingTaskId] = useState(null); // Track editing
+
         const [taskTitle, setTaskTitle] = useState('');
         const [taskTime, setTaskTime] = useState('');
         const [taskMaterials, setTaskMaterials] = useState('');
@@ -456,6 +519,7 @@
           setActiveJobId(null);
           setViewMode('dashboard');
           setIsTaskFormOpen(false);
+          setEditingTaskId(null);
         };
 
         const handleAddJob = (e) => {
@@ -545,29 +609,57 @@
           setTaskDescription('');
           setImagePreviews([]);
           setIsTaskFormOpen(false);
+          setEditingTaskId(null); // Clear edit mode
           if (fileInputRef.current) fileInputRef.current.value = '';
         };
 
-        const handleAddTask = (e) => {
+        // START EDIT LOGIC
+        const handleEditTask = (task) => {
+          setTaskTitle(task.title);
+          setTaskTime(task.estimatedTime || '');
+          setTaskDescription(task.description || '');
+          setTaskMaterials(task.materials.join(', '));
+          setTaskTools(task.tools.join(', '));
+          setImagePreviews(task.imageUrls || []);
+          
+          setEditingTaskId(task.id);
+          setIsTaskFormOpen(true);
+          // Scroll to form
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        // END EDIT LOGIC
+
+        const handleSaveTask = (e) => {
           e.preventDefault();
           if (!taskTitle.trim() || !activeJobId) return;
-          const newTask = {
-            id: crypto.randomUUID(),
+          
+          const taskData = {
             title: taskTitle,
             estimatedTime: taskTime,
             description: taskDescription,
             materials: taskMaterials.split(',').map(s => s.trim()).filter(Boolean),
             tools: taskTools.split(',').map(s => s.trim()).filter(Boolean),
             imageUrls: imagePreviews,
-            isCompleted: false,
-            createdAt: Date.now(),
+            // Preserve existing or create new
+            id: editingTaskId || crypto.randomUUID(),
+            createdAt: editingTaskId ? undefined : Date.now(), // Don't overwrite creation date on edit
           };
+
           setJobs(prev => prev.map(job => {
             if (job.id === activeJobId) {
-              return { ...job, tasks: [newTask, ...job.tasks], updatedAt: Date.now() };
+              let newTasks;
+              if (editingTaskId) {
+                // Update existing
+                newTasks = job.tasks.map(t => t.id === editingTaskId ? { ...t, ...taskData } : t);
+              } else {
+                // Add new
+                newTasks = [{ ...taskData, isCompleted: false }, ...job.tasks];
+              }
+              return { ...job, tasks: newTasks, updatedAt: Date.now() };
             }
             return job;
           }));
+          
           resetTaskForm();
         };
 
@@ -579,6 +671,10 @@
               }
               return job;
             }));
+            // If deleting the task currently being edited, close form
+            if (editingTaskId === taskId) {
+              resetTaskForm();
+            }
           }
         };
 
@@ -618,7 +714,10 @@
                      <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full font-medium transition-all text-sm mr-2" title="Print/PDF">
                        <Printer size={18} /><span className="hidden sm:inline">Print / PDF</span>
                      </button>
-                     <button onClick={() => setIsTaskFormOpen(!isTaskFormOpen)} className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all text-sm ${isTaskFormOpen ? 'bg-slate-700 text-white' : 'bg-orange-600 text-white hover:bg-orange-500 shadow-lg'}`}>
+                     <button onClick={() => { 
+                        if (isTaskFormOpen) resetTaskForm(); 
+                        else setIsTaskFormOpen(true); 
+                     }} className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all text-sm ${isTaskFormOpen ? 'bg-slate-700 text-white' : 'bg-orange-600 text-white hover:bg-orange-500 shadow-lg'}`}>
                       {isTaskFormOpen ? <X size={18} /> : <Plus size={18} />}<span className="hidden sm:inline">{isTaskFormOpen ? 'Cancel' : 'Add Item'}</span>
                     </button>
                   </div>
@@ -693,9 +792,13 @@
                   {isTaskFormOpen && (
                     <div className="mb-8 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200 print:hidden">
                       <div className="bg-slate-100 px-6 py-3 border-b border-slate-200 flex items-center justify-between">
-                        <h2 className="font-bold text-slate-700 flex items-center gap-2"><Clipboard size={18} />Record New Item for {activeJob.address}</h2>
+                        <h2 className="font-bold text-slate-700 flex items-center gap-2">
+                          <Clipboard size={18} />
+                          {editingTaskId ? 'Edit Item' : 'Record New Item'}
+                        </h2>
+                        <button onClick={resetTaskForm} className="text-slate-400 hover:text-red-500"><X size={20}/></button>
                       </div>
-                      <form onSubmit={handleAddTask} className="p-6">
+                      <form onSubmit={handleSaveTask} className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-4">
                             <div><label className="block text-sm font-semibold text-slate-700 mb-1">Item Title *</label><input type="text" required placeholder="e.g. Paint Living Room" className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} /></div>
@@ -729,7 +832,9 @@
                         </div>
                         <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end gap-3">
                           <button type="button" onClick={resetTaskForm} className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">Cancel</button>
-                          <button type="submit" disabled={isProcessingImages} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors shadow-sm flex items-center gap-2 disabled:bg-slate-600"><Save size={18} /> Save Entry</button>
+                          <button type="submit" disabled={isProcessingImages} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-slate-800 transition-colors shadow-sm flex items-center gap-2 disabled:bg-slate-600">
+                            <Save size={18} /> {editingTaskId ? 'Update Entry' : 'Save Entry'}
+                          </button>
                         </div>
                       </form>
                     </div>
@@ -747,11 +852,12 @@
                         <div className="grid gap-6 print:block print:gap-0">
                           {activeJob.tasks.map((task, index) => (
                             <div key={task.id} className="print:break-inside-avoid print:mb-8">
-                              <TaskCard task={task} index={index} onDelete={deleteTask} />
+                              <TaskCard task={task} index={index} onDelete={deleteTask} onEdit={handleEditTask} />
                             </div>
                           ))}
                         </div>
                       )}
+                      <PrintJobSummary tasks={activeJob.tasks} />
                     </div>
                     <div className="lg:col-span-1 print:hidden">
                        <SummarySidebar tasks={activeJob.tasks} jobAddress={activeJob.address} clientName={activeJob.clientName} />
