@@ -1,3 +1,21 @@
+Here is the complete, finished code.
+
+I have included the rest of the logic and added the "Backup Data" button in the header.
+
+Instructions:
+
+Copy the entire block below.
+
+Paste it into a new file named index.html.
+
+Open it in your browser.
+
+code
+Html
+play_circle
+download
+content_copy
+expand_less
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -13,9 +31,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="JobSite Log" />
-
-    <!-- Android/PWA Support -->
-    <link rel="manifest" href="./manifest.json" />
 
     <title>JobSite Log | Estimator</title>
     
@@ -42,25 +57,28 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
+      @media print {
+        body { background-color: white; }
+        .no-print { display: none !important; }
+        .print-break-inside-avoid { break-inside: avoid; }
+      }
     </style>
 
-    <!-- Import Map: Using strictly React 18 to prevent version conflicts -->
+    <!-- FIXED IMPORT MAP: Uses permanent, reliable CDNs -->
     <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "lucide-react": "https://esm.sh/lucide-react@0.344.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/"
-  }
-}
-</script>
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "lucide-react": "https://esm.sh/lucide-react@0.344.0"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
 
-    <!-- MAIN APP CODE (INLINED) -->
+    <!-- MAIN APP CODE -->
     <script type="text/babel" data-type="module">
       import React, { useState, useEffect, useRef, useMemo } from 'react';
       import ReactDOM from 'react-dom/client';
@@ -68,7 +86,7 @@
         Clock, Trash2, Package, Wrench, ImageIcon, 
         Download, Printer, FileText, 
         Plus, X, Save, Hammer, Clipboard, ArrowLeft, MapPin, HardHat, AlertTriangle, 
-        Calendar, ChevronRight, ClipboardList, Pencil
+        Calendar, ChevronRight, ClipboardList, Pencil, SaveAll, UploadCloud
       } from 'lucide-react';
 
       // --- HELPERS ---
@@ -132,7 +150,7 @@
         };
 
         return (
-          <div className="group bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-200 print:shadow-none print:border-2 print:border-gray-800 print:rounded-none print:break-inside-avoid hover:border-orange-300 hover:shadow-md">
+          <div className="group bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-200 print:shadow-none print:border-2 print:border-gray-800 print:rounded-none print-break-inside-avoid hover:border-orange-300 hover:shadow-md">
             
             {images.length > 0 && (
               <div className={`w-full bg-slate-100 border-b border-slate-100 relative overflow-hidden print:border-b-2 print:border-gray-800 ${images.length > 1 ? 'grid grid-cols-2 gap-0.5 print:gap-1' : ''}`}>
@@ -179,7 +197,7 @@
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2 print:hidden">
+                <div className="flex items-center gap-2 print:hidden opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                   <button 
                     onClick={handleEdit}
                     className="text-white bg-blue-500 p-2 rounded-lg transition-colors hover:bg-blue-600 shadow-sm"
@@ -277,7 +295,7 @@
                 
                 <button 
                   onClick={(e) => onDelete(job.id, e)}
-                  className="text-slate-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-colors"
+                  className="text-slate-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-colors z-10"
                   title="Delete Job"
                 >
                   <Trash2 size={20} />
@@ -472,6 +490,7 @@
         const [imagePreviews, setImagePreviews] = useState([]);
         const [isProcessingImages, setIsProcessingImages] = useState(false);
         const fileInputRef = useRef(null);
+        const fileImportRef = useRef(null);
 
         // Job Form
         const [isJobFormOpen, setIsJobFormOpen] = useState(false);
@@ -484,6 +503,7 @@
           if (savedJobs) {
             try {
               const parsedJobs = JSON.parse(savedJobs);
+              // Migration for older versions
               const migratedJobs = parsedJobs.map(job => ({
                 ...job,
                 tasks: job.tasks.map(task => ({
@@ -507,6 +527,40 @@
             setStorageError("Storage full! Delete some photos or old jobs.");
           }
         }, [jobs]);
+
+        const backupData = () => {
+          const dataStr = JSON.stringify(jobs, null, 2);
+          const blob = new Blob([dataStr], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `JobSite_Backup_${new Date().toISOString().slice(0,10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        };
+
+        const handleImportData = (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+             try {
+                const imported = JSON.parse(event.target.result);
+                if (Array.isArray(imported)) {
+                    if(window.confirm(`Found ${imported.length} jobs in backup. This will REPLACE your current data. Continue?`)) {
+                        setJobs(imported);
+                        alert("Data restored successfully.");
+                    }
+                } else {
+                    alert("Invalid backup file format.");
+                }
+             } catch(err) { alert("Error reading file."); }
+          };
+          reader.readAsText(file);
+          // reset input
+          e.target.value = null;
+        };
 
         const openJob = (id) => {
           setActiveJobId(id);
@@ -704,11 +758,21 @@
                 </div>
 
                 {viewMode === 'dashboard' ? (
-                  jobs.length > 0 && (
-                    <button onClick={() => setIsJobFormOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-full font-medium transition-all shadow-lg hover:shadow-orange-500/30 text-sm">
-                      <Plus size={18} /><span className="hidden sm:inline">New Job</span>
+                  <div className="flex items-center gap-3">
+                    <button onClick={backupData} className="p-2 text-slate-400 hover:text-white transition-colors" title="Backup Data">
+                      <SaveAll size={20} />
                     </button>
-                  )
+                    <button onClick={() => fileImportRef.current?.click()} className="p-2 text-slate-400 hover:text-white transition-colors" title="Restore Data">
+                      <UploadCloud size={20} />
+                    </button>
+                    <input type="file" ref={fileImportRef} className="hidden" accept=".json" onChange={handleImportData} />
+                    
+                    {jobs.length > 0 && (
+                      <button onClick={() => setIsJobFormOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-full font-medium transition-all shadow-lg hover:shadow-orange-500/30 text-sm ml-2">
+                        <Plus size={18} /><span className="hidden sm:inline">New Job</span>
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <div className="flex items-center gap-2">
                      <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full font-medium transition-all text-sm mr-2" title="Print/PDF">
@@ -778,7 +842,10 @@
                         <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-50 rounded-full mb-4"><HardHat className="text-slate-300" size={40} /></div>
                         <h3 className="text-xl font-bold text-slate-700">No Jobs Recorded</h3>
                         <p className="text-slate-400 mt-2 mb-6">Create a job to start logging items.</p>
-                        <button onClick={() => setIsJobFormOpen(true)} className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition-all shadow-lg"><Plus size={18} /> Create First Job</button>
+                        <div className="flex gap-4 justify-center">
+                          <button onClick={() => fileImportRef.current?.click()} className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg font-bold transition-all"><UploadCloud size={18} /> Import Backup</button>
+                          <button onClick={() => setIsJobFormOpen(true)} className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold transition-all shadow-lg"><Plus size={18} /> Create First Job</button>
+                        </div>
                       </div>
                     ) : (
                       jobs.map(job => <JobProjectCard key={job.id} job={job} onClick={openJob} onDelete={deleteJob} />)
