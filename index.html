@@ -1,27 +1,3 @@
-To make the PDF output "truly awesome" while keeping the app lightweight and deployed on GitHub Pages, we need to utilize Advanced CSS Print Styling.
-
-We don't need heavy PDF libraries (which bloat the app). Instead, we will tell the browser exactly how to render the HTML on paper.
-
-Key Changes Made for "Awesome" PDFs:
-
-Compact Professional Layout: Switched the Task Cards from "Stacked" (Image on top) to "Row" (Image Left, Text Right) specifically for print. This saves massive vertical space.
-
-Page Break Management: Added break-inside: avoid CSS to prevent an item from being cut in half across two pages.
-
-High-Contrast Ink: Forced text to pure black for crisp printing, removing the "web gray" look.
-
-Signature Line: Added a professional "Client Signature" section at the bottom.
-
-Print Header: Added a formal header that only appears on the PDF (Company Name, Date, Quote #).
-
-Here is the complete, updated file. You can replace your existing file entirely with this one.
-
-code
-Html
-play_circle
-download
-content_copy
-expand_less
 <!DOCTYPE html>
 <html lang="en">
   <head>
