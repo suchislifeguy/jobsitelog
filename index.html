@@ -187,133 +187,178 @@
       // This solves the readability issue by making photos large and formatted.
       const PrintReport = ({ job }) => {
         if (!job) return null;
+      
         const { totalMinutes, allMaterials, allTools } = calculateStats(job.tasks);
-        
-        // Filter tasks that actually have images
-        const tasksWithImages = job.tasks.filter(t => t.imageUrls && t.imageUrls.length > 0);
-
+        const hasContent = job.tasks.length > 0;
+      
         return (
-          <div className="print-only hidden print-container font-sans text-black">
-             {/* Header */}
-             <div className="border-b-4 border-black pb-6 mb-8">
+          <div className="print-only hidden">
+            <div className="print-container mx-auto" style={{ maxWidth: '210mm', padding: '12mm 10mm' }}>
+      
+              {/* Header */}
+              <div className="border-b-4 border-slate-900 pb-5 mb-8">
                 <div className="flex justify-between items-end">
                   <div>
-                    <div className="flex items-center gap-3 mb-2">
-                       <Hammer size={32} />
-                       <h1 className="text-3xl font-extrabold uppercase tracking-tight">JobSite Log</h1>
+                    <div className="flex items-center gap-3 mb-1">
+                      <Hammer size={36} className="text-slate-900" />
+                      <h1 className="text-4xl font-black uppercase tracking-tight">JobSite Log</h1>
                     </div>
-                    <div className="text-sm text-gray-500 font-medium">Field Report & Estimate</div>
+                    <div className="text-lg text-slate-600 font-medium">Professional Field Report & Estimate</div>
                   </div>
                   <div className="text-right">
-                    <h2 className="text-xl font-bold">{job.address}</h2>
-                    <p className="text-gray-600">{job.clientName}</p>
-                    <p className="text-xs text-gray-400 mt-1">Generated: {new Date().toLocaleDateString()}</p>
+                    <h2 className="text-2xl font-bold text-slate-900">{job.address}</h2>
+                    {job.clientName && <p className="text-slate-700 mt-1">{job.clientName}</p>}
+                    <p className="text-sm text-slate-500 mt-2">
+                      Generated: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
                   </div>
                 </div>
-             </div>
-
-             {/* Summary Section */}
-             <div className="grid grid-cols-2 gap-8 mb-8">
-                <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg print-block">
-                  <h3 className="font-bold border-b border-gray-300 pb-2 mb-3 uppercase text-sm">Labor & Tools</h3>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm">Est. Duration:</span>
-                    <span className="font-mono font-bold">{formatTime(totalMinutes)}</span>
+              </div>
+      
+              {/* Summary */}
+              <div className="grid grid-cols-2 gap-6 mb-10">
+                <div className="border border-slate-300 rounded-lg p-5 bg-slate-50/50 print-block">
+                  <h3 className="font-bold text-slate-800 uppercase text-sm tracking-wide mb-3 border-b border-slate-300 pb-2">
+                    Labor & Duration
+                  </h3>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-slate-700">Estimated Duration:</span>
+                    <span className="font-bold text-xl font-mono">{formatTime(totalMinutes)}</span>
                   </div>
                   {allTools.length > 0 && (
-                    <div className="mt-3">
-                      <span className="text-xs font-bold text-gray-500 block mb-1">REQUIRED TOOLS</span>
-                      <div className="text-xs leading-relaxed">{allTools.join(', ')}</div>
+                    <div className="mt-4">
+                      <div className="text-xs font-bold text-slate-500 uppercase mb-1.5">Required Tools</div>
+                      <div className="text-sm text-slate-700 leading-relaxed">{allTools.join(' • ')}</div>
                     </div>
                   )}
                 </div>
-                <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg print-block">
-                  <h3 className="font-bold border-b border-gray-300 pb-2 mb-3 uppercase text-sm">Materials List</h3>
+      
+                <div className="border border-slate-300 rounded-lg p-5 bg-slate-50/50 print-block">
+                  <h3 className="font-bold text-slate-800 uppercase text-sm tracking-wide mb-3 border-b border-slate-300 pb-2">
+                    Materials
+                  </h3>
                   {allMaterials.length > 0 ? (
-                    <ul className="list-disc list-inside text-sm columns-2">
-                      {allMaterials.map((m, i) => <li key={i} className="mb-1 break-inside-avoid">{m}</li>)}
+                    <ul className="text-sm text-slate-700 columns-2 gap-6 list-disc pl-4 marker:text-slate-500">
+                      {allMaterials.map((m, i) => (
+                        <li key={i} className="mb-1.5 break-inside-avoid">{m}</li>
+                      ))}
                     </ul>
-                  ) : <span className="text-xs italic text-gray-500">No materials recorded.</span>}
+                  ) : (
+                    <p className="text-sm italic text-slate-500">No materials recorded.</p>
+                  )}
                 </div>
-             </div>
-
-             {/* Task List (Text Only) */}
-             <div className="mb-8 print-block">
-               <h3 className="font-bold text-lg mb-4 uppercase border-b-2 border-black pb-1">Scope of Work</h3>
-               <table className="w-full text-sm text-left">
-                 <thead>
-                   <tr className="bg-gray-100 border-b border-gray-300">
-                     <th className="p-2 w-16">#</th>
-                     <th className="p-2">Item / Task</th>
-                     <th className="p-2 w-24">Est. Time</th>
-                     <th className="p-2">Notes</th>
-                   </tr>
-                 </thead>
-                 <tbody>
-                   {job.tasks.map((task, idx) => (
-                     <tr key={task.id} className="border-b border-gray-200">
-                       <td className="p-2 font-bold text-gray-500">{idx + 1}</td>
-                       <td className="p-2 font-bold">{task.title}</td>
-                       <td className="p-2">{task.estimatedTime || '-'}</td>
-                       <td className="p-2 text-gray-600 italic">{task.description}</td>
-                     </tr>
-                   ))}
-                 </tbody>
-               </table>
-             </div>
-
-             {/* Visual Appendix – Photos Grouped by Task */}
-            {tasksWithImages.length > 0 && (
-              <div className="print-block">
-                <h3 className="font-bold text-lg mb-6 uppercase border-b-2 border-black pb-1">
-                  Photographic Log
-                </h3>
-            
-                <div className="space-y-8">
-                  {tasksWithImages.map((task, taskIdx) => (
+              </div>
+      
+              {/* Tasks */}
+              {hasContent ? (
+                <div className="space-y-10">
+                  <h3 className="font-black text-2xl uppercase border-b-2 border-slate-900 pb-2 mb-6">
+                    Scope of Work & Photographic Evidence
+                  </h3>
+      
+                  {job.tasks.map((task, idx) => (
                     <div
                       key={task.id}
-                      className="border border-gray-300 rounded-lg overflow-hidden print-block"
+                      className="task-print-block border border-slate-300 rounded-lg overflow-hidden bg-white print-block"
+                      style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
                     >
                       {/* Task Header */}
-                      <div className="bg-gray-100 px-4 py-3 border-b border-gray-300">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-bold text-sm">
-                              Task #{job.tasks.findIndex(t => t.id === task.id) + 1}: {task.title}
+                      <div className="bg-slate-100 px-6 py-4 border-b border-slate-300 flex items-center gap-4">
+                        <div className="bg-slate-800 text-white h-10 w-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-xl text-slate-900">{task.title}</h4>
+                          {task.estimatedTime && (
+                            <div className="flex items-center gap-2 mt-1 text-slate-600">
+                              <Clock size={16} />
+                              <span className="font-medium">Est. {task.estimatedTime}</span>
                             </div>
-                            {task.estimatedTime && (
-                              <div className="text-xs text-gray-600">
-                                Est. Time: {task.estimatedTime}
+                          )}
+                        </div>
+                      </div>
+      
+                      {/* Content */}
+                      <div className="p-6 space-y-6">
+                        {task.description && (
+                          <div>
+                            <div className="text-xs font-bold uppercase text-slate-500 mb-2">Notes</div>
+                            <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">{task.description}</p>
+                          </div>
+                        )}
+      
+                        {(task.materials?.length > 0 || task.tools?.length > 0) && (
+                          <div className="grid grid-cols-2 gap-6">
+                            {task.materials?.length > 0 && (
+                              <div>
+                                <div className="text-xs font-bold uppercase text-slate-500 mb-2">Materials</div>
+                                <ul className="text-sm text-slate-700 list-disc pl-4 space-y-1 marker:text-orange-600">
+                                  {task.materials.map((m, i) => <li key={i}>{m}</li>)}
+                                </ul>
+                              </div>
+                            )}
+                            {task.tools?.length > 0 && (
+                              <div>
+                                <div className="text-xs font-bold uppercase text-slate-500 mb-2">Tools</div>
+                                <ul className="text-sm text-slate-700 list-disc pl-4 space-y-1 marker:text-blue-600">
+                                  {task.tools.map((t, i) => <li key={i}>{t}</li>)}
+                                </ul>
                               </div>
                             )}
                           </div>
-                        </div>
-                        {task.description && (
-                          <div className="text-xs text-gray-600 italic mt-1">
-                            {task.description}
+                        )}
+      
+                        {/* Photos – per task */}
+                        {task.imageUrls?.length > 0 && (
+                          <div>
+                            <div className="text-xs font-bold uppercase text-slate-500 mb-3 flex items-center gap-2">
+                              <ImageIcon size={16} /> Photographic Evidence ({task.imageUrls.length})
+                            </div>
+                            <div
+                              className="grid gap-4"
+                              style={{
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(90mm, 1fr))',
+                                gridAutoRows: 'minmax(60mm, auto)',
+                              }}
+                            >
+                              {task.imageUrls.map((url, imgIdx) => (
+                                <div
+                                  key={imgIdx}
+                                  className="border border-slate-200 rounded overflow-hidden bg-white shadow-sm"
+                                >
+                                  <img
+                                    src={url}
+                                    alt={`Task ${idx + 1} photo ${imgIdx + 1}`}
+                                    className="w-full h-auto object-contain max-h-[160mm]"
+                                    style={{ display: 'block' }}
+                                  />
+                                  <div className="px-3 py-2 bg-slate-50 text-xs text-slate-600 border-t border-slate-200">
+                                    Image {imgIdx + 1} of {task.imageUrls.length}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
-                      </div>
-            
-                      {/* Photos */}
-                      <div className="p-3">
-                        <div className="photo-grid">
-                          {task.imageUrls.map((url, imgIdx) => (
-                            <div key={imgIdx} className="photo-item">
-                              <img src={url} alt={`Task ${taskIdx + 1} Photo ${imgIdx + 1}`} />
-                              <div className="p-1 text-center text-xs text-gray-500 bg-white border-t">
-                                Photo {imgIdx + 1} of {task.imageUrls.length}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
+              ) : (
+                <div className="text-center py-16 text-slate-500 italic border border-dashed border-slate-300 rounded-lg">
+                  No tasks recorded for this job.
+                </div>
+              )}
+      
+              {/* Footer */}
+              <div className="mt-12 pt-6 border-t border-slate-300 text-xs text-slate-500 flex justify-between">
+                <span>JobSite Log • Confidential Field Documentation</span>
+                <span>Page <span className="page-number"></span></span>
               </div>
-            )}
+            </div>
+          </div>
+        );
+      };
 
       // 3. TaskCard (Screen Version)
       const TaskCard = ({ task, index, onDelete, onEdit, onImageClick }) => {
