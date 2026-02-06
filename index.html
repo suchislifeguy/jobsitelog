@@ -11,22 +11,31 @@
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
 
     <style>
-      body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+      body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; overscroll-behavior-y: none; }
       
+      /* --- PRINT STYLING --- */
       @media print {
         @page { margin: 10mm; size: A4; }
-        body { background-color: white !important; -webkit-print-color-adjust: exact !important; }
-        .no-print { display: none !important; }
+        body { background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .no-print, button { display: none !important; }
         .print-only { display: block !important; }
-        .print-card { break-inside: avoid; border: 1px solid #e2e8f0; margin-bottom: 20px; border-radius: 8px; }
+        .print-card { 
+          break-inside: avoid; 
+          border: 1px solid #e2e8f0; 
+          margin-bottom: 20px; 
+          border-radius: 8px; 
+          overflow: hidden;
+        }
       }
 
-      .img-preview-container {
+      .img-preview-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 10px;
         margin-top: 10px;
       }
+
+      .custom-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 
     <script type="importmap">
@@ -48,16 +57,32 @@
       import ReactDOM from 'react-dom/client';
       import { get, set } from 'idb-keyval';
       import { 
-        Clock, Trash2, Package, Wrench, ImageIcon, Printer, 
-        Plus, X, Hammer, ChevronRight, Sparkles, Layout
+        Trash2, ImageIcon, Printer, Plus, X, Hammer, 
+        ChevronRight, Sparkles, Layout, HardHat, MapPin
       } from 'lucide-react';
 
-      const DB_KEY = 'jobsite-log-db-v2';
+      const DB_KEY = 'jobsite-log-final-db';
 
+      // --- TEMPLATES ---
       const TASK_TEMPLATES = {
-        marking: { title: "Mark with Highlight Paint", materials: "Highlight Paint, Chalk", tools: "Marking Wand", desc: "Site marking per plans." },
-        washing: { title: "Pressure Washing", materials: "Degreaser", tools: "Pressure Washer, Turbo Nozzle", desc: "Surface preparation and cleaning." },
-        fencing: { title: "Fence Installation", materials: "Panels, Posts, Concrete", tools: "Post Hole Digger, Level", desc: "Installation of boundary fencing." }
+        marking: { 
+          title: "Mark with Highlight Paint", 
+          materials: "Fluorescent Spray Paint, Marking Chalk", 
+          tools: "Marking Wand, Measuring Tape", 
+          desc: "Marking out site boundaries and service locations as per site plan." 
+        },
+        washing: { 
+          title: "Pressure Washing", 
+          materials: "Degreaser, Surface Sealer", 
+          tools: "Petrol Pressure Washer, Turbo Nozzle", 
+          desc: "Deep clean of hard surfaces to remove grime and prepare for treatment." 
+        },
+        fencing: { 
+          title: "Fence Installation", 
+          materials: "Fence Panels, Posts, Rapid Set Concrete", 
+          tools: "Post Hole Digger, Level, Impact Driver", 
+          desc: "Installing vertical posts and securing panels. Ensuring level alignment." 
+        }
       };
 
       const App = () => {
@@ -67,30 +92,49 @@
         const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
         const [taskData, setTaskData] = useState({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
 
-        useEffect(() => { get(DB_KEY).then(data => setJobs(data || [])); }, []);
+        useEffect(() => { 
+          get(DB_KEY).then(data => setJobs(data || [])); 
+        }, []);
 
-        const saveToDB = (newJobs) => { setJobs(newJobs); set(DB_KEY, newJobs); };
+        const saveToDB = (newJobs) => { 
+          setJobs(newJobs); 
+          set(DB_KEY, newJobs); 
+        };
 
         const activeJob = jobs.find(j => j.id === activeJobId);
 
+        // --- MATH HELPERS ---
         const calculateTotals = (tasks) => {
           let totalMins = 0;
           let allMats = new Set();
           let allTools = new Set();
+          
           tasks.forEach(t => {
-            const m = t.time?.match(/(\d+)/);
-            if (m) totalMins += parseInt(m[1]) * (t.time.includes('h') ? 60 : 1);
-            t.materials.split(',').forEach(i => i.trim() && allMats.add(i.trim()));
-            t.tools.split(',').forEach(i => i.trim() && allTools.add(i.trim()));
+            // Parse time (handles 2h, 1.5h, 30m, etc)
+            const match = t.time?.toLowerCase().match(/(\d+\.?\d*)\s*([hm])/);
+            if (match) {
+              const val = parseFloat(match[1]);
+              const unit = match[2];
+              totalMins += (unit === 'h') ? val * 60 : val;
+            }
+
+            t.materials.split(',').forEach(i => i.trim() && allMats.add(i.trim().toLowerCase()));
+            t.tools.split(',').forEach(i => i.trim() && allTools.add(i.trim().toLowerCase()));
           });
+
+          const h = Math.floor(totalMins / 60);
+          const m = Math.round(totalMins % 60);
+
           return { 
-            timeStr: `${Math.floor(totalMins/60)}h ${totalMins%60}m`,
-            materials: Array.from(allMats).join(', '),
-            tools: Array.from(allTools).join(', ')
+            timeStr: `${h}h ${m}m`,
+            materials: Array.from(allMats).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', '),
+            tools: Array.from(allTools).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ')
           };
         };
 
+        // --- HANDLERS ---
         const handleAddTask = () => {
+          if (!taskData.title) return alert("Please enter a task title");
           const newTask = { ...taskData, id: Date.now() };
           const updated = jobs.map(j => j.id === activeJobId ? { ...j, tasks: [...j.tasks, newTask] } : j);
           saveToDB(updated);
@@ -98,177 +142,249 @@
           setTaskData({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
         };
 
-        const removeImage = (idx) => {
-          setTaskData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }));
+        const deleteJob = (id, e) => {
+          e.stopPropagation();
+          if(confirm("Delete this entire job?")) {
+            saveToDB(jobs.filter(j => j.id !== id));
+          }
+        };
+
+        const applyTemplate = (key) => {
+          const t = TASK_TEMPLATES[key];
+          setTaskData({ ...taskData, ...t });
+        };
+
+        const handleFileChange = (e) => {
+          const files = Array.from(e.target.files);
+          files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              setTaskData(prev => ({ ...prev, images: [...prev.images, event.target.result] }));
+            };
+            reader.readAsDataURL(file);
+          });
         };
 
         return (
-          <div className="min-h-screen">
-            <header className="bg-slate-900 text-white p-4 no-print flex justify-between items-center shadow-md sticky top-0 z-50">
-              <div className="flex items-center gap-2" onClick={() => setViewMode('dashboard')}>
-                <Hammer className="text-orange-500" />
-                <h1 className="font-black text-lg">JOBSITE LOG</h1>
+          <div className="min-h-screen pb-10">
+            {/* APP HEADER */}
+            <header className="bg-slate-900 text-white p-4 no-print flex justify-between items-center shadow-xl sticky top-0 z-50">
+              <div className="flex items-center gap-2 cursor-pointer" onClick={() => setViewMode('dashboard')}>
+                <div className="bg-orange-500 p-1.5 rounded-lg"><Hammer size={20} /></div>
+                <h1 className="font-black text-xl tracking-tighter">JOBSITE LOG</h1>
               </div>
               {viewMode === 'detail' && (
-                <button onClick={() => window.print()} className="bg-orange-500 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                <button onClick={() => window.print()} className="bg-white text-slate-900 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 shadow-sm active:scale-95 transition-transform">
                   <Printer size={16} /> PRINT PDF
                 </button>
               )}
             </header>
 
+            {/* DASHBOARD */}
             {viewMode === 'dashboard' ? (
               <div className="p-4 max-w-2xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold">Active Jobs</h2>
+                  <h2 className="text-xl font-extrabold text-slate-800">Job Dashboard</h2>
                   <button onClick={() => {
-                    const addr = prompt("Address:");
-                    if(addr) saveToDB([...jobs, { id: Date.now(), address: addr, clientName: prompt("Client:"), tasks: [] }]);
-                  }} className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold">+ New Job</button>
+                    const addr = prompt("Site Address:");
+                    if(addr) saveToDB([...jobs, { id: Date.now(), address: addr, clientName: prompt("Client Name:"), tasks: [] }]);
+                  }} className="bg-slate-900 text-white px-5 py-2.5 rounded-2xl text-sm font-bold shadow-lg">+ New Project</button>
                 </div>
-                {jobs.map(j => (
-                  <div key={j.id} onClick={() => { setActiveJobId(j.id); setViewMode('detail'); }} className="bg-white p-4 rounded-xl border mb-3 flex justify-between items-center">
-                    <div><p className="font-bold">{j.address}</p><p className="text-xs text-slate-500">{j.tasks.length} tasks</p></div>
-                    <ChevronRight size={18} className="text-slate-300" />
-                  </div>
-                ))}
+                <div className="grid gap-3">
+                  {jobs.length === 0 && <div className="text-center py-20 text-slate-400 font-medium">No jobs started. Create one above.</div>}
+                  {jobs.map(j => (
+                    <div key={j.id} onClick={() => { setActiveJobId(j.id); setViewMode('detail'); }} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center hover:border-orange-500 transition-all cursor-pointer group">
+                      <div>
+                        <p className="font-bold text-slate-900 group-hover:text-orange-600 transition-colors">{j.address}</p>
+                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mt-1">{j.tasks.length} Task Logs</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Trash2 size={18} className="text-slate-300 hover:text-red-500" onClick={(e) => deleteJob(j.id, e)} />
+                        <ChevronRight size={20} className="text-slate-300" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : (
+              /* JOB DETAIL VIEW */
               <div className="p-4 max-w-2xl mx-auto no-print">
-                <div className="bg-white p-6 rounded-2xl border mb-6">
-                  <h2 className="text-2xl font-black">{activeJob?.address}</h2>
-                  <p className="text-slate-500 mb-4">{activeJob?.clientName}</p>
+                <button onClick={() => setViewMode('dashboard')} className="mb-4 text-slate-500 font-bold text-sm flex items-center gap-1">
+                  <ChevronRight size={16} className="rotate-180" /> BACK TO DASHBOARD
+                </button>
+                
+                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-6">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-slate-100 p-3 rounded-2xl text-slate-600"><MapPin /></div>
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-900">{activeJob?.address}</h2>
+                      <p className="text-slate-500 font-medium">{activeJob?.clientName}</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-4 mb-20">
+                <div className="space-y-4 mb-24">
                   {activeJob?.tasks.map((t, i) => (
-                    <div key={t.id} className="bg-white rounded-xl border overflow-hidden">
-                      <div className="bg-slate-50 p-3 border-b font-bold flex justify-between">
-                        <span>Task {i+1}: {t.title}</span>
-                        <button onClick={() => {
-                          const updated = jobs.map(j => j.id === activeJobId ? { ...j, tasks: j.tasks.filter(tk => tk.id !== t.id) } : j);
-                          saveToDB(updated);
-                        }} className="text-red-400"><Trash2 size={16}/></button>
+                    <div key={t.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div className="bg-slate-50 p-4 border-b flex justify-between items-center">
+                        <span className="font-black text-slate-700 text-sm tracking-wide">TASK {i+1}</span>
+                        <div className="flex items-center gap-3">
+                           <span className="text-xs font-bold bg-orange-100 text-orange-700 px-2 py-1 rounded-md">{t.time}</span>
+                           <button onClick={() => {
+                             const updated = jobs.map(j => j.id === activeJobId ? { ...j, tasks: j.tasks.filter(tk => tk.id !== t.id) } : j);
+                             saveToDB(updated);
+                           }} className="text-slate-300 hover:text-red-500"><Trash2 size={16}/></button>
+                        </div>
                       </div>
-                      <div className="p-4 text-sm text-slate-600">{t.desc}</div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-lg mb-2">{t.title}</h3>
+                        <p className="text-sm text-slate-600 leading-relaxed">{t.desc}</p>
+                        {t.images?.length > 0 && (
+                          <div className="flex gap-2 mt-4 overflow-x-auto pb-2 custom-scrollbar">
+                            {t.images.map((img, idx) => (
+                              <img key={idx} src={img} className="h-20 w-20 object-cover rounded-xl border flex-shrink-0" />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
 
-                <button onClick={() => setIsTaskFormOpen(true)} className="fixed bottom-6 right-6 bg-orange-500 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center"><Plus/></button>
+                <button onClick={() => setIsTaskFormOpen(true)} className="fixed bottom-6 right-6 bg-slate-900 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-transform z-40">
+                  <Plus size={32} />
+                </button>
               </div>
             )}
 
-            {/* MODAL */}
+            {/* TASK ENTRY MODAL */}
             {isTaskFormOpen && (
-              <div className="fixed inset-0 z-[100] bg-slate-900/90 p-4 overflow-y-auto">
-                <div className="bg-white rounded-2xl max-w-md mx-auto p-6">
-                  <div className="flex justify-between mb-4">
-                    <h2 className="font-bold">Add Task</h2>
-                    <X onClick={() => setIsTaskFormOpen(false)} />
+              <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-sm p-4 overflow-y-auto">
+                <div className="bg-white rounded-[2.5rem] max-w-md mx-auto p-6 shadow-2xl mt-4">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-black text-slate-900">Add Task Entry</h2>
+                    <button onClick={() => setIsTaskFormOpen(false)} className="bg-slate-100 p-2 rounded-full"><X size={20}/></button>
                   </div>
                   
-                  <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-                    {Object.entries(TASK_TEMPLATES).map(([key, val]) => (
-                      <button key={key} onClick={() => setTaskData({...taskData, ...val})} className="whitespace-nowrap bg-slate-100 px-3 py-2 rounded-lg text-xs font-bold border hover:border-orange-500 flex items-center gap-1">
-                        <Sparkles size={12}/> {key.toUpperCase()}
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Apply Template</label>
+                  <div className="flex gap-2 mb-8 overflow-x-auto pb-2 custom-scrollbar">
+                    {Object.keys(TASK_TEMPLATES).map(key => (
+                      <button key={key} onClick={() => applyTemplate(key)} className="whitespace-nowrap bg-white border-2 border-slate-100 px-4 py-2 rounded-2xl text-xs font-bold hover:border-orange-500 transition-all flex items-center gap-2">
+                        <Sparkles size={14} className="text-orange-500"/> {key.toUpperCase()}
                       </button>
                     ))}
                   </div>
 
-                  <div className="space-y-3">
-                    <input placeholder="Task Title" className="w-full p-3 bg-slate-50 rounded-lg border" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
-                    <input placeholder="Time (e.g. 2.5h)" className="w-full p-3 bg-slate-50 rounded-lg border font-mono" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
+                  <div className="space-y-4">
+                    <div>
+                      <input placeholder="Task Title (e.g. Surface Prep)" className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 ring-orange-500 outline-none font-bold" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
+                    </div>
                     
-                    <div className="p-3 bg-slate-50 rounded-lg border">
-                      <label className="text-xs font-bold block mb-2">Photos (Visible Below)</label>
-                      <input type="file" multiple accept="image/*" onChange={e => {
-                        const files = Array.from(e.target.files);
-                        files.forEach(file => {
-                          const reader = new FileReader();
-                          reader.onload = (re) => setTaskData(prev => ({...prev, images: [...prev.images, re.target.result]}));
-                          reader.readAsDataURL(file);
-                        });
-                      }} />
-                      <div className="img-preview-container">
+                    <div className="flex gap-3">
+                      <input placeholder="Time (e.g. 2.5h)" className="flex-1 p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 ring-orange-500 outline-none font-mono text-sm" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
+                      <label className="bg-slate-100 p-4 rounded-2xl cursor-pointer hover:bg-slate-200 transition-colors">
+                        <ImageIcon className="text-slate-600" />
+                        <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileChange} />
+                      </label>
+                    </div>
+
+                    {/* Image Preview Area */}
+                    {taskData.images.length > 0 && (
+                      <div className="img-preview-grid">
                         {taskData.images.map((img, i) => (
-                          <div key={i} className="relative aspect-square">
-                            <img src={img} className="w-full h-full object-cover rounded-md border" />
-                            <button onClick={() => removeImage(i)} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={12}/></button>
+                          <div key={i} className="relative aspect-square group">
+                            <img src={img} className="w-full h-full object-cover rounded-xl border-2 border-slate-100" />
+                            <button onClick={() => setTaskData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg">
+                              <X size={12}/>
+                            </button>
                           </div>
                         ))}
                       </div>
-                    </div>
+                    )}
 
-                    <input placeholder="Materials" className="w-full p-3 bg-slate-50 rounded-lg border" value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} />
-                    <input placeholder="Tools" className="w-full p-3 bg-slate-50 rounded-lg border" value={taskData.tools} onChange={e => setTaskData({...taskData, tools: e.target.value})} />
-                    <textarea placeholder="Description" className="w-full p-3 bg-slate-50 rounded-lg border h-24" value={taskData.desc} onChange={e => setTaskData({...taskData, desc: e.target.value})} />
+                    <input placeholder="Materials (comma separated)" className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none text-sm" value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} />
+                    <input placeholder="Tools Used" className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none text-sm" value={taskData.tools} onChange={e => setTaskData({...taskData, tools: e.target.value})} />
+                    <textarea placeholder="Work Description..." className="w-full p-4 bg-slate-50 rounded-2xl border-none outline-none text-sm h-32 resize-none" value={taskData.desc} onChange={e => setTaskData({...taskData, desc: e.target.value})} />
                     
-                    <button onClick={handleAddTask} className="w-full bg-orange-500 text-white p-4 rounded-xl font-bold">Save Task</button>
+                    <button onClick={handleAddTask} className="w-full bg-slate-900 text-white p-5 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-transform mt-4">
+                      SAVE TASK
+                    </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* PRINT PDF LAYOUT */}
+            {/* --- PRINT PDF LAYOUT (HIDDEN UNTIL PRINT) --- */}
             {activeJob && (
               <div className="print-only hidden p-8">
-                <div className="border-b-4 border-slate-900 pb-4 mb-6 flex justify-between items-end">
+                {/* Header */}
+                <div className="border-b-8 border-slate-900 pb-6 mb-8 flex justify-between items-end">
                   <div>
-                    <h1 className="text-4xl font-black tracking-tighter">JOBSITE LOG</h1>
-                    <p className="text-slate-500 font-bold">{new Date().toLocaleDateString()}</p>
+                    <h1 className="text-5xl font-black tracking-tighter text-slate-900">JOBSITE LOG</h1>
+                    <p className="text-slate-500 font-bold text-lg uppercase tracking-widest">{new Date().toLocaleDateString('en-AU', { dateStyle: 'full' })}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold uppercase">{activeJob.address}</p>
-                    <p className="text-slate-600">{activeJob.clientName}</p>
+                    <p className="text-2xl font-black text-slate-900 uppercase">{activeJob.address}</p>
+                    <p className="text-slate-600 font-bold text-lg">{activeJob.clientName}</p>
                   </div>
                 </div>
 
-                {/* PROJECT TOTALS SUMMARY */}
-                <div className="bg-slate-900 text-white p-6 rounded-xl mb-8 grid grid-cols-3 gap-6">
-                  <div>
-                    <h4 className="text-[10px] uppercase text-slate-400 font-bold mb-1">Total Labor</h4>
-                    <p className="text-xl font-black text-orange-400">{calculateTotals(activeJob.tasks).timeStr}</p>
+                {/* PROJECT SUMMARY BOX */}
+                <div className="bg-slate-900 text-white p-8 rounded-2xl mb-10 grid grid-cols-4 gap-8">
+                  <div className="border-r border-slate-700">
+                    <h4 className="text-[10px] uppercase text-orange-500 font-black mb-2 tracking-widest">Total Labor</h4>
+                    <p className="text-3xl font-black">{calculateTotals(activeJob.tasks).timeStr}</p>
                   </div>
-                  <div className="col-span-2">
-                    <h4 className="text-[10px] uppercase text-slate-400 font-bold mb-1">Materials & Tools Summary</h4>
-                    <p className="text-xs leading-relaxed opacity-90">
-                      <strong>Mats:</strong> {calculateTotals(activeJob.tasks).materials || 'N/A'}<br/>
-                      <strong>Tools:</strong> {calculateTotals(activeJob.tasks).tools || 'N/A'}
+                  <div className="col-span-3">
+                    <h4 className="text-[10px] uppercase text-orange-500 font-black mb-2 tracking-widest">Consolidated Materials & Tools</h4>
+                    <p className="text-sm leading-relaxed opacity-90 font-medium">
+                      <span className="text-slate-400">Materials:</span> {calculateTotals(activeJob.tasks).materials || 'N/A'}<br/>
+                      <span className="text-slate-400">Tools:</span> {calculateTotals(activeJob.tasks).tools || 'N/A'}
                     </p>
                   </div>
                 </div>
 
+                {/* TASK LOGS */}
                 {activeJob.tasks.map((t, idx) => (
-                  <div key={t.id} className="print-card">
-                    <div className="bg-slate-100 p-3 font-bold border-b text-sm">
-                      {idx + 1}. {t.title.toUpperCase()}
+                  <div key={t.id} className="print-card mb-10">
+                    <div className="bg-slate-100 p-4 font-black border-b flex justify-between items-center text-slate-800">
+                      <span className="text-lg">{idx + 1}. {t.title.toUpperCase()}</span>
                     </div>
-                    <div className="p-4">
-                      {t.desc && <p className="text-sm mb-4 leading-relaxed">{t.desc}</p>}
+                    <div className="p-6">
+                      {t.desc && <p className="text-base text-slate-700 mb-6 leading-relaxed italic">"{t.desc}"</p>}
                       
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div className="p-3 bg-slate-50 rounded border">
-                          <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">Labor Time</label>
-                          <span className="font-bold text-slate-800">{t.time || 'N/A'}</span>
+                      {/* Detailed Metadata Grid */}
+                      <div className="grid grid-cols-3 gap-4 mb-8">
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                          <label className="text-[10px] font-black uppercase text-slate-400 block mb-1 tracking-tighter">Labor Time</label>
+                          <span className="font-black text-xl text-slate-900 underline decoration-orange-500 decoration-4">{t.time || 'N/A'}</span>
                         </div>
-                        <div className="p-3 bg-slate-50 rounded border">
-                          <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">Materials Used</label>
-                          <span className="text-[11px] text-slate-700">{t.materials || 'None'}</span>
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                          <label className="text-[10px] font-black uppercase text-slate-400 block mb-1 tracking-tighter">Materials</label>
+                          <span className="text-sm font-bold text-slate-700">{t.materials || 'None'}</span>
                         </div>
-                        <div className="p-3 bg-slate-50 rounded border">
-                          <label className="text-[9px] font-black uppercase text-slate-400 block mb-1">Tools Required</label>
-                          <span className="text-[11px] text-slate-700">{t.tools || 'None'}</span>
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                          <label className="text-[10px] font-black uppercase text-slate-400 block mb-1 tracking-tighter">Tools</label>
+                          <span className="text-sm font-bold text-slate-700">{t.tools || 'None'}</span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
+                      {/* Images Grid */}
+                      <div className="grid grid-cols-2 gap-4">
                         {t.images.map((img, i) => (
-                          <img key={i} src={img} className="rounded-lg border h-60 w-full object-cover" />
+                          <div key={i} className="rounded-xl overflow-hidden border border-slate-200 h-72">
+                            <img src={img} className="w-full h-full object-cover" />
+                          </div>
                         ))}
                       </div>
                     </div>
                   </div>
                 ))}
+
+                {/* Footer Disclaimer */}
+                <div className="mt-20 pt-8 border-t border-slate-100 text-center">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">End of Site Log - Generated via JobSite Professional</p>
+                </div>
               </div>
             )}
           </div>
