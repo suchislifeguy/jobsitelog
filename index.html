@@ -4,74 +4,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0f172a" />
-    <meta name="description" content="Professional JobSite Log & Estimate Creator" />
-    
-    <!-- Favicon -->
-    <link rel="icon" href="https://cdn.jsdelivr.net/npm/lucide-static@0.344.0/icons/hammer.svg" type="image/svg+xml">
-
-    <!-- iOS / PWA Support -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="JobSite Log" />
-
     <title>JobSite Log | Professional</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Babel Standalone -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
 
     <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #f1f5f9;
-        overscroll-behavior-y: none;
-      }
-      
-      /* Smooth Image Loading */
-      img {
-        transition: opacity 0.3s ease-in-out;
-      }
-
-      /* Custom Scrollbar */
+      body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; overscroll-behavior-y: none; }
       .custom-scrollbar::-webkit-scrollbar { display: none; }
-      .custom-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-      /* --- PRINT STYLING (The Report Look) --- */
-      @media print {
-        @page {
-          margin: 15mm;
-          size: A4;
-        }
-        body {
-          background-color: white !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        
-        .no-print, header, .app-ui, button { 
-          display: none !important; 
-        }
-        
-        .print-only { 
-          display: block !important; 
-        }
       
-        /* Force page breaks to be smart */
-        .print-block {
-          break-inside: avoid !important;
-          page-break-inside: avoid !important;
-          margin-bottom: 20px;
-        }
+      /* --- PRINT STYLING --- */
+      @media print {
+        @page { margin: 12mm; size: A4; }
+        body { background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .no-print, .app-ui, button { display: none !important; }
+        .print-only { display: block !important; }
+        .print-block { break-inside: avoid !important; page-break-inside: avoid !important; margin-bottom: 24px; }
+      }
+
+      /* Template Button Styles */
+      .template-btn {
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+      }
+      .template-btn:hover {
+        background-color: #f8fafc;
+        border-color: #f97316;
       }
     </style>
 
-    <!-- Import Map including IDB-Keyval for massive storage -->
     <script type="importmap">
     {
       "imports": {
@@ -86,682 +48,323 @@
   <body>
     <div id="root"></div>
 
-    <!-- MAIN APP CODE -->
     <script type="text/babel" data-type="module">
-      import React, { useState, useEffect, useRef, useMemo } from 'react';
+      import React, { useState, useEffect, useRef } from 'react';
       import ReactDOM from 'react-dom/client';
-      import { get, set, del } from 'idb-keyval'; // IndexedDB wrapper
+      import { get, set } from 'idb-keyval';
       import { 
-        Clock, Trash2, Package, Wrench, ImageIcon, 
-        Download, Printer, FileText, 
-        Plus, X, Save, Hammer, Clipboard, ArrowLeft, MapPin, HardHat, AlertTriangle, 
-        Calendar, ChevronRight, ClipboardList, Pencil, SaveAll, UploadCloud, Maximize2, ExternalLink
+        Clock, Trash2, Package, Wrench, ImageIcon, Download, Printer, 
+        FileText, Plus, X, Save, Hammer, MapPin, ChevronRight, 
+        ClipboardList, Pencil, Maximize2, Sparkles, Layout
       } from 'lucide-react';
 
-      // --- HELPERS ---
-      
       const DB_KEY = 'jobsite-log-db-v1';
+
+      // --- TEMPLATES DATA ---
+      const TASK_TEMPLATES = {
+        marking: {
+          title: "Mark with Highlight Paint",
+          materials: "Fluorescent Spray Paint, Marking Chalk",
+          tools: "Marking Wand, Measuring Tape",
+          description: "Marking out site boundaries and service locations as per site plan."
+        },
+        washing: {
+          title: "Pressure Washing",
+          materials: "Degreaser, Surface Sealer",
+          tools: "Petrol Pressure Washer, Turbo Nozzle, Scrubbing Brush",
+          description: "Deep clean of hard surfaces to remove grime and prepare for treatment."
+        },
+        fencing: {
+          title: "Fence Installation",
+          materials: "Fence Panels, Posts, Rapid Set Concrete, Nails/Screws",
+          tools: "Post Hole Digger, Level, Impact Driver, String Line",
+          description: "Installing vertical posts and securing panels. Ensuring level alignment across run."
+        }
+      };
 
       const calculateStats = (tasks) => {
         let totalMinutes = 0;
-        const allMaterials = [];
-        const toolsSet = new Set();
-
+        const materials = [];
+        const tools = new Set();
         tasks.forEach(t => {
           if (t.estimatedTime) {
-            const timeStr = t.estimatedTime.toLowerCase().trim();
-            let minutes = 0;
-            const hoursMatch = timeStr.match(/(\d+(\.\d+)?)\s*(h|hr|hour)/);
-            const minsMatch = timeStr.match(/(\d+)\s*(m|min)/);
-
-            if (hoursMatch) minutes += parseFloat(hoursMatch[1]) * 60;
-            if (minsMatch) minutes += parseInt(minsMatch[1], 10);
-            if (!hoursMatch && !minsMatch) {
-              const val = parseFloat(timeStr);
-              if (!isNaN(val)) minutes += val * 60;
-            }
-            totalMinutes += minutes;
+            const m = t.estimatedTime.match(/(\d+)/);
+            if(m) totalMinutes += parseInt(m[1]) * (t.estimatedTime.includes('h') ? 60 : 1);
           }
-          t.materials.forEach(m => allMaterials.push(m));
-          t.tools.forEach(tool => toolsSet.add(tool));
+          t.materials.forEach(mat => materials.push(mat));
+          t.tools.forEach(tool => tools.add(tool));
         });
-
-        return {
-          totalMinutes,
-          allMaterials: allMaterials.sort(),
-          allTools: Array.from(toolsSet).sort()
-        };
+        return { totalMinutes, materials, tools: Array.from(tools) };
       };
 
-      const formatTime = (minutes) => {
-        if (minutes === 0) return "TBD";
-        const h = Math.floor(minutes / 60);
-        const m = Math.round(minutes % 60);
-        if (h > 0 && m > 0) return `${h}h ${m}m`;
-        if (h > 0) return `${h}h`;
-        return `${m}m`;
+      const formatTime = (mins) => {
+        const h = Math.floor(mins/60);
+        const m = mins%60;
+        return h > 0 ? `${h}h ${m > 0 ? m+'m' : ''}` : `${m}m`;
       };
 
-      // --- COMPONENTS ---
-
-      // 1. Lightbox (Full Screen Image Viewer)
-      const Lightbox = ({ src, onClose }) => {
-        if (!src) return null;
-        return (
-          <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm no-print" onClick={onClose}>
-            <button className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-full transition-colors"><X size={32} /></button>
-            <img src={src} className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl" onClick={e => e.stopPropagation()} />
-          </div>
-        );
-      };
-
-      // 2. Print Report Layout (Hidden on Screen, Visible on Print)
-      // This solves the readability issue by making photos large and formatted.
+      // --- PDF REPORT COMPONENT ---
       const PrintReport = ({ job }) => {
         if (!job) return null;
-      
-        const { totalMinutes, allMaterials, allTools } = calculateStats(job.tasks);
-      
+        const { totalMinutes, materials, tools } = calculateStats(job.tasks);
+
         return (
           <div className="print-only hidden">
-            <div style={{ fontFamily: 'Inter, sans-serif', color: '#1e293b' }}>
-              
-              {/* REPORT HEADER */}
-              <div style={{ borderBottom: '2px solid #0f172a', paddingBottom: '10px', marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+              {/* Header */}
+              <div style={{ borderBottom: '3px solid #0f172a', paddingBottom: '15px', marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
-                  <h1 style={{ fontSize: '24pt', fontWeight: '800', margin: 0, textTransform: 'uppercase', color: '#0f172a' }}>JobSite Log</h1>
-                  <p style={{ margin: 0, color: '#64748b', fontSize: '10pt' }}>Professional Field Report • {new Date().toLocaleDateString()}</p>
+                  <h1 style={{ fontSize: '28pt', fontWeight: '800', margin: 0, color: '#0f172a', letterSpacing: '-1px' }}>JOBSITE LOG</h1>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '11pt', fontWeight: '500' }}>{new Date().toLocaleDateString('en-AU', { dateStyle: 'long' })}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <h2 style={{ fontSize: '14pt', fontWeight: '700', margin: 0 }}>{job.address}</h2>
-                  <p style={{ margin: 0, color: '#475569' }}>{job.clientName}</p>
+                  <h2 style={{ fontSize: '16pt', fontWeight: '700', margin: 0 }}>{job.address}</h2>
+                  <p style={{ margin: 0, color: '#475569', fontSize: '12pt' }}>{job.clientName}</p>
                 </div>
               </div>
-      
-              {/* SUMMARY BOX */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
-                <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <h3 style={{ fontSize: '9pt', textTransform: 'uppercase', color: '#64748b', marginBottom: '8px', borderBottom: '1px solid #cbd5e1' }}>Labor Summary</h3>
-                  <div style={{ fontSize: '12pt', fontWeight: '700' }}>Total Est. Time: {formatTime(totalMinutes)}</div>
-                  <div style={{ fontSize: '10pt', marginTop: '5px' }}>Tools: {allTools.join(', ') || 'None listed'}</div>
-                </div>
-                <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <h3 style={{ fontSize: '9pt', textTransform: 'uppercase', color: '#64748b', marginBottom: '8px', borderBottom: '1px solid #cbd5e1' }}>Material Requirements</h3>
-                  <div style={{ fontSize: '10pt', columnCount: 2 }}>
-                    {allMaterials.length > 0 ? allMaterials.map((m, i) => <div key={i}>• {m}</div>) : 'No materials listed'}
+
+              {/* Task Cards */}
+              {job.tasks.map((task, idx) => (
+                <div key={task.id} className="print-block" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#fff' }}>
+                  {/* Task Header - Hours prominently visible */}
+                  <div style={{ backgroundColor: '#0f172a', color: '#fff', padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: '700', fontSize: '13pt' }}>{idx + 1}. {task.title}</span>
+                    {task.estimatedTime && (
+                      <div style={{ backgroundColor: '#f97316', padding: '4px 12px', borderRadius: '6px', fontWeight: '800', fontSize: '11pt' }}>
+                        {task.estimatedTime.toUpperCase()}
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
-      
-              {/* TASK LISTING */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                {job.tasks.map((task, idx) => (
-                  <div key={task.id} className="print-block" style={{ border: '1px solid #cbd5e1', borderRadius: '10px', overflow: 'hidden' }}>
+
+                  <div style={{ padding: '20px' }}>
+                    {task.description && <p style={{ fontSize: '11pt', color: '#334155', marginBottom: '20px', lineHeight: '1.6' }}>{task.description}</p>}
                     
-                    {/* Task Header */}
-                    <div style={{ background: '#f1f5f9', padding: '12px 15px', borderBottom: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: '800', fontSize: '12pt' }}>Task {idx + 1}: {task.title}</span>
-                      {task.estimatedTime && <span style={{ fontSize: '10pt', background: '#fff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>{task.estimatedTime}</span>}
-                    </div>
-      
-                    <div style={{ padding: '15px' }}>
-                      {/* Description */}
-                      {task.description && (
-                        <p style={{ margin: '0 0 15px 0', fontSize: '11pt', lineHeight: '1.5', color: '#334155' }}>{task.description}</p>
-                      )}
-      
-                      {/* Task-Specific Materials/Tools */}
-                      {(task.materials.length > 0 || task.tools.length > 0) && (
-                         <div style={{ display: 'flex', gap: '20px', fontSize: '9pt', marginBottom: '15px', color: '#475569' }}>
-                            {task.materials.length > 0 && <div><strong>Materials:</strong> {task.materials.join(', ')}</div>}
-                            {task.tools.length > 0 && <div><strong>Tools:</strong> {task.tools.join(', ')}</div>}
-                         </div>
-                      )}
-      
-                      {/* Boxed Photos Grid */}
-                      {task.imageUrls?.length > 0 && (
-                        <div style={{ 
-                          display: 'grid', 
-                          gridTemplateColumns: task.imageUrls.length === 1 ? '1fr' : '1fr 1fr', 
-                          gap: '10px',
-                          marginTop: '10px' 
-                        }}>
-                          {task.imageUrls.map((url, i) => (
-                            <div key={i} style={{ border: '1px solid #e2e8f0', borderRadius: '6px', overflow: 'hidden', height: '220px' }}>
-                              <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-      
-            </div>
-          </div>
-        );
-      };
-
-      // 3. TaskCard (Screen Version)
-      const TaskCard = ({ task, index, onDelete, onEdit, onImageClick }) => {
-        const images = task.imageUrls || [];
-
-        return (
-          <div className="task-card group bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-200 hover:border-orange-300 hover:shadow-md">
-            {images.length > 0 && (
-              <div className={`w-full bg-slate-100 border-b border-slate-100 relative overflow-hidden ${images.length > 1 ? 'grid grid-cols-2 gap-0.5' : ''}`}>
-                  {images.map((url, idx) => (
-                    <div 
-                      key={idx} 
-                      onClick={() => onImageClick(url)}
-                      className={`relative cursor-zoom-in group/img ${images.length === 1 ? 'h-64 w-full' : images.length === 2 ? 'h-48 w-full' : images.length === 3 && idx === 0 ? 'h-48 col-span-2' : 'h-40 w-full'}`}
-                    >
-                      <img src={url} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"/>
-                      <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 transition-colors flex items-center justify-center">
-                        <Maximize2 className="text-white opacity-0 group-hover/img:opacity-100 drop-shadow-lg" size={24} />
+                    {/* Separated Details Table */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                      <div style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                        <h4 style={{ fontSize: '8pt', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '5px', fontWeight: '700' }}>Materials Used</h4>
+                        <div style={{ fontSize: '10pt', color: '#1e293b' }}>{task.materials.join(', ') || 'None'}</div>
+                      </div>
+                      <div style={{ padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                        <h4 style={{ fontSize: '8pt', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '5px', fontWeight: '700' }}>Tools Required</h4>
+                        <div style={{ fontSize: '10pt', color: '#1e293b' }}>{task.tools.join(', ') || 'None'}</div>
                       </div>
                     </div>
-                  ))}
-              </div>
-            )}
-            <div className="p-5">
-              <div className="flex items-start justify-between mb-3 gap-3">
-                <div className="flex items-start gap-3 flex-1">
-                  <div className="mt-1 flex-shrink-0 h-8 w-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-sm">#{index + 1}</div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg leading-tight text-slate-900">{task.title}</h3>
-                    {task.estimatedTime && (
-                      <div className="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded text-xs font-medium w-fit mt-1">
-                        <Clock size={12} /><span>Est: {task.estimatedTime}</span>
+
+                    {/* Clean Image Grid */}
+                    {task.imageUrls?.length > 0 && (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {task.imageUrls.map((url, i) => (
+                          <div key={i} style={{ borderRadius: '8px', overflow: 'hidden', height: '240px', border: '1px solid #e2e8f0' }}>
+                            <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity no-print">
-                  <button onClick={(e) => { e.stopPropagation(); onEdit(task); }} className="text-white bg-blue-500 p-2 rounded-lg hover:bg-blue-600 shadow-sm"><Pencil size={18} /></button>
-                  <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} className="text-white bg-red-500 p-2 rounded-lg hover:bg-red-600 shadow-sm"><Trash2 size={18} /></button>
-                </div>
-              </div>
-              {task.description && <p className="text-slate-600 text-sm mb-4 whitespace-pre-wrap">{task.description}</p>}
-              {(task.materials.length > 0 || task.tools.length > 0) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100">
-                  {task.materials.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><Package size={12} /><span>Materials</span></div>
-                      <ul className="list-disc list-inside text-sm text-slate-700 leading-relaxed">{task.materials.map((item, idx) => <li key={idx} className="truncate marker:text-orange-300">{item}</li>)}</ul>
-                    </div>
-                  )}
-                  {task.tools.length > 0 && (
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider"><Wrench size={12} /><span>Tools</span></div>
-                      <ul className="list-disc list-inside text-sm text-slate-700 leading-relaxed">{task.tools.map((item, idx) => <li key={idx} className="truncate marker:text-blue-300">{item}</li>)}</ul>
-                    </div>
-                  )}
-                </div>
-              )}
+              ))}
             </div>
           </div>
         );
       };
 
-      // 4. JobProjectCard
-      const JobProjectCard = ({ job, onClick, onDelete }) => {
-        const totalTasks = job.tasks.length;
-        const totalImages = job.tasks.reduce((acc, t) => acc + (t.imageUrls ? t.imageUrls.length : 0), 0);
-        
-        return (
-          <div onClick={() => onClick(job.id)} className="group bg-white rounded-xl shadow-sm border border-slate-200 hover:border-orange-400 hover:shadow-md transition-all duration-200 cursor-pointer relative overflow-hidden">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-start gap-3">
-                  <div className="bg-slate-100 p-3 rounded-lg group-hover:bg-orange-50 transition-colors">
-                    <MapPin className="text-slate-600 group-hover:text-orange-600" size={24} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-900 leading-tight group-hover:text-orange-600 transition-colors">{job.address}</h3>
-                    {job.clientName && <p className="text-sm text-slate-500">{job.clientName}</p>}
-                    <div className="flex items-center gap-2 mt-2 text-xs text-slate-400">
-                      <Calendar size={12} /><span>{new Date(job.updatedAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                </div>
-                <button onClick={(e) => onDelete(job.id, e)} className="text-slate-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-colors z-10"><Trash2 size={20} /></button>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 text-slate-500 bg-slate-50 px-3 py-2 rounded-md w-fit">
-                  <ClipboardList size={16} /><span className="font-medium text-sm">{totalTasks} Items</span>
-                </div>
-                {totalImages > 0 && (
-                  <div className="flex items-center gap-2 text-slate-500 bg-slate-50 px-3 py-2 rounded-md w-fit">
-                    <ImageIcon size={16} /><span className="font-medium text-sm">{totalImages} Photos</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 flex justify-between items-center text-sm font-medium text-slate-600 group-hover:text-slate-900 group-hover:bg-orange-50/30 transition-colors">
-              <span>Open Job Log</span><ChevronRight size={16} />
-            </div>
-          </div>
-        );
-      };
-
-      // --- MAIN APP COMPONENT ---
+      // --- APP LOGIC ---
       const App = () => {
         const [jobs, setJobs] = useState([]);
-        const [loading, setLoading] = useState(true);
         const [activeJobId, setActiveJobId] = useState(null);
         const [viewMode, setViewMode] = useState('dashboard');
-        const [lightboxImg, setLightboxImg] = useState(null);
         
-        // Form State
+        // Task Form State
         const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-        const [editingTaskId, setEditingTaskId] = useState(null);
-        const [taskTitle, setTaskTitle] = useState('');
-        const [taskTime, setTaskTime] = useState('');
-        const [taskMaterials, setTaskMaterials] = useState('');
-        const [taskTools, setTaskTools] = useState('');
-        const [taskDescription, setTaskDescription] = useState('');
-        const [imagePreviews, setImagePreviews] = useState([]);
-        const [isProcessingImages, setIsProcessingImages] = useState(false);
-        
-        const fileInputRef = useRef(null);
-        const fileImportRef = useRef(null);
+        const [taskData, setTaskData] = useState({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
 
-        // Job Form State
-        const [isJobFormOpen, setIsJobFormOpen] = useState(false);
-        const [newJobAddress, setNewJobAddress] = useState('');
-        const [newJobClient, setNewJobClient] = useState('');
-
-        // --- MIGRATION & LOADING ---
         useEffect(() => {
-          const loadData = async () => {
-            // 1. Try Load from IndexedDB
-            const dbJobs = await get(DB_KEY);
-            
-            // 2. If DB empty, check LocalStorage (Migration)
-            if (!dbJobs) {
-              const localJobs = localStorage.getItem('jobsite-log-jobs');
-              if (localJobs) {
-                try {
-                  const parsed = JSON.parse(localJobs);
-                  // Correct image arrays if old format
-                  const migrated = parsed.map(job => ({
-                    ...job,
-                    tasks: job.tasks.map(task => ({
-                      ...task,
-                      imageUrls: task.imageUrls || (task.imageUrl ? [task.imageUrl] : [])
-                    }))
-                  }));
-                  await set(DB_KEY, migrated); // Save to DB
-                  setJobs(migrated);
-                  localStorage.removeItem('jobsite-log-jobs'); // Cleanup old
-                } catch (e) { console.error("Migration failed", e); }
-              } else {
-                setJobs([]);
-              }
-            } else {
-              setJobs(dbJobs);
-            }
-            setLoading(false);
-          };
-          loadData();
+          get(DB_KEY).then(data => setJobs(data || []));
         }, []);
 
-        // --- SAVING ---
-        // Save to IndexedDB whenever jobs change
-        useEffect(() => {
-          if (!loading) {
-            set(DB_KEY, jobs).catch(err => console.error("DB Save Failed", err));
-          }
-        }, [jobs, loading]);
-
-        const backupData = async () => {
-          const dataStr = JSON.stringify(jobs, null, 2);
-          const blob = new Blob([dataStr], { type: "application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `JobSite_Backup_${new Date().toISOString().slice(0,10)}.json`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          
-          // Warn about size
-          if (blob.size > 10000000) {
-            alert("Note: Backup includes full resolution images. It might be large!");
-          }
-        };
-
-        const handleImportData = (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = async (event) => {
-             try {
-                const imported = JSON.parse(event.target.result);
-                if (Array.isArray(imported)) {
-                    if(window.confirm(`Found ${imported.length} jobs in backup. This will replace current data.`)) {
-                        setJobs(imported);
-                        await set(DB_KEY, imported);
-                    }
-                } else { alert("Invalid backup file."); }
-             } catch(err) { alert("Error reading file."); }
-          };
-          reader.readAsText(file);
-          e.target.value = null;
-        };
-
-        const compressImage = (file) => {
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-              const img = new Image();
-              img.src = event.target.result;
-              img.onload = () => {
-                const canvas = document.createElement('canvas');
-                // INCREASED QUALITY AND SIZE FOR INDEXEDDB STORAGE
-                const MAX_SIZE = 1200; // Better for print
-                let width = img.width;
-                let height = img.height;
-                if (width > height) {
-                  if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
-                } else {
-                  if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                // Better quality JPEG (0.75) since we have space now
-                resolve(canvas.toDataURL('image/jpeg', 0.75));
-              };
-              img.onerror = () => resolve(event.target.result);
-            };
-          });
-        };
-
-        const handleImageUpload = async (e) => {
-          const files = e.target.files;
-          if (files && files.length > 0) {
-            setIsProcessingImages(true);
-            const processedImages = [];
-            try {
-              for (let i = 0; i < files.length; i++) {
-                const base64 = await compressImage(files[i]);
-                processedImages.push(base64);
-              }
-              setImagePreviews(prev => [...prev, ...processedImages]);
-            } catch (err) { alert("Could not process images."); }
-            finally { setIsProcessingImages(false); }
-          }
-        };
-
-        const resetTaskForm = () => {
-          setTaskTitle(''); setTaskTime(''); setTaskMaterials(''); setTaskTools('');
-          setTaskDescription(''); setImagePreviews([]); setIsTaskFormOpen(false);
-          setEditingTaskId(null);
-          if (fileInputRef.current) fileInputRef.current.value = '';
-        };
-
-        const handleEditTask = (task) => {
-          setTaskTitle(task.title); setTaskTime(task.estimatedTime || '');
-          setTaskDescription(task.description || '');
-          setTaskMaterials(task.materials.join(', '));
-          setTaskTools(task.tools.join(', '));
-          setImagePreviews(task.imageUrls || []);
-          setEditingTaskId(task.id); setIsTaskFormOpen(true);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        const handleSaveTask = (e) => {
-          e.preventDefault();
-          if (!taskTitle.trim() || !activeJobId) return;
-          const taskData = {
-            title: taskTitle,
-            estimatedTime: taskTime,
-            description: taskDescription,
-            materials: taskMaterials.split(',').map(s => s.trim()).filter(Boolean),
-            tools: taskTools.split(',').map(s => s.trim()).filter(Boolean),
-            imageUrls: imagePreviews,
-            id: editingTaskId || crypto.randomUUID(),
-            createdAt: editingTaskId ? undefined : Date.now(),
-          };
-          setJobs(prev => prev.map(job => {
-            if (job.id === activeJobId) {
-              const newTasks = editingTaskId 
-                ? job.tasks.map(t => t.id === editingTaskId ? { ...t, ...taskData } : t)
-                : [{ ...taskData }, ...job.tasks];
-              return { ...job, tasks: newTasks, updatedAt: Date.now() };
-            }
-            return job;
-          }));
-          resetTaskForm();
-        };
-
-        const deleteTask = (taskId) => {
-          if (window.confirm('Delete this entry?')) {
-            setJobs(prev => prev.map(job => job.id === activeJobId ? { ...job, tasks: job.tasks.filter(t => t.id !== taskId) } : job));
-            if (editingTaskId === taskId) resetTaskForm();
-          }
+        const saveToDB = (newJobs) => {
+          setJobs(newJobs);
+          set(DB_KEY, newJobs);
         };
 
         const activeJob = jobs.find(j => j.id === activeJobId);
 
-        if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="animate-spin text-orange-600"><Hammer size={32}/></div></div>;
+        // Template Applicator
+        const applyTemplate = (key) => {
+          const t = TASK_TEMPLATES[key];
+          setTaskData({
+            ...taskData,
+            title: t.title,
+            materials: t.materials,
+            tools: t.tools,
+            desc: t.description
+          });
+        };
+
+        const handleAddTask = () => {
+          const newTask = {
+            id: Date.now(),
+            title: taskData.title,
+            estimatedTime: taskData.time,
+            materials: taskData.materials.split(',').map(s => s.trim()).filter(s => s),
+            tools: taskData.tools.split(',').map(s => s.trim()).filter(s => s),
+            description: taskData.desc,
+            imageUrls: taskData.images
+          };
+
+          const updatedJobs = jobs.map(j => {
+            if (j.id === activeJobId) return { ...j, tasks: [...j.tasks, newTask], updatedAt: Date.now() };
+            return j;
+          });
+
+          saveToDB(updatedJobs);
+          setIsTaskFormOpen(false);
+          setTaskData({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
+        };
+
+        const createNewJob = () => {
+          const addr = prompt("Job Address:");
+          if (!addr) return;
+          const newJob = { id: Date.now(), address: addr, clientName: prompt("Client Name:"), tasks: [], updatedAt: Date.now() };
+          saveToDB([...jobs, newJob]);
+          setActiveJobId(newJob.id);
+          setViewMode('detail');
+        };
 
         return (
-          <>
-            {/* The dedicated Print Layout (Invisible on screen) */}
-            <PrintReport job={activeJob} />
-            
-            {/* Lightbox Overlay */}
-            {lightboxImg && <Lightbox src={lightboxImg} onClose={() => setLightboxImg(null)} />}
+          <div className="min-h-screen pb-20">
+            {/* Header */}
+            <header className="bg-slate-900 text-white p-4 sticky top-0 z-40 no-print flex justify-between items-center shadow-lg">
+              <div className="flex items-center gap-2" onClick={() => setViewMode('dashboard')}>
+                <Hammer className="text-orange-500" />
+                <h1 className="font-extrabold text-xl tracking-tight">JOBSITE LOG</h1>
+              </div>
+              {viewMode === 'detail' && (
+                <button onClick={() => window.print()} className="bg-orange-500 hover:bg-orange-600 p-2 rounded-lg flex items-center gap-2 text-sm font-bold">
+                  <Printer size={18} /> PRINT PDF
+                </button>
+              )}
+            </header>
 
-            {/* Main Application UI */}
-            <div className="app-ui min-h-screen bg-slate-50 text-slate-900 pb-20 font-sans">
-              <header className="bg-slate-900 text-white shadow-md sticky top-0 z-40">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {viewMode === 'job-detail' ? (
-                       <button onClick={() => { setActiveJobId(null); setViewMode('dashboard'); setIsTaskFormOpen(false); }} className="p-2 -ml-2 rounded-full hover:bg-slate-800 transition-colors flex items-center gap-2">
-                         <ArrowLeft size={20} /><span className="text-sm font-semibold text-slate-300">Back to Jobs</span>
-                       </button>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <div className="bg-orange-600 p-1.5 rounded-lg"><Hammer className="text-white h-5 w-5" /></div>
-                        <div><h1 className="text-xl font-bold tracking-tight">JobSite Log</h1></div>
+            {/* Dashboard View */}
+            {viewMode === 'dashboard' && (
+              <main className="p-4 max-w-4xl mx-auto no-print">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-slate-800">Active Jobs</h2>
+                  <button onClick={createNewJob} className="bg-slate-900 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-bold shadow-md">
+                    <Plus size={20} /> New Job
+                  </button>
+                </div>
+                <div className="grid gap-4">
+                  {jobs.map(job => (
+                    <div key={job.id} onClick={() => { setActiveJobId(job.id); setViewMode('detail'); }} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center cursor-pointer hover:border-orange-500 transition-all">
+                      <div>
+                        <h3 className="font-bold text-lg">{job.address}</h3>
+                        <p className="text-slate-500 text-sm">{job.clientName} • {job.tasks.length} tasks</p>
                       </div>
-                    )}
-                  </div>
-
-                  {viewMode === 'dashboard' ? (
-                    <div className="flex items-center gap-3">
-                      <button onClick={backupData} className="p-2 text-slate-400 hover:text-white" title="Backup"><SaveAll size={20} /></button>
-                      <button onClick={() => fileImportRef.current?.click()} className="p-2 text-slate-400 hover:text-white" title="Restore"><UploadCloud size={20} /></button>
-                      <input type="file" ref={fileImportRef} className="hidden" accept=".json" onChange={handleImportData} />
-                      {jobs.length > 0 && (
-                        <button onClick={() => setIsJobFormOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-full font-medium shadow-lg ml-2 text-sm">
-                          <Plus size={18} /><span className="hidden sm:inline">New Job</span>
-                        </button>
-                      )}
+                      <ChevronRight className="text-slate-400" />
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                       <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full font-medium text-sm mr-2">
-                         <Printer size={18} /><span className="hidden sm:inline">Print Report</span>
-                       </button>
-                       <button onClick={() => { isTaskFormOpen ? resetTaskForm() : setIsTaskFormOpen(true); }} className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm ${isTaskFormOpen ? 'bg-slate-700' : 'bg-orange-600 hover:bg-orange-500 shadow-lg'} text-white`}>
-                        {isTaskFormOpen ? <X size={18} /> : <Plus size={18} />}<span className="hidden sm:inline">{isTaskFormOpen ? 'Cancel' : 'Add Item'}</span>
+                  ))}
+                </div>
+              </main>
+            )}
+
+            {/* Detail View */}
+            {viewMode === 'detail' && activeJob && (
+              <main className="p-4 max-w-4xl mx-auto no-print">
+                <button onClick={() => setViewMode('dashboard')} className="mb-4 text-slate-600 font-medium flex items-center gap-1">
+                  <ChevronRight className="rotate-180" size={18} /> Back to Jobs
+                </button>
+                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mb-6">
+                  <h2 className="text-2xl font-black text-slate-900">{activeJob.address}</h2>
+                  <p className="text-slate-500">{activeJob.clientName}</p>
+                </div>
+
+                <div className="grid gap-4">
+                  {activeJob.tasks.map((task, i) => (
+                    <div key={task.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                      <div className="p-4 flex justify-between items-center bg-slate-50 border-b">
+                        <span className="font-bold text-slate-700">Task {i+1}</span>
+                        <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-bold">{task.estimatedTime}</span>
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold text-lg mb-1">{task.title}</h3>
+                        <p className="text-slate-600 text-sm">{task.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button onClick={() => setIsTaskFormOpen(true)} className="fixed bottom-6 right-6 bg-orange-500 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform">
+                  <Plus size={30} />
+                </button>
+              </main>
+            )}
+
+            {/* Task Modal with Templates */}
+            {isTaskFormOpen && (
+              <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm p-4 overflow-y-auto">
+                <div className="bg-white max-w-lg mx-auto rounded-3xl shadow-2xl overflow-hidden">
+                  <div className="p-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl font-black">Add New Task</h2>
+                      <button onClick={() => setIsTaskFormOpen(false)}><X /></button>
+                    </div>
+
+                    {/* Quick Templates Section */}
+                    <div className="mb-6">
+                      <label className="block text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1">
+                        <Sparkles size={12} /> Quick Templates
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => applyTemplate('marking')} className="template-btn px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1">
+                          <Layout size={14} /> Marking
+                        </button>
+                        <button onClick={() => applyTemplate('washing')} className="template-btn px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1">
+                          <Layout size={14} /> Wash
+                        </button>
+                        <button onClick={() => applyTemplate('fencing')} className="template-btn px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1">
+                          <Layout size={14} /> Fence
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <input value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} placeholder="Task Title" className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 ring-orange-500 outline-none" />
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <input value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} placeholder="Time (e.g. 2h)" className="w-full p-3 rounded-xl border border-slate-200 outline-none" />
+                        </div>
+                        <input type="file" multiple accept="image/*" onChange={e => {
+                          const files = Array.from(e.target.files);
+                          Promise.all(files.map(f => new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = (re) => resolve(re.target.result);
+                            reader.readAsDataURL(f);
+                          }))).then(urls => setTaskData({...taskData, images: [...taskData.images, ...urls]}));
+                        }} className="hidden" id="img-up" />
+                        <label htmlFor="img-up" className="bg-slate-100 p-3 rounded-xl cursor-pointer hover:bg-slate-200"><ImageIcon /></label>
+                      </div>
+                      <input value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} placeholder="Materials (comma separated)" className="w-full p-3 rounded-xl border border-slate-200 outline-none" />
+                      <input value={taskData.tools} onChange={e => setTaskData({...taskData, tools: e.target.value})} placeholder="Tools (comma separated)" className="w-full p-3 rounded-xl border border-slate-200 outline-none" />
+                      <textarea value={taskData.desc} onChange={e => setTaskData({...taskData, desc: e.target.value})} placeholder="Detailed Description..." className="w-full p-3 rounded-xl border border-slate-200 h-32 outline-none" />
+                      
+                      <button onClick={handleAddTask} className="w-full bg-slate-900 text-white p-4 rounded-2xl font-bold text-lg hover:bg-orange-500 transition-colors">
+                        Save Task
                       </button>
                     </div>
-                  )}
-                </div>
-                {viewMode === 'job-detail' && activeJob && (
-                  <div className="border-t border-slate-800 bg-slate-900 pb-4 pt-1 px-4">
-                     <div className="max-w-5xl mx-auto">
-                        <h2 className="text-2xl font-bold text-white flex items-center gap-2"><MapPin className="text-orange-500" size={24} />{activeJob.address}</h2>
-                        {activeJob.clientName && <p className="text-slate-400 text-sm ml-8">{activeJob.clientName}</p>}
-                     </div>
                   </div>
-                )}
-              </header>
+                </div>
+              </div>
+            )}
 
-              <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-                {viewMode === 'dashboard' && (
-                  <>
-                    {isJobFormOpen && (
-                       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                         <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-                            <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                              <h3 className="font-bold text-lg">Add New Job</h3>
-                              <button onClick={() => setIsJobFormOpen(false)}><X size={20} className="text-slate-400 hover:text-slate-600"/></button>
-                            </div>
-                            <form onSubmit={(e) => {
-                               e.preventDefault(); if(!newJobAddress.trim()) return;
-                               setJobs(p => [{ id: crypto.randomUUID(), address: newJobAddress, clientName: newJobClient, tasks: [], createdAt: Date.now(), updatedAt: Date.now() }, ...p]);
-                               setNewJobAddress(''); setNewJobClient(''); setIsJobFormOpen(false);
-                            }} className="p-6 space-y-4">
-                              <div><label className="block text-sm font-medium mb-1">Job Address *</label><input autoFocus required type="text" className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500" value={newJobAddress} onChange={e => setNewJobAddress(e.target.value)} /></div>
-                              <div><label className="block text-sm font-medium mb-1">Client Name</label><input type="text" className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500" value={newJobClient} onChange={e => setNewJobClient(e.target.value)} /></div>
-                              <button type="submit" className="w-full bg-slate-900 text-white font-bold py-3 rounded-lg">Create Job</button>
-                            </form>
-                         </div>
-                       </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {jobs.length === 0 ? (
-                        <div className="md:col-span-2 text-center py-24 bg-white rounded-xl border-2 border-dashed border-slate-200">
-                          <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-50 rounded-full mb-4"><HardHat className="text-slate-300" size={40} /></div>
-                          <h3 className="text-xl font-bold text-slate-700">No Jobs Recorded</h3>
-                          <p className="text-slate-400 mt-2 mb-6">Create a job to start logging items.</p>
-                          <div className="flex gap-4 justify-center">
-                            <button onClick={() => fileImportRef.current?.click()} className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg font-bold"><UploadCloud size={18} /> Restore</button>
-                            <button onClick={() => setIsJobFormOpen(true)} className="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold shadow-lg"><Plus size={18} /> Create Job</button>
-                          </div>
-                        </div>
-                      ) : (
-                        jobs.map(job => <JobProjectCard key={job.id} job={job} onClick={(id) => { setActiveJobId(id); setViewMode('job-detail'); setIsTaskFormOpen(false); window.scrollTo(0, 0); }} onDelete={(id, e) => { e.stopPropagation(); if(window.confirm('Delete job?')) setJobs(p => p.filter(j => j.id !== id)); }} />)
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {viewMode === 'job-detail' && activeJob && (
-                  <>
-                    {isTaskFormOpen && (
-                      <div className="mb-8 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
-                        <div className="bg-slate-100 px-6 py-3 border-b border-slate-200 flex items-center justify-between">
-                          <h2 className="font-bold text-slate-700 flex items-center gap-2"><Clipboard size={18} /> {editingTaskId ? 'Edit Item' : 'Record Item'}</h2>
-                          <button onClick={resetTaskForm} className="text-slate-400 hover:text-red-500"><X size={20}/></button>
-                        </div>
-                        <form onSubmit={handleSaveTask} className="p-6">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <div><label className="block text-sm font-semibold mb-1">Item Title *</label><input type="text" required className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)} /></div>
-                              <div><label className="block text-sm font-semibold mb-1">Est. Time</label><input type="text" placeholder="e.g. 2h 30m" className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={taskTime} onChange={(e) => setTaskTime(e.target.value)} /></div>
-                              <div><label className="block text-sm font-semibold mb-1">Notes</label><textarea rows={3} className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500 resize-none" value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} /></div>
-                            </div>
-                            <div className="space-y-4">
-                              <div><label className="block text-sm font-semibold mb-1">Materials</label><input type="text" placeholder="Comma separated" className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={taskMaterials} onChange={(e) => setTaskMaterials(e.target.value)} /></div>
-                              <div><label className="block text-sm font-semibold mb-1">Tools</label><input type="text" placeholder="Comma separated" className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-orange-500" value={taskTools} onChange={(e) => setTaskTools(e.target.value)} /></div>
-                              <div>
-                                <label className="block text-sm font-semibold mb-2">Photos</label>
-                                <div className="space-y-3">
-                                  <div className="flex items-center gap-4">
-                                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isProcessingImages} className="flex items-center gap-2 px-4 py-2 bg-slate-100 border rounded-lg text-sm font-medium hover:bg-slate-200 disabled:opacity-50"><ImageIcon size={18} /> {isProcessingImages ? 'Processing...' : 'Add Photos'}</button>
-                                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
-                                  </div>
-                                  {imagePreviews.length > 0 && (
-                                    <div className="flex gap-3 overflow-x-auto py-2">
-                                      {imagePreviews.map((src, idx) => (
-                                        <div key={idx} className="relative flex-shrink-0 h-20 w-20 rounded-lg bg-slate-200 overflow-hidden border group">
-                                          <img src={src} className="h-full w-full object-cover" />
-                                          <button type="button" onClick={() => setImagePreviews(p => p.filter((_, i) => i !== idx))} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} /></button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end gap-3">
-                            <button type="button" onClick={resetTaskForm} className="px-4 py-2 text-slate-600 font-medium">Cancel</button>
-                            <button type="submit" disabled={isProcessingImages} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold flex items-center gap-2 shadow-sm hover:bg-slate-800 disabled:bg-slate-600"><Save size={18} /> {editingTaskId ? 'Update' : 'Save'}</button>
-                          </div>
-                        </form>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                      <div className="lg:col-span-2 space-y-6">
-                        {activeJob.tasks.length === 0 && !isTaskFormOpen ? (
-                          <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-slate-200">
-                            <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-50 rounded-full mb-4"><Clipboard className="text-slate-300" size={40} /></div>
-                            <h3 className="text-xl font-bold text-slate-700">Job Log Empty</h3>
-                            <p className="text-slate-400 mt-2">No tasks recorded yet.</p>
-                          </div>
-                        ) : (
-                          <div className="grid gap-6">
-                            {activeJob.tasks.map((task, index) => (
-                              <TaskCard key={task.id} task={task} index={index} onDelete={deleteTask} onEdit={handleEditTask} onImageClick={(src) => setLightboxImg(src)} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="lg:col-span-1">
-                        {/* Summary Sidebar (Screen Only) */}
-                         {activeJob.tasks.length > 0 && (
-                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 sticky top-24">
-                              <h2 className="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800 border-b border-slate-100 pb-3">
-                                <FileText className="text-orange-600" size={20} /> Job Summary
-                              </h2>
-                              <div className="space-y-3">
-                                <button onClick={() => window.print()} className="w-full py-3 px-4 bg-slate-900 text-white text-sm font-bold rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 shadow-sm">
-                                  <Printer size={18} /> Print Report
-                                </button>
-                              </div>
-                              <div className="mt-8 pt-6 border-t border-slate-100 space-y-6">
-                                <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                     <Clock size={16} className="text-orange-500" /><span>Total Est. Time</span>
-                                  </div>
-                                  <span className="font-bold text-slate-900">{formatTime(calculateStats(activeJob.tasks).totalMinutes)}</span>
-                                </div>
-                                <div>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2 text-sm font-semibold text-slate-700"><Package size={16} className="text-slate-400" /><span>Material List</span></div>
-                                    <span className="text-xs text-slate-400 font-medium">{calculateStats(activeJob.tasks).allMaterials.length} items</span>
-                                  </div>
-                                  <ul className="space-y-1 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                                    {calculateStats(activeJob.tasks).allMaterials.map((m, i) => (
-                                      <li key={i} className="text-xs text-slate-600 flex items-start gap-2">
-                                        <span className="mt-1 w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0"></span><span className="leading-tight">{m}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              </div>
-                            </div>
-                         )}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </main>
-            </div>
-          </>
+            <PrintReport job={activeJob} />
+          </div>
         );
       };
 
-      const rootElement = document.getElementById('root');
-      if (rootElement) {
-        const root = ReactDOM.createRoot(rootElement);
-        root.render(<App />);
-      }
+      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
   </body>
 </html>
