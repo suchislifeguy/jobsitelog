@@ -189,151 +189,345 @@
         if (!job) return null;
       
         const { totalMinutes, allMaterials, allTools } = calculateStats(job.tasks);
-        const hasContent = job.tasks.length > 0;
       
         return (
           <div className="print-only hidden">
-            <div className="print-container mx-auto" style={{ maxWidth: '210mm', padding: '12mm 10mm' }}>
+            <div 
+              className="print-container"
+              style={{
+                maxWidth: '210mm',
+                margin: '0 auto',
+                padding: '20mm 16mm 24mm',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                color: '#111827',
+                background: 'white',
+              }}
+            >
       
-              {/* Header */}
-              <div className="border-b-4 border-slate-900 pb-5 mb-8">
-                <div className="flex justify-between items-end">
+              {/* Header - clean and authoritative */}
+              <div style={{ marginBottom: '28mm' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'flex-end',
+                  paddingBottom: '12mm',
+                  borderBottom: '3px solid #111827',
+                }}>
                   <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <Hammer size={36} className="text-slate-900" />
-                      <h1 className="text-4xl font-black uppercase tracking-tight">JobSite Log</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+                      <Hammer size={32} style={{ color: '#111827' }} />
+                      <h1 style={{ 
+                        fontSize: '28px', 
+                        fontWeight: 900, 
+                        letterSpacing: '-0.025em',
+                        margin: 0,
+                        textTransform: 'uppercase',
+                      }}>
+                        JobSite Log
+                      </h1>
                     </div>
-                    <div className="text-lg text-slate-600 font-medium">Professional Field Report & Estimate</div>
+                    <div style={{ fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>
+                      Field Report & Work Estimate
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <h2 className="text-2xl font-bold text-slate-900">{job.address}</h2>
-                    {job.clientName && <p className="text-slate-700 mt-1">{job.clientName}</p>}
-                    <p className="text-sm text-slate-500 mt-2">
-                      Generated: {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </p>
+      
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>
+                      {job.address}
+                    </div>
+                    {job.clientName && (
+                      <div style={{ fontSize: '14px', color: '#374151', marginBottom: '6px' }}>
+                        {job.clientName}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                      {new Date().toLocaleDateString('en-GB', { 
+                        day: 'numeric', month: 'long', year: 'numeric' 
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>
       
-              {/* Summary */}
-              <div className="grid grid-cols-2 gap-6 mb-10">
-                <div className="border border-slate-300 rounded-lg p-5 bg-slate-50/50 print-block">
-                  <h3 className="font-bold text-slate-800 uppercase text-sm tracking-wide mb-3 border-b border-slate-300 pb-2">
-                    Labor & Duration
-                  </h3>
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-700">Estimated Duration:</span>
-                    <span className="font-bold text-xl font-mono">{formatTime(totalMinutes)}</span>
+              {/* Summary - compact, two clean cards */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '16mm', 
+                marginBottom: '28mm' 
+              }}>
+                {/* Duration & Tools */}
+                <div style={{ 
+                  border: '1px solid #d1d5db', 
+                  borderRadius: '6px', 
+                  padding: '14px 16px',
+                  background: '#f9fafb',
+                }}>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    fontWeight: 700, 
+                    color: '#374151',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '10px',
+                    borderBottom: '1px solid #e5e7eb',
+                    paddingBottom: '6px',
+                  }}>
+                    Labor & Equipment
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '13px', color: '#4b5563' }}>Estimated Duration</span>
+                    <span style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'monospace' }}>
+                      {formatTime(totalMinutes)}
+                    </span>
                   </div>
                   {allTools.length > 0 && (
-                    <div className="mt-4">
-                      <div className="text-xs font-bold text-slate-500 uppercase mb-1.5">Required Tools</div>
-                      <div className="text-sm text-slate-700 leading-relaxed">{allTools.join(' • ')}</div>
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#6b7280', marginBottom: '6px' }}>
+                        Tools Required
+                      </div>
+                      <div style={{ fontSize: '13px', lineHeight: '1.45', color: '#374151' }}>
+                        {allTools.join(' • ')}
+                      </div>
                     </div>
                   )}
                 </div>
       
-                <div className="border border-slate-300 rounded-lg p-5 bg-slate-50/50 print-block">
-                  <h3 className="font-bold text-slate-800 uppercase text-sm tracking-wide mb-3 border-b border-slate-300 pb-2">
+                {/* Materials */}
+                <div style={{ 
+                  border: '1px solid #d1d5db', 
+                  borderRadius: '6px', 
+                  padding: '14px 16px',
+                  background: '#f9fafb',
+                }}>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    fontWeight: 700, 
+                    color: '#374151',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    marginBottom: '10px',
+                    borderBottom: '1px solid #e5e7eb',
+                    paddingBottom: '6px',
+                  }}>
                     Materials
-                  </h3>
+                  </div>
                   {allMaterials.length > 0 ? (
-                    <ul className="text-sm text-slate-700 columns-2 gap-6 list-disc pl-4 marker:text-slate-500">
+                    <ul style={{ 
+                      margin: 0, 
+                      paddingLeft: '18px', 
+                      fontSize: '13px', 
+                      color: '#374151',
+                      lineHeight: '1.5',
+                      columnCount: 2,
+                      columnGap: '24px',
+                    }}>
                       {allMaterials.map((m, i) => (
-                        <li key={i} className="mb-1.5 break-inside-avoid">{m}</li>
+                        <li key={i} style={{ marginBottom: '6px', breakInside: 'avoid' }}>
+                          {m}
+                        </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm italic text-slate-500">No materials recorded.</p>
+                    <div style={{ fontStyle: 'italic', color: '#6b7280', fontSize: '13px' }}>
+                      No materials recorded
+                    </div>
                   )}
                 </div>
               </div>
       
-              {/* Tasks */}
-              {hasContent ? (
-                <div className="space-y-10">
-                  <h3 className="font-black text-2xl uppercase border-b-2 border-slate-900 pb-2 mb-6">
-                    Scope of Work & Photographic Evidence
-                  </h3>
-      
+              {/* Tasks – each in its own clean box */}
+              {job.tasks.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20mm' }}>
                   {job.tasks.map((task, idx) => (
                     <div
                       key={task.id}
-                      className="task-print-block border border-slate-300 rounded-lg overflow-hidden bg-white print-block"
-                      style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}
+                      style={{
+                        border: '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        background: 'white',
+                        breakInside: 'avoid',
+                        pageBreakInside: 'avoid',
+                      }}
                     >
-                      {/* Task Header */}
-                      <div className="bg-slate-100 px-6 py-4 border-b border-slate-300 flex items-center gap-4">
-                        <div className="bg-slate-800 text-white h-10 w-10 rounded-full flex items-center justify-center font-bold text-lg shrink-0">
+                      {/* Task header bar */}
+                      <div style={{
+                        background: '#f1f5f9',
+                        padding: '14px 18px',
+                        borderBottom: '1px solid #cbd5e1',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '14px',
+                      }}>
+                        <div style={{
+                          background: '#1e293b',
+                          color: 'white',
+                          height: '36px',
+                          width: '36px',
+                          borderRadius: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 700,
+                          fontSize: '15px',
+                          flexShrink: 0,
+                        }}>
                           {idx + 1}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-xl text-slate-900">{task.title}</h4>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '17px', fontWeight: 700, color: '#111827' }}>
+                            {task.title}
+                          </div>
                           {task.estimatedTime && (
-                            <div className="flex items-center gap-2 mt-1 text-slate-600">
-                              <Clock size={16} />
-                              <span className="font-medium">Est. {task.estimatedTime}</span>
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '8px', 
+                              marginTop: '4px',
+                              fontSize: '13px',
+                              color: '#4b5563',
+                            }}>
+                              <Clock size={14} />
+                              <span>Est. {task.estimatedTime}</span>
                             </div>
                           )}
                         </div>
                       </div>
       
-                      {/* Content */}
-                      <div className="p-6 space-y-6">
+                      {/* Task content */}
+                      <div style={{ padding: '18px' }}>
                         {task.description && (
-                          <div>
-                            <div className="text-xs font-bold uppercase text-slate-500 mb-2">Notes</div>
-                            <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">{task.description}</p>
+                          <div style={{ marginBottom: '16px' }}>
+                            <div style={{ 
+                              fontSize: '11px', 
+                              fontWeight: 700, 
+                              color: '#6b7280', 
+                              textTransform: 'uppercase',
+                              marginBottom: '6px',
+                              letterSpacing: '0.4px',
+                            }}>
+                              Description
+                            </div>
+                            <div style={{ 
+                              fontSize: '13.5px', 
+                              lineHeight: '1.55', 
+                              color: '#1f2937',
+                              whiteSpace: 'pre-wrap',
+                            }}>
+                              {task.description}
+                            </div>
                           </div>
                         )}
       
                         {(task.materials?.length > 0 || task.tools?.length > 0) && (
-                          <div className="grid grid-cols-2 gap-6">
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '1fr 1fr', 
+                            gap: '16px', 
+                            marginBottom: '20px',
+                            paddingTop: task.description ? '16px' : 0,
+                            borderTop: task.description ? '1px solid #e5e7eb' : 'none',
+                          }}>
                             {task.materials?.length > 0 && (
                               <div>
-                                <div className="text-xs font-bold uppercase text-slate-500 mb-2">Materials</div>
-                                <ul className="text-sm text-slate-700 list-disc pl-4 space-y-1 marker:text-orange-600">
-                                  {task.materials.map((m, i) => <li key={i}>{m}</li>)}
+                                <div style={{ 
+                                  fontSize: '11px', 
+                                  fontWeight: 700, 
+                                  color: '#6b7280', 
+                                  textTransform: 'uppercase',
+                                  marginBottom: '8px',
+                                }}>
+                                  Materials
+                                </div>
+                                <ul style={{ 
+                                  margin: 0, 
+                                  paddingLeft: '16px', 
+                                  fontSize: '13px', 
+                                  lineHeight: '1.5',
+                                  color: '#374151',
+                                }}>
+                                  {task.materials.map((m, i) => (
+                                    <li key={i} style={{ marginBottom: '4px' }}>{m}</li>
+                                  ))}
                                 </ul>
                               </div>
                             )}
+      
                             {task.tools?.length > 0 && (
                               <div>
-                                <div className="text-xs font-bold uppercase text-slate-500 mb-2">Tools</div>
-                                <ul className="text-sm text-slate-700 list-disc pl-4 space-y-1 marker:text-blue-600">
-                                  {task.tools.map((t, i) => <li key={i}>{t}</li>)}
+                                <div style={{ 
+                                  fontSize: '11px', 
+                                  fontWeight: 700, 
+                                  color: '#6b7280', 
+                                  textTransform: 'uppercase',
+                                  marginBottom: '8px',
+                                }}>
+                                  Tools
+                                </div>
+                                <ul style={{ 
+                                  margin: 0, 
+                                  paddingLeft: '16px', 
+                                  fontSize: '13px', 
+                                  lineHeight: '1.5',
+                                  color: '#374151',
+                                }}>
+                                  {task.tools.map((t, i) => (
+                                    <li key={i} style={{ marginBottom: '4px' }}>{t}</li>
+                                  ))}
                                 </ul>
                               </div>
                             )}
                           </div>
                         )}
       
-                        {/* Photos – per task */}
                         {task.imageUrls?.length > 0 && (
                           <div>
-                            <div className="text-xs font-bold uppercase text-slate-500 mb-3 flex items-center gap-2">
-                              <ImageIcon size={16} /> Photographic Evidence ({task.imageUrls.length})
+                            <div style={{ 
+                              fontSize: '11px', 
+                              fontWeight: 700, 
+                              color: '#6b7280', 
+                              textTransform: 'uppercase',
+                              marginBottom: '10px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}>
+                              <ImageIcon size={14} /> Photos
                             </div>
-                            <div
-                              className="grid gap-4"
-                              style={{
-                                gridTemplateColumns: 'repeat(auto-fit, minmax(90mm, 1fr))',
-                                gridAutoRows: 'minmax(60mm, auto)',
-                              }}
-                            >
+                            <div style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fit, minmax(85mm, 1fr))',
+                              gap: '12mm',
+                            }}>
                               {task.imageUrls.map((url, imgIdx) => (
-                                <div
-                                  key={imgIdx}
-                                  className="border border-slate-200 rounded overflow-hidden bg-white shadow-sm"
-                                >
+                                <div key={imgIdx} style={{
+                                  border: '1px solid #e2e8f0',
+                                  borderRadius: '4px',
+                                  overflow: 'hidden',
+                                  background: 'white',
+                                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                                }}>
                                   <img
                                     src={url}
-                                    alt={`Task ${idx + 1} photo ${imgIdx + 1}`}
-                                    className="w-full h-auto object-contain max-h-[160mm]"
-                                    style={{ display: 'block' }}
+                                    alt=""
+                                    style={{
+                                      width: '100%',
+                                      height: 'auto',
+                                      display: 'block',
+                                      maxHeight: '140mm',
+                                      objectFit: 'contain',
+                                    }}
                                   />
-                                  <div className="px-3 py-2 bg-slate-50 text-xs text-slate-600 border-t border-slate-200">
-                                    Image {imgIdx + 1} of {task.imageUrls.length}
+                                  <div style={{
+                                    fontSize: '11px',
+                                    color: '#6b7280',
+                                    padding: '6px 10px',
+                                    background: '#f8fafc',
+                                    borderTop: '1px solid #e2e8f0',
+                                    textAlign: 'center',
+                                  }}>
+                                    Photo {imgIdx + 1} of {task.imageUrls.length}
                                   </div>
                                 </div>
                               ))}
@@ -345,16 +539,18 @@
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16 text-slate-500 italic border border-dashed border-slate-300 rounded-lg">
-                  No tasks recorded for this job.
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '40px 0', 
+                  color: '#6b7280', 
+                  fontStyle: 'italic',
+                  border: '1px dashed #d1d5db',
+                  borderRadius: '8px',
+                }}>
+                  No items recorded for this job.
                 </div>
               )}
       
-              {/* Footer */}
-              <div className="mt-12 pt-6 border-t border-slate-300 text-xs text-slate-500 flex justify-between">
-                <span>JobSite Log • Confidential Field Documentation</span>
-                <span>Page <span className="page-number"></span></span>
-              </div>
             </div>
           </div>
         );
