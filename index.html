@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0f172a" />
-    <title>JobSite Log </title>
+    <title>JobSite Log | Professional</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,14 +13,11 @@
     <style>
       body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
       
-      /* --- PRINT STYLING --- */
       @media print {
         @page { margin: 8mm; size: A4; }
         body { background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .no-print, button, .action-btns { display: none !important; }
         .print-only { display: block !important; }
-        
-        /* Ensures cards don't split, but allows the first one to sit on page 1 */
         .print-card { 
           break-inside: avoid; 
           border: 2px solid #0f172a !important; 
@@ -249,6 +246,8 @@
                   )}
                   <div className="space-y-4">
                     <input placeholder="Task Title" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
+                    
+                    {/* SHORTER TIME BOX & IMAGE ICON */}
                     <div className="flex gap-4">
                       <input placeholder="Time" className="w-32 p-4 bg-slate-50 rounded-2xl outline-none font-black text-center" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
                       <label className="flex-1 bg-slate-100 p-4 rounded-2xl cursor-pointer flex items-center justify-center hover:bg-slate-200 transition-colors">
@@ -268,12 +267,20 @@
                         ))}
                       </div>
                     )}
-                    
+                    <input placeholder="Materials" className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium" value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} />
+                    <input placeholder="Tools Used" className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium" value={taskData.tools} onChange={e => setTaskData({...taskData, tools: e.target.value})} />
+                    <textarea placeholder="Description..." className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium h-28 resize-none" value={taskData.desc} onChange={e => setTaskData({...taskData, desc: e.target.value})} />
+                    <button onClick={handleSaveTask} className="w-full bg-slate-900 text-white p-5 rounded-[2rem] font-black text-lg shadow-2xl flex items-center justify-center gap-2">
+                      <Save size={20} /> {editingTaskId ? 'UPDATE LOG' : 'SAVE LOG ENTRY'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* --- PDF OUTPUT SECTION --- */}
             {activeJob && (
               <div className="print-only hidden p-4">
-                {/* PDF HEADER - Compacted */}
                 <div className="border-b-[8px] border-slate-900 pb-4 mb-4 flex justify-between items-end">
                   <div>
                     <h1 className="text-4xl font-black tracking-tighter text-slate-900">JOBSITE LOG</h1>
@@ -285,7 +292,6 @@
                   </div>
                 </div>
 
-                {/* PROJECT SUMMARY BOX - Compacted to keep Task 1 on Page 1 */}
                 <div className="bg-slate-900 text-white p-6 rounded-2xl mb-6 grid grid-cols-4 gap-6">
                   <div className="border-r border-slate-700 flex flex-col justify-center">
                     <h4 className="text-[10px] uppercase text-orange-500 font-black mb-1 tracking-[0.2em]">Project Totals</h4>
@@ -306,7 +312,6 @@
                   </div>
                 </div>
 
-                {/* TASK LOGS */}
                 {activeJob.tasks.map((t, idx) => (
                   <div key={t.id} className="print-card">
                     <div className="bg-slate-100 px-5 py-3 font-black border-b flex justify-between items-center text-slate-800 text-lg tracking-tight uppercase">
@@ -314,7 +319,6 @@
                     </div>
                     <div className="p-6">
                       {t.desc && <p className="text-[14px] text-slate-700 mb-6 leading-relaxed border-l-4 border-slate-200 pl-4 italic font-medium">"{t.desc}"</p>}
-                      
                       <div className="grid grid-cols-3 gap-4 mb-6">
                         <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
                           <label className="text-[12px] font-black uppercase text-slate-400 block mb-1 tracking-[0.1em]">Time</label>
@@ -329,7 +333,6 @@
                           <span className="text-[11px] font-bold text-slate-600 uppercase leading-tight">{t.tools || 'None'}</span>
                         </div>
                       </div>
-
                       {t.images?.length > 0 && (
                         <div className="grid grid-cols-2 gap-4">
                           {t.images.map((img, i) => (
