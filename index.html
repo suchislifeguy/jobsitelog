@@ -45,56 +45,28 @@
       /* --- PRINT STYLING (The Report Look) --- */
       @media print {
         @page {
-          margin: 0;
+          margin: 15mm;
           size: A4;
         }
         body {
-          background-color: white;
+          background-color: white !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
         
-        /* Hide UI Elements */
-        .no-print, header, .app-ui { 
+        .no-print, header, .app-ui, button { 
           display: none !important; 
         }
         
-        /* Show Print Elements */
         .print-only { 
           display: block !important; 
         }
-        
-        /* Report Layout */
-        .print-container {
-          padding: 10mm;
-          max-width: 100%;
-        }
-
-        /* Prevent breaking inside elements */
+      
+        /* Force page breaks to be smart */
         .print-block {
-          break-inside: avoid;
-          page-break-inside: avoid;
-        }
-
-        /* Large Photos for Readability */
-        .photo-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
-        }
-        
-        .photo-item {
-          break-inside: avoid;
-          page-break-inside: avoid;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          overflow: hidden;
-        }
-
-        .photo-item img {
-          width: 100%;
-          height: 300px; /* Fixed height for uniformity */
-          object-fit: cover;
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          margin-bottom: 20px;
         }
       }
     </style>
@@ -192,364 +164,79 @@
       
         return (
           <div className="print-only hidden">
-            <div 
-              className="print-container"
-              style={{
-                maxWidth: '210mm',
-                margin: '0 auto',
-                padding: '20mm 16mm 24mm',
-                fontFamily: 'Inter, system-ui, sans-serif',
-                color: '#111827',
-                background: 'white',
-              }}
-            >
+            <div style={{ fontFamily: 'Inter, sans-serif', color: '#1e293b' }}>
+              
+              {/* REPORT HEADER */}
+              <div style={{ borderBottom: '2px solid #0f172a', paddingBottom: '10px', marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div>
+                  <h1 style={{ fontSize: '24pt', fontWeight: '800', margin: 0, textTransform: 'uppercase', color: '#0f172a' }}>JobSite Log</h1>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '10pt' }}>Professional Field Report • {new Date().toLocaleDateString()}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <h2 style={{ fontSize: '14pt', fontWeight: '700', margin: 0 }}>{job.address}</h2>
+                  <p style={{ margin: 0, color: '#475569' }}>{job.clientName}</p>
+                </div>
+              </div>
       
-              {/* Header - clean and authoritative */}
-              <div style={{ marginBottom: '28mm' }}>
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'flex-end',
-                  paddingBottom: '12mm',
-                  borderBottom: '3px solid #111827',
-                }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                      <Hammer size={32} style={{ color: '#111827' }} />
-                      <h1 style={{ 
-                        fontSize: '28px', 
-                        fontWeight: 900, 
-                        letterSpacing: '-0.025em',
-                        margin: 0,
-                        textTransform: 'uppercase',
-                      }}>
-                        JobSite Log
-                      </h1>
-                    </div>
-                    <div style={{ fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>
-                      Field Report & Work Estimate
-                    </div>
-                  </div>
-      
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '20px', fontWeight: 700, marginBottom: '4px' }}>
-                      {job.address}
-                    </div>
-                    {job.clientName && (
-                      <div style={{ fontSize: '14px', color: '#374151', marginBottom: '6px' }}>
-                        {job.clientName}
-                      </div>
-                    )}
-                    <div style={{ fontSize: '11px', color: '#6b7280' }}>
-                      {new Date().toLocaleDateString('en-GB', { 
-                        day: 'numeric', month: 'long', year: 'numeric' 
-                      })}
-                    </div>
+              {/* SUMMARY BOX */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
+                <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <h3 style={{ fontSize: '9pt', textTransform: 'uppercase', color: '#64748b', marginBottom: '8px', borderBottom: '1px solid #cbd5e1' }}>Labor Summary</h3>
+                  <div style={{ fontSize: '12pt', fontWeight: '700' }}>Total Est. Time: {formatTime(totalMinutes)}</div>
+                  <div style={{ fontSize: '10pt', marginTop: '5px' }}>Tools: {allTools.join(', ') || 'None listed'}</div>
+                </div>
+                <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <h3 style={{ fontSize: '9pt', textTransform: 'uppercase', color: '#64748b', marginBottom: '8px', borderBottom: '1px solid #cbd5e1' }}>Material Requirements</h3>
+                  <div style={{ fontSize: '10pt', columnCount: 2 }}>
+                    {allMaterials.length > 0 ? allMaterials.map((m, i) => <div key={i}>• {m}</div>) : 'No materials listed'}
                   </div>
                 </div>
               </div>
       
-              {/* Summary - compact, two clean cards */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: '1fr 1fr', 
-                gap: '16mm', 
-                marginBottom: '28mm' 
-              }}>
-                {/* Duration & Tools */}
-                <div style={{ 
-                  border: '1px solid #d1d5db', 
-                  borderRadius: '6px', 
-                  padding: '14px 16px',
-                  background: '#f9fafb',
-                }}>
-                  <div style={{ 
-                    fontSize: '12px', 
-                    fontWeight: 700, 
-                    color: '#374151',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    marginBottom: '10px',
-                    borderBottom: '1px solid #e5e7eb',
-                    paddingBottom: '6px',
-                  }}>
-                    Labor & Equipment
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <span style={{ fontSize: '13px', color: '#4b5563' }}>Estimated Duration</span>
-                    <span style={{ fontSize: '18px', fontWeight: 700, fontFamily: 'monospace' }}>
-                      {formatTime(totalMinutes)}
-                    </span>
-                  </div>
-                  {allTools.length > 0 && (
-                    <div>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#6b7280', marginBottom: '6px' }}>
-                        Tools Required
-                      </div>
-                      <div style={{ fontSize: '13px', lineHeight: '1.45', color: '#374151' }}>
-                        {allTools.join(' • ')}
-                      </div>
+              {/* TASK LISTING */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                {job.tasks.map((task, idx) => (
+                  <div key={task.id} className="print-block" style={{ border: '1px solid #cbd5e1', borderRadius: '10px', overflow: 'hidden' }}>
+                    
+                    {/* Task Header */}
+                    <div style={{ background: '#f1f5f9', padding: '12px 15px', borderBottom: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: '800', fontSize: '12pt' }}>Task {idx + 1}: {task.title}</span>
+                      {task.estimatedTime && <span style={{ fontSize: '10pt', background: '#fff', padding: '2px 8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>{task.estimatedTime}</span>}
                     </div>
-                  )}
-                </div>
       
-                {/* Materials */}
-                <div style={{ 
-                  border: '1px solid #d1d5db', 
-                  borderRadius: '6px', 
-                  padding: '14px 16px',
-                  background: '#f9fafb',
-                }}>
-                  <div style={{ 
-                    fontSize: '12px', 
-                    fontWeight: 700, 
-                    color: '#374151',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    marginBottom: '10px',
-                    borderBottom: '1px solid #e5e7eb',
-                    paddingBottom: '6px',
-                  }}>
-                    Materials
-                  </div>
-                  {allMaterials.length > 0 ? (
-                    <ul style={{ 
-                      margin: 0, 
-                      paddingLeft: '18px', 
-                      fontSize: '13px', 
-                      color: '#374151',
-                      lineHeight: '1.5',
-                      columnCount: 2,
-                      columnGap: '24px',
-                    }}>
-                      {allMaterials.map((m, i) => (
-                        <li key={i} style={{ marginBottom: '6px', breakInside: 'avoid' }}>
-                          {m}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div style={{ fontStyle: 'italic', color: '#6b7280', fontSize: '13px' }}>
-                      No materials recorded
-                    </div>
-                  )}
-                </div>
-              </div>
+                    <div style={{ padding: '15px' }}>
+                      {/* Description */}
+                      {task.description && (
+                        <p style={{ margin: '0 0 15px 0', fontSize: '11pt', lineHeight: '1.5', color: '#334155' }}>{task.description}</p>
+                      )}
       
-              {/* Tasks – each in its own clean box */}
-              {job.tasks.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20mm' }}>
-                  {job.tasks.map((task, idx) => (
-                    <div
-                      key={task.id}
-                      style={{
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        background: 'white',
-                        breakInside: 'avoid',
-                        pageBreakInside: 'avoid',
-                      }}
-                    >
-                      {/* Task header bar */}
-                      <div style={{
-                        background: '#f1f5f9',
-                        padding: '14px 18px',
-                        borderBottom: '1px solid #cbd5e1',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '14px',
-                      }}>
-                        <div style={{
-                          background: '#1e293b',
-                          color: 'white',
-                          height: '36px',
-                          width: '36px',
-                          borderRadius: '6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 700,
-                          fontSize: '15px',
-                          flexShrink: 0,
+                      {/* Task-Specific Materials/Tools */}
+                      {(task.materials.length > 0 || task.tools.length > 0) && (
+                         <div style={{ display: 'flex', gap: '20px', fontSize: '9pt', marginBottom: '15px', color: '#475569' }}>
+                            {task.materials.length > 0 && <div><strong>Materials:</strong> {task.materials.join(', ')}</div>}
+                            {task.tools.length > 0 && <div><strong>Tools:</strong> {task.tools.join(', ')}</div>}
+                         </div>
+                      )}
+      
+                      {/* Boxed Photos Grid */}
+                      {task.imageUrls?.length > 0 && (
+                        <div style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: task.imageUrls.length === 1 ? '1fr' : '1fr 1fr', 
+                          gap: '10px',
+                          marginTop: '10px' 
                         }}>
-                          {idx + 1}
+                          {task.imageUrls.map((url, i) => (
+                            <div key={i} style={{ border: '1px solid #e2e8f0', borderRadius: '6px', overflow: 'hidden', height: '220px' }}>
+                              <img src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
+                          ))}
                         </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '17px', fontWeight: 700, color: '#111827' }}>
-                            {task.title}
-                          </div>
-                          {task.estimatedTime && (
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '8px', 
-                              marginTop: '4px',
-                              fontSize: '13px',
-                              color: '#4b5563',
-                            }}>
-                              <Clock size={14} />
-                              <span>Est. {task.estimatedTime}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-      
-                      {/* Task content */}
-                      <div style={{ padding: '18px' }}>
-                        {task.description && (
-                          <div style={{ marginBottom: '16px' }}>
-                            <div style={{ 
-                              fontSize: '11px', 
-                              fontWeight: 700, 
-                              color: '#6b7280', 
-                              textTransform: 'uppercase',
-                              marginBottom: '6px',
-                              letterSpacing: '0.4px',
-                            }}>
-                              Description
-                            </div>
-                            <div style={{ 
-                              fontSize: '13.5px', 
-                              lineHeight: '1.55', 
-                              color: '#1f2937',
-                              whiteSpace: 'pre-wrap',
-                            }}>
-                              {task.description}
-                            </div>
-                          </div>
-                        )}
-      
-                        {(task.materials?.length > 0 || task.tools?.length > 0) && (
-                          <div style={{ 
-                            display: 'grid', 
-                            gridTemplateColumns: '1fr 1fr', 
-                            gap: '16px', 
-                            marginBottom: '20px',
-                            paddingTop: task.description ? '16px' : 0,
-                            borderTop: task.description ? '1px solid #e5e7eb' : 'none',
-                          }}>
-                            {task.materials?.length > 0 && (
-                              <div>
-                                <div style={{ 
-                                  fontSize: '11px', 
-                                  fontWeight: 700, 
-                                  color: '#6b7280', 
-                                  textTransform: 'uppercase',
-                                  marginBottom: '8px',
-                                }}>
-                                  Materials
-                                </div>
-                                <ul style={{ 
-                                  margin: 0, 
-                                  paddingLeft: '16px', 
-                                  fontSize: '13px', 
-                                  lineHeight: '1.5',
-                                  color: '#374151',
-                                }}>
-                                  {task.materials.map((m, i) => (
-                                    <li key={i} style={{ marginBottom: '4px' }}>{m}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-      
-                            {task.tools?.length > 0 && (
-                              <div>
-                                <div style={{ 
-                                  fontSize: '11px', 
-                                  fontWeight: 700, 
-                                  color: '#6b7280', 
-                                  textTransform: 'uppercase',
-                                  marginBottom: '8px',
-                                }}>
-                                  Tools
-                                </div>
-                                <ul style={{ 
-                                  margin: 0, 
-                                  paddingLeft: '16px', 
-                                  fontSize: '13px', 
-                                  lineHeight: '1.5',
-                                  color: '#374151',
-                                }}>
-                                  {task.tools.map((t, i) => (
-                                    <li key={i} style={{ marginBottom: '4px' }}>{t}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        )}
-      
-                        {task.imageUrls?.length > 0 && (
-                          <div>
-                            <div style={{ 
-                              fontSize: '11px', 
-                              fontWeight: 700, 
-                              color: '#6b7280', 
-                              textTransform: 'uppercase',
-                              marginBottom: '10px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                            }}>
-                              <ImageIcon size={14} /> Photos
-                            </div>
-                            <div style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(85mm, 1fr))',
-                              gap: '12mm',
-                            }}>
-                              {task.imageUrls.map((url, imgIdx) => (
-                                <div key={imgIdx} style={{
-                                  border: '1px solid #e2e8f0',
-                                  borderRadius: '4px',
-                                  overflow: 'hidden',
-                                  background: 'white',
-                                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                                }}>
-                                  <img
-                                    src={url}
-                                    alt=""
-                                    style={{
-                                      width: '100%',
-                                      height: 'auto',
-                                      display: 'block',
-                                      maxHeight: '140mm',
-                                      objectFit: 'contain',
-                                    }}
-                                  />
-                                  <div style={{
-                                    fontSize: '11px',
-                                    color: '#6b7280',
-                                    padding: '6px 10px',
-                                    background: '#f8fafc',
-                                    borderTop: '1px solid #e2e8f0',
-                                    textAlign: 'center',
-                                  }}>
-                                    Photo {imgIdx + 1} of {task.imageUrls.length}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: '40px 0', 
-                  color: '#6b7280', 
-                  fontStyle: 'italic',
-                  border: '1px dashed #d1d5db',
-                  borderRadius: '8px',
-                }}>
-                  No items recorded for this job.
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
       
             </div>
           </div>
