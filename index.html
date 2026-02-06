@@ -250,12 +250,14 @@
                   <div className="space-y-4">
                     <input placeholder="Task Title" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
                     <div className="flex gap-4">
-                      <input placeholder="Time (e.g. 2.5h)" className="flex-1 p-4 bg-slate-50 rounded-2xl outline-none font-black" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
-                      <label className="bg-slate-100 p-4 rounded-2xl cursor-pointer">
-                        <ImageIcon className="text-slate-600" />
+                      <input placeholder="Time" className="w-32 p-4 bg-slate-50 rounded-2xl outline-none font-black text-center" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
+                      <label className="flex-1 bg-slate-100 p-4 rounded-2xl cursor-pointer flex items-center justify-center hover:bg-slate-200 transition-colors">
+                        <ImageIcon className="text-slate-600 mr-2" />
+                        <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Add Photos</span>
                         <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
                       </label>
                     </div>
+
                     {taskData.images.length > 0 && (
                       <div className="img-preview-grid">
                         {taskData.images.map((img, i) => (
@@ -266,16 +268,7 @@
                         ))}
                       </div>
                     )}
-                    <input placeholder="Materials" className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium" value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} />
-                    <input placeholder="Tools Used" className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium" value={taskData.tools} onChange={e => setTaskData({...taskData, tools: e.target.value})} />
-                    <textarea placeholder="Description..." className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium h-28 resize-none" value={taskData.desc} onChange={e => setTaskData({...taskData, desc: e.target.value})} />
-                    <button onClick={handleSaveTask} className="w-full bg-slate-900 text-white p-5 rounded-[2rem] font-black text-lg shadow-2xl flex items-center justify-center gap-2">
-                      <Save size={20} /> {editingTaskId ? 'UPDATE LOG' : 'SAVE LOG ENTRY'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+                    
 
             {/* --- PDF OUTPUT SECTION --- */}
             {activeJob && (
