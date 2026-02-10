@@ -4,37 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0f172a" />
-    <title>JobSite Log | Professional</title>
+    <title>JobSite Log | Optimized</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-      body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+      body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
       
       @media print {
-        @page { margin: 8mm; size: A4; }
-        body { background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .no-print, button, .action-btns { display: none !important; }
-        .print-only { display: block !important; }
+        @page { margin: 10mm; size: A4; }
+        body { background-color: white !important; }
+        .no-print, button { display: none !important; }
         .print-card { 
           break-inside: avoid; 
-          border: 2px solid #0f172a !important; 
-          margin-bottom: 15px; 
-          border-radius: 10px; 
-          overflow: hidden;
+          border: 1px solid #e2e8f0 !important; 
+          margin-bottom: 20px; 
+          border-radius: 8px; 
           page-break-inside: avoid;
         }
+        /* Forces the browser to not bloat images during PDF generation */
+        img { max-width: 100% !important; height: auto !important; image-rendering: -webkit-optimize-contrast; }
       }
 
       .img-preview-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-        gap: 12px;
-        margin-top: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
       }
-
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
     <script type="importmap">
     {
@@ -56,49 +51,32 @@
       import { get, set } from 'idb-keyval';
       import { 
         Trash2, ImageIcon, Printer, Plus, X, Hammer, 
-        ChevronRight, Sparkles, MapPin, Pencil, Save, Clock
+        ChevronRight, Sparkles, MapPin, Pencil, Save, HardDrive
       } from 'lucide-react';
 
-      const DB_KEY = 'jobsite-log-master-v1';
+      const DB_KEY = 'jobsite-v2-optimized';
 
-      const TEMPLATES = {
-        marking: { 
-          title: "Mark with Highlight Paint", 
-          materials: "Yellow/White Spray Paint, Masking Tape, Rags, Turps", 
-          tools: "Paint Brush, Roller Brush, Drop sheet", 
-          desc: "Paint Leading edge " 
-        },
-        washing: { 
-          title: "Pressure Washing", 
-          materials: "Industrial Degreaser", 
-          tools: "Petrol Pressure Washer, Turbo Nozzle, hose, tap fittings, cleaning disc", 
-          desc: "Deep cleaning hard surfaces to remove buildup." 
-        },
-        fencing: { 
-          title: "Fence Installation", 
-          materials: "Timber Pailings, Railings, Steel Posts, Concrete, Nails, Bolts, Bits", 
-          tools: "Post Hole Digger, Level, Impact Driver, Wheel Barrow, Bucket, Trowel, Shovel, Stringline", 
-          desc: "Excavation of post holes, setting posts in concrete, and mounting panels." 
-        }
-      };
-
-      // --- UTILITY: COMPRESS IMAGES TO SHRINK PDF SIZE ---
+      // --- AGGRESSIVE COMPRESSION ENGINE ---
       const compressImage = (file) => {
         return new Promise((resolve) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
-          reader.onload = (event) => {
+          reader.onload = (e) => {
             const img = new Image();
-            img.src = event.target.result;
+            img.src = e.target.result;
             img.onload = () => {
               const canvas = document.createElement('canvas');
-              const MAX_WIDTH = 1000; // Resize to max 1000px width
               let width = img.width;
               let height = img.height;
-
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
+              
+              // Max 800px for reports - keeps PDF size tiny
+              const MAX_DIM = 800; 
+              if (width > height && width > MAX_DIM) {
+                height *= MAX_DIM / width;
+                width = MAX_DIM;
+              } else if (height > MAX_DIM) {
+                width *= MAX_DIM / height;
+                height = MAX_DIM;
               }
 
               canvas.width = width;
@@ -106,8 +84,8 @@
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
               
-              // 0.7 quality provides a massive reduction in file size with minimal visual loss
-              resolve(canvas.toDataURL('image/jpeg', 0.7));
+              // Quality 0.6 is the sweet spot for file size vs print quality
+              resolve(canvas.toDataURL('image/jpeg', 0.6));
             };
           };
         });
@@ -119,45 +97,38 @@
         const [viewMode, setViewMode] = useState('dashboard');
         const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
         const [editingTaskId, setEditingTaskId] = useState(null);
+        const [dbSize, setDbSize] = useState('0 KB');
         const [taskData, setTaskData] = useState({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
 
-        useEffect(() => { 
-          get(DB_KEY).then(data => setJobs(data || [])); 
-        }, []);
+        useEffect(() => { loadData(); }, []);
 
-        const saveToDB = (newJobs) => { setJobs(newJobs); set(DB_KEY, newJobs); };
-        const activeJob = jobs.find(j => j.id === activeJobId);
-
-        const getAggregatedTotals = (tasks) => {
-          let totalMins = 0;
-          let matSet = new Set();
-          let toolSet = new Set();
-          tasks.forEach(t => {
-            const timeVal = parseFloat(t.time) || 0;
-            if (t.time?.toLowerCase().includes('m')) totalMins += timeVal;
-            else totalMins += timeVal * 60;
-            t.materials.split(',').forEach(m => m.trim() && matSet.add(m.trim()));
-            t.tools.split(',').forEach(t => t.trim() && toolSet.add(t.trim()));
-          });
-          const h = Math.floor(totalMins / 60);
-          const m = Math.round(totalMins % 60);
-          return {
-            totalHours: `${h}h ${m}m`,
-            mats: Array.from(matSet).join(', ') || 'None listed',
-            tools: Array.from(toolSet).join(', ') || 'None listed'
-          };
+        const loadData = async () => {
+          const data = await get(DB_KEY) || [];
+          setJobs(data);
+          calculateDbSize(data);
         };
 
+        const calculateDbSize = (data) => {
+          const string = JSON.stringify(data);
+          const size = (new TextEncoder().encode(string).length / 1024 / 1024).toFixed(2);
+          setDbSize(`${size} MB`);
+        };
+
+        const saveToDB = async (newJobs) => {
+          setJobs(newJobs);
+          await set(DB_KEY, newJobs);
+          calculateDbSize(newJobs);
+        };
+
+        const activeJob = jobs.find(j => j.id === activeJobId);
+
         const handleSaveTask = () => {
-          if (!taskData.title) return alert("Please enter a Task Title");
+          if (!taskData.title) return alert("Task Title required");
           const updatedTasks = editingTaskId 
             ? activeJob.tasks.map(t => t.id === editingTaskId ? { ...taskData, id: editingTaskId } : t)
             : [...activeJob.tasks, { ...taskData, id: Date.now() }];
+          
           saveToDB(jobs.map(j => j.id === activeJobId ? { ...j, tasks: updatedTasks } : j));
-          closeTaskModal();
-        };
-
-        const closeTaskModal = () => {
           setIsTaskFormOpen(false);
           setEditingTaskId(null);
           setTaskData({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
@@ -165,97 +136,84 @@
 
         const handleImageUpload = async (e) => {
           const files = Array.from(e.target.files);
-          const compressedImages = await Promise.all(files.map(file => compressImage(file)));
-          setTaskData(prev => ({ ...prev, images: [...prev.images, ...compressedImages] }));
-        };
-
-        const deleteJob = (e, id) => {
-          e.stopPropagation(); // Prevents clicking the job while trying to delete
-          if (confirm("Delete this entire project and all associated logs?")) {
-            saveToDB(jobs.filter(j => j.id !== id));
-          }
+          const compressed = await Promise.all(files.map(f => compressImage(f)));
+          setTaskData(prev => ({ ...prev, images: [...prev.images, ...compressed] }));
         };
 
         return (
           <div className="min-h-screen">
-            <header className="bg-slate-900 text-white p-4 no-print flex justify-between items-center shadow-lg sticky top-0 z-50">
+            <header className="bg-slate-900 text-white p-4 no-print flex justify-between items-center sticky top-0 z-50 shadow-md">
               <div className="flex items-center gap-2 cursor-pointer" onClick={() => setViewMode('dashboard')}>
-                <div className="bg-orange-500 p-2 rounded-xl text-white shadow-inner"><Hammer size={22} /></div>
-                <h1 className="font-black text-xl tracking-tight uppercase">Jobsite Log</h1>
+                <Hammer className="text-orange-500" />
+                <h1 className="font-bold text-lg tracking-tight">JOBSITE LOG</h1>
               </div>
-              {viewMode === 'detail' && (
-                <button onClick={() => window.print()} className="bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 uppercase tracking-wider shadow-sm">
-                  <Printer size={16} /> Print Report
-                </button>
-              )}
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-slate-400 bg-slate-800 px-3 py-1.5 rounded-full">
+                  <HardDrive size={12}/> {dbSize}
+                </div>
+                {viewMode === 'detail' && (
+                  <button onClick={() => window.print()} className="bg-orange-500 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
+                    <Printer size={16} /> PRINT PDF
+                  </button>
+                )}
+              </div>
             </header>
 
             {viewMode === 'dashboard' ? (
-              <main className="p-4 max-w-2xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight">Projects</h2>
+              <main className="p-4 max-w-xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-bold text-slate-800">Projects</h2>
                   <button onClick={() => {
                     const addr = prompt("Job Address:");
                     if(addr) saveToDB([...jobs, { id: Date.now(), address: addr, clientName: prompt("Client Name:"), tasks: [] }]);
-                  }} className="bg-slate-900 text-white px-6 py-3 rounded-2xl text-sm font-bold shadow-xl">+ New Site</button>
+                  }} className="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold">+ New Site</button>
                 </div>
-                <div className="grid gap-4">
+                
+                <div className="space-y-3">
                   {jobs.map(j => (
-                    <div key={j.id} onClick={() => { setActiveJobId(j.id); setViewMode('detail'); }} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex justify-between items-center hover:border-orange-500 transition-all cursor-pointer group">
+                    <div key={j.id} className="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center hover:border-orange-500 transition-all cursor-pointer group shadow-sm" onClick={() => { setActiveJobId(j.id); setViewMode('detail'); }}>
                       <div>
-                        <p className="font-black text-slate-900 text-lg">{j.address}</p>
-                        <p className="text-[14px] text-slate-400 font-bold uppercase mt-1 tracking-widest">{j.tasks.length} LOG ENTRIES</p>
+                        <p className="font-bold text-slate-900">{j.address}</p>
+                        <p className="text-xs text-slate-400 font-semibold uppercase">{j.tasks.length} entries</p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={(e) => deleteJob(e, j.id)} 
-                          className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 size={20} />
+                      <div className="flex items-center gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); if(confirm("Delete Project?")) saveToDB(jobs.filter(x => x.id !== j.id)); }} className="p-2 text-slate-300 hover:text-red-500">
+                          <Trash2 size={18} />
                         </button>
-                        <ChevronRight size={20} className="text-slate-300" />
+                        <ChevronRight size={18} className="text-slate-300" />
                       </div>
                     </div>
                   ))}
-                  {jobs.length === 0 && (
-                    <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-[3rem]">
-                      <p className="text-slate-400 font-bold uppercase tracking-widest">No active projects</p>
-                    </div>
-                  )}
                 </div>
               </main>
             ) : (
-              <main className="p-4 max-w-2xl mx-auto no-print">
-                <button onClick={() => setViewMode('dashboard')} className="mb-6 text-slate-400 font-bold text-xs flex items-center gap-1 hover:text-slate-900 transition-colors">
-                  <ChevronRight size={14} className="rotate-180" /> BACK TO PROJECTS
+              <main className="p-4 max-w-xl mx-auto no-print">
+                <button onClick={() => setViewMode('dashboard')} className="mb-4 text-slate-400 font-bold text-xs flex items-center gap-1">
+                  <ChevronRight size={14} className="rotate-180" /> BACK
                 </button>
-                <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm mb-8 relative overflow-hidden">
-                  <div className="relative z-10 flex items-start gap-4">
-                    <div className="bg-slate-100 p-4 rounded-2xl text-slate-600 shadow-inner"><MapPin size={24} /></div>
-                    <div>
-                      <h2 className="text-3xl font-black text-slate-900 leading-tight">{activeJob?.address}</h2>
-                      <p className="text-slate-400 font-bold uppercase tracking-widest text-[14px] mt-1">{activeJob?.clientName}</p>
-                    </div>
-                  </div>
+                
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-6">
+                  <h2 className="text-2xl font-bold text-slate-900 leading-tight">{activeJob?.address}</h2>
+                  <p className="text-slate-400 font-bold text-sm uppercase">{activeJob?.clientName}</p>
                 </div>
 
-                <div className="space-y-6 mb-24">
+                <div className="space-y-4 mb-24">
                   {activeJob?.tasks.map((t, i) => (
-                    <div key={t.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                      <div className="bg-slate-50 p-5 border-b flex justify-between items-center">
-                        <span className="font-black text-slate-400 text-[14px] tracking-widest uppercase">Entry #{i+1}</span>
-                        <div className="flex gap-4 items-center">
-                           <button onClick={() => { setEditingTaskId(t.id); setTaskData(t); setIsTaskFormOpen(true); }} className="bg-white p-2 rounded-lg text-slate-400 hover:text-orange-500 border border-slate-100"><Pencil size={18}/></button>
-                           <button onClick={() => { if(confirm("Delete this log?")) saveToDB(jobs.map(j => j.id === activeJobId ? { ...j, tasks: j.tasks.filter(tk => tk.id !== t.id) } : j)); }} className="bg-white p-2 rounded-lg text-slate-400 hover:text-red-500 border border-slate-100"><Trash2 size={18}/></button>
+                    <div key={t.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div className="bg-slate-50 p-3 border-b flex justify-between items-center">
+                        <span className="font-bold text-slate-400 text-xs">LOG #{i+1}</span>
+                        <div className="flex gap-2">
+                           <button onClick={() => { setEditingTaskId(t.id); setTaskData(t); setIsTaskFormOpen(true); }} className="p-1.5 text-slate-400 hover:text-blue-500"><Pencil size={16}/></button>
+                           <button onClick={() => { if(confirm("Delete log?")) saveToDB(jobs.map(j => j.id === activeJobId ? { ...j, tasks: j.tasks.filter(tk => tk.id !== t.id) } : j)); }} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 size={16}/></button>
                         </div>
                       </div>
-                      <div className="p-6">
-                        <h3 className="font-black text-xl text-slate-900 mb-2">{t.title}</h3>
-                        <p className="text-slate-500 text-sm leading-relaxed">{t.desc}</p>
+                      <div className="p-4">
+                        <h3 className="font-bold text-slate-900">{t.title}</h3>
+                        <p className="text-slate-500 text-sm mt-1">{t.desc}</p>
                         {t.images?.length > 0 && (
-                          <div className="flex gap-3 mt-4 overflow-x-auto pb-2 no-scrollbar">
+                          <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
                             {t.images.map((img, idx) => (
-                              <img key={idx} src={img} className="h-24 w-24 object-cover rounded-2xl border flex-shrink-0" />
+                              <img key={idx} src={img} className="h-16 w-16 object-cover rounded-lg border flex-shrink-0" />
                             ))}
                           </div>
                         )}
@@ -264,39 +222,27 @@
                   ))}
                 </div>
 
-                <button onClick={() => setIsTaskFormOpen(true)} className="fixed bottom-8 right-8 bg-slate-900 text-white w-20 h-20 rounded-full shadow-2xl flex items-center justify-center active:scale-90 hover:bg-orange-500 transition-all z-40 border-4 border-white">
-                  <Plus size={40} />
+                <button onClick={() => setIsTaskFormOpen(true)} className="fixed bottom-6 right-6 bg-slate-900 text-white w-14 h-14 rounded-full shadow-xl flex items-center justify-center active:scale-95 transition-all z-40">
+                  <Plus size={28} />
                 </button>
               </main>
             )}
 
             {isTaskFormOpen && (
-              <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md p-4 overflow-y-auto">
-                <div className="bg-white rounded-[3rem] max-w-md mx-auto p-8 shadow-2xl mt-4">
-                  <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">{editingTaskId ? 'Edit Log' : 'New Log'}</h2>
-                    <button onClick={closeTaskModal} className="bg-slate-100 p-3 rounded-full hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"><X size={24}/></button>
+              <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+                <div className="bg-white rounded-2xl max-w-md mx-auto p-6 shadow-2xl">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold">{editingTaskId ? 'Edit Entry' : 'New Entry'}</h2>
+                    <button onClick={() => setIsTaskFormOpen(false)} className="text-slate-400"><X size={24}/></button>
                   </div>
-                  {!editingTaskId && (
-                    <div className="mb-6">
-                      <label className="text-[14px] font-black text-slate-400 uppercase tracking-widest block mb-3">Quick Templates</label>
-                      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                        {Object.keys(TEMPLATES).map(key => (
-                          <button key={key} onClick={() => setTaskData({...taskData, ...TEMPLATES[key]})} className="whitespace-nowrap bg-white border-2 border-slate-100 px-5 py-2.5 rounded-2xl text-[14px] font-black hover:border-orange-500 hover:text-orange-500 transition-all flex items-center gap-2 uppercase tracking-wider">
-                            <Sparkles size={14}/> {key}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  
                   <div className="space-y-4">
-                    <input placeholder="Task Title" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
+                    <input placeholder="Task Title" className="w-full p-3 bg-slate-100 rounded-lg outline-none font-bold" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
                     
-                    <div className="flex gap-4">
-                      <input placeholder="Time" className="w-32 p-4 bg-slate-50 rounded-2xl outline-none font-black text-center" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
-                      <label className="flex-1 bg-slate-100 p-4 rounded-2xl cursor-pointer flex items-center justify-center hover:bg-slate-200 transition-colors text-center">
-                        <ImageIcon className="text-slate-600 mr-2" />
-                        <span className="text-xs font-black text-slate-500 uppercase tracking-wider">Add Photos</span>
+                    <div className="flex gap-3">
+                      <input placeholder="Time" className="w-24 p-3 bg-slate-100 rounded-lg outline-none font-bold text-center" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
+                      <label className="flex-1 bg-blue-50 text-blue-600 p-3 rounded-lg cursor-pointer flex items-center justify-center font-bold text-xs uppercase">
+                        <ImageIcon size={16} className="mr-2" /> Add Photos
                         <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
                       </label>
                     </div>
@@ -305,88 +251,51 @@
                       <div className="img-preview-grid">
                         {taskData.images.map((img, i) => (
                           <div key={i} className="relative aspect-square">
-                            <img src={img} className="w-full h-full object-cover rounded-2xl border" />
-                            <button onClick={() => setTaskData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg border-2 border-white"><X size={10}/></button>
+                            <img src={img} className="w-full h-full object-cover rounded-lg border" />
+                            <button onClick={() => setTaskData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)}))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 shadow-sm"><X size={10}/></button>
                           </div>
                         ))}
                       </div>
                     )}
-                    <input placeholder="Materials" className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium" value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} />
-                    <input placeholder="Tools Used" className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium" value={taskData.tools} onChange={e => setTaskData({...taskData, tools: e.target.value})} />
-                    <textarea placeholder="Description..." className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium h-28 resize-none" value={taskData.desc} onChange={e => setTaskData({...taskData, desc: e.target.value})} />
-                    <button onClick={handleSaveTask} className="w-full bg-slate-900 text-white p-5 rounded-[2rem] font-black text-lg shadow-2xl flex items-center justify-center gap-2">
-                      <Save size={20} /> {editingTaskId ? 'UPDATE LOG' : 'SAVE LOG ENTRY'}
+                    
+                    <textarea placeholder="Description / Materials / Tools..." className="w-full p-3 bg-slate-100 rounded-lg outline-none text-sm h-24" value={taskData.desc} onChange={e => setTaskData({...taskData, desc: e.target.value})} />
+                    
+                    <button onClick={handleSaveTask} className="w-full bg-orange-500 text-white p-4 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2">
+                      <Save size={18} /> SAVE LOG
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* --- PDF OUTPUT SECTION --- */}
+            {/* --- PDF OUTPUT (A4 Optimized) --- */}
             {activeJob && (
-              <div className="print-only hidden p-4">
-                <div className="border-b-[8px] border-slate-900 pb-4 mb-4 flex justify-between items-end">
+              <div className="print-only hidden">
+                <div className="border-b-4 border-slate-900 pb-4 mb-6 flex justify-between items-end">
                   <div>
-                    <h1 className="text-4xl font-black tracking-tighter text-slate-900">JOBSITE LOG</h1>
-                    <p className="text-slate-400 font-black text-sm uppercase tracking-widest mt-1">{new Date().toLocaleDateString('en-AU', { dateStyle: 'full' })}</p>
+                    <h1 className="text-3xl font-black">SITE REPORT</h1>
+                    <p className="text-slate-500 text-xs font-bold uppercase">{new Date().toLocaleDateString('en-AU')}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-black text-slate-900 uppercase tracking-tight">{activeJob.address}</p>
-                    <p className="text-slate-500 font-bold text-sm">{activeJob.clientName}</p>
-                  </div>
-                </div>
-
-                <div className="bg-slate-900 text-white p-6 rounded-2xl mb-6 grid grid-cols-4 gap-6">
-                  <div className="border-r border-slate-700 flex flex-col justify-center">
-                    <h4 className="text-[10px] uppercase text-orange-500 font-black mb-1 tracking-[0.2em]">Project Totals</h4>
-                    <p className="text-2xl font-black">{getAggregatedTotals(activeJob.tasks).totalHours}</p>
-                    <p className="text-[12px] font-bold text-slate-400 uppercase tracking-wider mt-1">{activeJob.tasks.length} {activeJob.tasks.length === 1 ? 'Task' : 'Tasks'}</p>
-                  </div>
-                  <div className="col-span-3 flex flex-col justify-center">
-                    <div className="space-y-1">
-                      <p className="text-[12px] leading-snug opacity-95">
-                        <strong className="text-slate-400 uppercase mr-2">Materials:</strong> 
-                        <span className="font-medium italic">{getAggregatedTotals(activeJob.tasks).mats}</span>
-                      </p>
-                      <p className="text-[12px] leading-snug opacity-95">
-                        <strong className="text-slate-400 uppercase mr-2">Tools:</strong> 
-                        <span className="font-medium italic">{getAggregatedTotals(activeJob.tasks).tools}</span>
-                      </p>
-                    </div>
+                    <p className="text-xl font-bold">{activeJob.address}</p>
+                    <p className="text-slate-500 font-bold text-xs italic">{activeJob.clientName}</p>
                   </div>
                 </div>
 
                 {activeJob.tasks.map((t, idx) => (
-                  <div key={t.id} className="print-card">
-                    <div className="bg-slate-100 px-5 py-3 font-black border-b flex justify-between items-center text-slate-800 text-lg tracking-tight uppercase">
-                      <span>{idx + 1}. {t.title}</span>
+                  <div key={t.id} className="print-card p-4">
+                    <div className="flex justify-between items-start mb-2 border-b pb-2">
+                      <h3 className="font-bold text-lg">{idx + 1}. {t.title}</h3>
+                      <span className="bg-slate-100 px-3 py-1 rounded text-xs font-black uppercase">Time: {t.time || 'N/A'}</span>
                     </div>
-                    <div className="p-6">
-                      {t.desc && <p className="text-[14px] text-slate-700 mb-6 leading-relaxed border-l-4 border-slate-200 pl-4 italic font-medium">"{t.desc}"</p>}
-                      <div className="grid grid-cols-3 gap-4 mb-6">
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                          <label className="text-[12px] font-black uppercase text-slate-400 block mb-1 tracking-[0.1em]">Time</label>
-                          <span className="font-black text-xl text-slate-900 border-b-2 border-orange-500 px-2">{t.time || 'N/A'}</span>
-                        </div>
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                          <label className="text-[12px] font-black uppercase text-slate-400 block mb-1 tracking-[0.1em]">Materials</label>
-                          <span className="text-[11px] font-bold text-slate-600 uppercase leading-tight">{t.materials || 'None'}</span>
-                        </div>
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                          <label className="text-[12px] font-black uppercase text-slate-400 block mb-1 tracking-[0.1em]">Tools</label>
-                          <span className="text-[11px] font-bold text-slate-600 uppercase leading-tight">{t.tools || 'None'}</span>
-                        </div>
+                    <p className="text-sm text-slate-700 mb-4 whitespace-pre-wrap">{t.desc}</p>
+                    {t.images?.length > 0 && (
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        {t.images.map((img, i) => (
+                          <img key={i} src={img} className="rounded border w-full h-48 object-cover" />
+                        ))}
                       </div>
-                      {t.images?.length > 0 && (
-                        <div className="grid grid-cols-2 gap-4">
-                          {t.images.map((img, i) => (
-                            <div key={i} className="rounded-xl overflow-hidden border border-slate-100 h-64 shadow-sm">
-                              <img src={img} className="w-full h-full object-cover" />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
