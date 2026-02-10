@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0f172a" />
-    <title>JobSite Master | Quote & Handover</title>
+    <title>JobSite Master | Log</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
@@ -42,23 +42,21 @@
       import { get, set } from 'idb-keyval';
       import { 
         Trash2, ImageIcon, Printer, Plus, X, Hammer, 
-        ChevronRight, Sparkles, MapPin, Pencil, Save, HardDrive, CheckCircle2, ClipboardCheck
+        ChevronRight, Sparkles, MapPin, Pencil, Save, HardDrive, CheckCircle2, Clock
       } from 'lucide-react';
 
-      const DB_KEY = 'jobsite-lifecycle-v1';
+      const DB_KEY = 'jobsite-master-v3';
 
+      // Templates grouped by Job Type
       const TEMPLATES = {
-        handover: { 
-          title: "Final Handover Inspection", 
-          materials: "N/A - Final Inspection", 
-          tools: "No delays reported", 
-          desc: "Completed site walkthrough with client. All defects rectified." 
+        quote: {
+          marking: { title: "Mark with Highlight Paint", materials: "Yellow/White Spray Paint, Masking Tape", tools: "Paint Brush, Roller Brush", desc: "Paint Leading edge" },
+          washing: { title: "Pressure Washing", materials: "Industrial Degreaser", tools: "Petrol Pressure Washer, Turbo Nozzle", desc: "Deep cleaning hard surfaces." },
+          fencing: { title: "Fence Installation", materials: "Timber Pailings, Steel Posts", tools: "Post Hole Digger, Level", desc: "Excavation and setting posts." }
         },
-        rectification: { 
-          title: "Minor Defect Fix", 
-          materials: "Touch-up paint, sealant", 
-          tools: "Inclement weather (1 day delay)", 
-          desc: "Fixed minor scratches and resealed edges." 
+        handover: { 
+          final: { title: "Final Walkthrough", materials: "N/A", tools: "No delays", desc: "Completed site walkthrough with client. All items verified." },
+          cleanup: { title: "Site Handover Cleanup", materials: "Cleaning supplies", tools: "Minor weather delay", desc: "Removed debris and polished surfaces for handover." }
         }
       };
 
@@ -112,8 +110,21 @@
 
         const activeJob = jobs.find(j => j.id === activeJobId);
 
+        const getAggregatedTotals = (tasks) => {
+          let totalMins = 0;
+          tasks.forEach(t => {
+            const timeVal = parseFloat(t.time) || 0;
+            if (t.time?.toLowerCase().includes('m')) totalMins += timeVal;
+            else totalMins += timeVal * 60;
+          });
+          const h = Math.floor(totalMins / 60);
+          const m = Math.round(totalMins % 60);
+          return { h, m, string: `${h}h ${m}m` };
+        };
+
         const createNewJob = (type) => {
-          const addr = prompt(`${type.toUpperCase()} - Job Address:`);
+          const label = type === 'handover' ? 'Completed Works' : 'Field Report';
+          const addr = prompt(`${label.toUpperCase()} - Job Address:`);
           if(!addr) return;
           const client = prompt("Client Name:");
           const newJob = { id: Date.now(), type, address: addr, clientName: client, tasks: [] };
@@ -121,7 +132,7 @@
         };
 
         const handleSaveTask = () => {
-          if (!taskData.title) return alert("Required: Title");
+          if (!taskData.title) return alert("Title Required");
           const updatedTasks = editingTaskId 
             ? activeJob.tasks.map(t => t.id === editingTaskId ? { ...taskData, id: editingTaskId } : t)
             : [...activeJob.tasks, { ...taskData, id: Date.now() }];
@@ -143,17 +154,18 @@
 
         return (
           <div className="min-h-screen">
+            {/* Header with Memory Counter */}
             <header className="bg-slate-900 text-white p-4 no-print flex justify-between items-center shadow-lg sticky top-0 z-50">
               <div className="flex items-center gap-2 cursor-pointer" onClick={() => setViewMode('dashboard')}>
-                <div className="bg-emerald-500 p-2 rounded-xl text-white shadow-inner"><ClipboardCheck size={22} /></div>
-                <h1 className="font-black text-xl tracking-tight uppercase leading-none">JobSite <span className="text-emerald-400">Master</span></h1>
+                <div className="bg-orange-500 p-2 rounded-xl text-white shadow-inner"><Hammer size={22} /></div>
+                <h1 className="font-black text-xl tracking-tight uppercase">Jobsite</h1>
               </div>
               <div className="flex items-center gap-4">
-                <div className="hidden md:flex items-center gap-1 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
-                  <HardDrive size={12}/> {dbSize}
+                <div className="flex items-center gap-1 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                  <HardDrive size={12} className="text-slate-400"/> {dbSize} USED
                 </div>
                 {viewMode === 'detail' && (
-                  <button onClick={() => window.print()} className="bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 uppercase shadow-sm">
+                  <button onClick={() => window.print()} className="bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 uppercase shadow-sm active:scale-95">
                     <Printer size={16} /> Print
                   </button>
                 )}
@@ -163,33 +175,31 @@
             {viewMode === 'dashboard' ? (
               <main className="p-4 max-w-2xl mx-auto">
                 <div className="mb-8">
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-4">Project Pipeline</h2>
+                  <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-4 uppercase">Projects</h2>
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => createNewJob('quote')} className="bg-slate-900 text-white p-4 rounded-2xl text-sm font-black shadow-lg flex flex-col items-center gap-2 border-b-4 border-orange-500 active:translate-y-1 transition-all uppercase">
-                       <Plus size={20} /> New Quote
+                    <button onClick={() => createNewJob('quote')} className="bg-white border-2 border-slate-200 text-slate-900 p-4 rounded-3xl text-xs font-black shadow-sm flex flex-col items-center gap-2 active:scale-95 transition-all uppercase">
+                       <Plus size={24} className="text-orange-500" /> New Field Report
                     </button>
-                    <button onClick={() => createNewJob('handover')} className="bg-slate-900 text-white p-4 rounded-2xl text-sm font-black shadow-lg flex flex-col items-center gap-2 border-b-4 border-emerald-500 active:translate-y-1 transition-all uppercase">
-                       <CheckCircle2 size={20} /> New Handover
+                    <button onClick={() => createNewJob('handover')} className="bg-slate-900 text-white p-4 rounded-3xl text-xs font-black shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all uppercase">
+                       <CheckCircle2 size={24} className="text-emerald-400" /> New Completed Works
                     </button>
                   </div>
                 </div>
 
                 <div className="grid gap-4">
                   {jobs.sort((a,b) => b.id - a.id).map(j => (
-                    <div key={j.id} onClick={() => { setActiveJobId(j.id); setViewMode('detail'); }} className={`bg-white p-6 rounded-3xl border-2 transition-all cursor-pointer group flex justify-between items-center ${j.type === 'handover' ? 'border-emerald-100 hover:border-emerald-500' : 'border-slate-100 hover:border-orange-500'}`}>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${j.type === 'handover' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
-                            {j.type}
-                          </span>
-                        </div>
-                        <p className="font-black text-slate-900 text-lg leading-tight">{j.address}</p>
-                        <p className="text-[12px] text-slate-400 font-bold uppercase mt-1">{j.tasks.length} LOG ENTRIES</p>
+                    <div key={j.id} onClick={() => { setActiveJobId(j.id); setViewMode('detail'); }} className={`bg-white p-6 rounded-[2rem] border-2 transition-all cursor-pointer flex justify-between items-center shadow-sm ${j.type === 'handover' ? 'border-emerald-100 hover:border-emerald-500' : 'border-slate-100 hover:border-orange-500'}`}>
+                      <div className="flex-1">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type === 'handover' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
+                          {j.type === 'handover' ? 'Completed Works' : 'Field Report'}
+                        </span>
+                        <p className="font-black text-slate-900 text-lg mt-1 truncate max-w-[200px]">{j.address}</p>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <button onClick={(e) => { e.stopPropagation(); if(confirm("Delete?")) saveToDB(jobs.filter(x => x.id !== j.id)); }} className="p-2 text-slate-200 hover:text-red-500 transition-colors">
-                           <Trash2 size={20} />
-                        </button>
+                      <div className="text-right flex items-center gap-4">
+                        <div className="flex flex-col items-end">
+                            <span className="text-[10px] font-black text-slate-400 uppercase">Total Hours</span>
+                            <span className="font-black text-slate-900">{getAggregatedTotals(j.tasks).string}</span>
+                        </div>
                         <ChevronRight size={20} className="text-slate-300" />
                       </div>
                     </div>
@@ -198,16 +208,25 @@
               </main>
             ) : (
               <main className="p-4 max-w-2xl mx-auto no-print">
-                <button onClick={() => setViewMode('dashboard')} className="mb-6 text-slate-400 font-bold text-xs flex items-center gap-1 hover:text-slate-900 uppercase tracking-widest">
-                  <ChevronRight size={14} className="rotate-180" /> Dashboard
-                </button>
+                <div className="flex justify-between items-center mb-6">
+                  <button onClick={() => setViewMode('dashboard')} className="text-slate-400 font-bold text-xs flex items-center gap-1 uppercase tracking-widest">
+                    <ChevronRight size={14} className="rotate-180" /> Dashboard
+                  </button>
+                  <button onClick={() => { if(confirm("Permanently delete project?")) { saveToDB(jobs.filter(x => x.id !== activeJobId)); setViewMode('dashboard'); }}} className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase">
+                    <Trash2 size={14}/> Delete
+                  </button>
+                </div>
                 
-                <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-8 relative overflow-hidden ${activeJob?.type === 'handover' ? 'bg-emerald-50 border-emerald-100' : 'bg-white border-slate-200'}`}>
-                  <div className="relative z-10 flex items-start gap-4">
-                    <div className="bg-white p-4 rounded-2xl text-slate-600 shadow-sm"><MapPin size={24} /></div>
+                <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-8 relative overflow-hidden bg-white ${activeJob?.type === 'handover' ? 'border-emerald-200' : 'border-slate-200'}`}>
+                  <div className="flex justify-between items-start relative z-10">
                     <div>
                       <h2 className="text-3xl font-black text-slate-900 leading-tight">{activeJob?.address}</h2>
-                      <p className="text-slate-500 font-bold uppercase tracking-widest text-[14px]">{activeJob?.clientName}</p>
+                      <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">{activeJob?.clientName}</p>
+                    </div>
+                    <div className="bg-slate-900 text-white p-4 rounded-2xl flex flex-col items-center min-w-[100px] shadow-lg border-b-4 border-orange-500">
+                        <Clock size={16} className="mb-1 text-orange-500"/>
+                        <span className="text-[10px] font-black uppercase text-slate-400">Total Hours</span>
+                        <span className="text-xl font-black">{getAggregatedTotals(activeJob?.tasks || []).string}</span>
                     </div>
                   </div>
                 </div>
@@ -215,8 +234,8 @@
                 <div className="space-y-6 mb-32">
                   {activeJob?.tasks.map((t, i) => (
                     <div key={t.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                      <div className="bg-slate-50 p-4 border-b flex justify-between items-center">
-                        <span className="font-black text-slate-400 text-[12px] tracking-widest uppercase">Entry #{i+1}</span>
+                      <div className="bg-slate-50 p-4 border-b flex justify-between items-center px-6">
+                        <span className="font-black text-slate-400 text-[10px] tracking-widest uppercase">Entry #{i+1}</span>
                         <div className="flex gap-2">
                            <button onClick={() => { setEditingTaskId(t.id); setTaskData(t); setIsTaskFormOpen(true); }} className="p-2 text-slate-400 hover:text-blue-500"><Pencil size={18}/></button>
                            <button onClick={() => { if(confirm("Delete log?")) saveToDB(jobs.map(j => j.id === activeJobId ? { ...j, tasks: j.tasks.filter(tk => tk.id !== t.id) } : j)); }} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18}/></button>
@@ -225,7 +244,7 @@
                       <div className="p-6">
                         <div className="flex justify-between items-start mb-2">
                            <h3 className="font-black text-xl text-slate-900">{t.title}</h3>
-                           <span className="bg-slate-100 px-3 py-1 rounded-full text-xs font-black text-slate-500">{t.time}</span>
+                           <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-black">{t.time}</span>
                         </div>
                         <p className="text-slate-500 text-sm leading-relaxed mb-4">{t.desc}</p>
                         {t.images?.length > 0 && (
@@ -238,6 +257,7 @@
                       </div>
                     </div>
                   ))}
+                  {activeJob?.tasks.length === 0 && <div className="text-center py-20 text-slate-300 font-black uppercase tracking-widest">No Log Entries Yet</div>}
                 </div>
 
                 <button onClick={() => setIsTaskFormOpen(true)} className={`fixed bottom-8 right-8 text-white w-20 h-20 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-4 border-white ${activeJob?.type === 'handover' ? 'bg-emerald-600' : 'bg-slate-900'}`}>
@@ -250,30 +270,30 @@
               <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md p-4 overflow-y-auto">
                 <div className="bg-white rounded-[3rem] max-w-md mx-auto p-8 shadow-2xl mt-4">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-black text-slate-900">{editingTaskId ? 'Edit' : 'New'} {activeJob?.type === 'handover' ? 'Completion Record' : 'Log Entry'}</h2>
-                    <button onClick={closeTaskModal} className="text-slate-400"><X size={24}/></button>
+                    <h2 className="text-2xl font-black text-slate-900">{editingTaskId ? 'Edit' : 'New'} {activeJob?.type === 'handover' ? 'Works Record' : 'Report Entry'}</h2>
+                    <button onClick={closeTaskModal} className="bg-slate-100 p-2 rounded-full text-slate-400"><X size={20}/></button>
                   </div>
 
-                  {activeJob?.type === 'handover' && !editingTaskId && (
-                    <div className="mb-6">
-                      <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                        {Object.keys(TEMPLATES).map(key => (
-                          <button key={key} onClick={() => setTaskData({...taskData, ...TEMPLATES[key]})} className="whitespace-nowrap bg-emerald-50 border-2 border-emerald-100 px-4 py-2 rounded-2xl text-[12px] font-black text-emerald-700 uppercase tracking-widest hover:border-emerald-500 transition-all">
-                            <Sparkles size={14} className="inline mr-1"/> {key}
-                          </button>
-                        ))}
-                      </div>
+                  {/* RESTORED TEMPLATES LOGIC */}
+                  <div className="mb-6">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Quick Templates</label>
+                    <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                      {Object.keys(TEMPLATES[activeJob.type] || {}).map(key => (
+                        <button key={key} onClick={() => setTaskData({...taskData, ...TEMPLATES[activeJob.type][key]})} className="whitespace-nowrap bg-white border-2 border-slate-100 px-4 py-2 rounded-2xl text-[12px] font-black text-slate-700 uppercase tracking-widest hover:border-orange-500 transition-all">
+                          <Sparkles size={14} className="inline mr-1 text-orange-500"/> {key}
+                        </button>
+                      ))}
                     </div>
-                  )}
+                  </div>
 
                   <div className="space-y-4">
-                    <input placeholder="Item Title / Phase" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
+                    <input placeholder="Task / Item Title" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
                     
                     <div className="flex gap-4">
-                      <input placeholder="Duration" className="w-32 p-4 bg-slate-50 rounded-2xl outline-none font-black text-center" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
+                      <input placeholder="Hours (e.g. 2h)" className="w-32 p-4 bg-slate-50 rounded-2xl outline-none font-black text-center" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
                       <label className="flex-1 bg-slate-100 p-4 rounded-2xl cursor-pointer flex items-center justify-center">
                         <ImageIcon className="text-slate-600 mr-2" />
-                        <span className="text-xs font-black text-slate-500 uppercase">Add Photos</span>
+                        <span className="text-xs font-black text-slate-500 uppercase">Photos</span>
                         <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
                       </label>
                     </div>
@@ -292,21 +312,21 @@
                     <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium" value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} />
                     
                     <input 
-                      placeholder={activeJob?.type === 'handover' ? "Delays or Obstacles" : "Tools Used"} 
-                      className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium border-l-4 border-orange-400" 
+                      placeholder={activeJob?.type === 'handover' ? "Notes / Delays" : "Tools Used"} 
+                      className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300" 
                       value={taskData.tools} 
                       onChange={e => setTaskData({...taskData, tools: e.target.value})} 
                     />
 
                     <textarea 
-                      placeholder={activeJob?.type === 'handover' ? "Final Work Summary..." : "Task Description..."} 
+                      placeholder="Full details..." 
                       className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium h-28 resize-none" 
                       value={taskData.desc} 
                       onChange={e => setTaskData({...taskData, desc: e.target.value})} 
                     />
                     
                     <button onClick={handleSaveTask} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all ${activeJob?.type === 'handover' ? 'bg-emerald-600' : 'bg-slate-900'}`}>
-                      <Save size={20} /> SAVE {activeJob?.type === 'handover' ? 'HANDOVER' : 'LOG'}
+                      <Save size={20} /> SAVE ENTRY
                     </button>
                   </div>
                 </div>
@@ -319,13 +339,13 @@
                 <div className={`border-b-[8px] pb-4 mb-4 flex justify-between items-end ${activeJob.type === 'handover' ? 'border-emerald-600' : 'border-slate-900'}`}>
                   <div>
                     <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">
-                      {activeJob.type === 'handover' ? 'Completion Certificate' : 'Jobsite Field Report'}
+                      {activeJob.type === 'handover' ? 'Completed Works' : 'Field Report'}
                     </h1>
-                    <p className="text-slate-400 font-black text-sm uppercase tracking-widest mt-2">{new Date().toLocaleDateString('en-AU', { dateStyle: 'full' })}</p>
+                    <p className="text-slate-400 font-black text-xs uppercase tracking-widest mt-2">{new Date().toLocaleDateString('en-AU', { dateStyle: 'full' })}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-black text-slate-900 uppercase">{activeJob.address}</p>
-                    <p className="text-slate-500 font-bold text-sm">{activeJob.clientName}</p>
+                    <p className="text-slate-500 font-bold text-sm">TOTAL TIME: {getAggregatedTotals(activeJob.tasks).string}</p>
                   </div>
                 </div>
 
@@ -344,7 +364,7 @@
                         </div>
                         <div className="p-4 bg-slate-50 rounded-xl border">
                           <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">
-                            {activeJob.type === 'handover' ? 'Delays/Notes' : 'Tools Used'}
+                            {activeJob.type === 'handover' ? 'Notes/Delays' : 'Tools Used'}
                           </label>
                           <span className="text-[12px] font-bold text-slate-600 uppercase leading-tight">{t.tools || 'None'}</span>
                         </div>
@@ -361,17 +381,6 @@
                     </div>
                   </div>
                 ))}
-                
-                {activeJob.type === 'handover' && (
-                  <div className="mt-12 grid grid-cols-2 gap-12">
-                    <div className="border-t-2 border-slate-900 pt-4">
-                      <p className="text-[10px] font-black uppercase text-slate-400">Representative Signature</p>
-                    </div>
-                    <div className="border-t-2 border-slate-900 pt-4">
-                      <p className="text-[10px] font-black uppercase text-slate-400">Client Signature / Date</p>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
