@@ -51,226 +51,42 @@
       const TEMPLATES = {
         quote: {
           // Interior Work
-          painting_interior: {
-            title: "Interior Painting",
-            materials: "Paint (premium/standard), Primer, Drop Sheets, Painter's Tape, Filler",
-            tools: "Brushes, Rollers, Extension Poles, Sandpaper, Spray Gun (optional)",
-            desc: "Surface preparation, filling holes/cracks, primer coat, and 2 finish coats"
-          },
-          painting_exterior: {
-            title: "Exterior Painting",
-            materials: "Exterior Paint, Primer, Weatherproof Filler, Drop Sheets",
-            tools: "Pressure Washer, Scrapers, Brushes, Rollers, Ladders/Scaffolding",
-            desc: "Pressure wash, scrape old paint, repair surfaces, prime and 2 finish coats"
-          },
-          drywall_repair: {
-            title: "Drywall/Gyprock Repair",
-            materials: "Plasterboard Sheets, Joint Compound, Mesh Tape, Sandpaper, Paint",
-            tools: "Utility Knife, Trowels, Sanding Block, Drywall Saw",
-            desc: "Cut out damaged section, install new board, tape joints, compound, sand and paint"
-          },
+          painting_interior: { title: "Interior Painting", materials: "Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools: "Brushes, Rollers, Extension Poles, Sandpaper", desc: "Surface prep, fill holes, prime and 2 finish coats" },
+          painting_exterior: { title: "Exterior Painting", materials: "Exterior Paint, Primer, Weatherproof Filler, Drop Sheets", tools: "Pressure Washer, Scrapers, Brushes, Rollers, Ladders", desc: "Pressure wash, scrape, repair, prime and 2 coats" },
+          drywall_repair: { title: "Drywall/Gyprock Repair", materials: "Plasterboard, Joint Compound, Mesh Tape, Sandpaper, Paint", tools: "Utility Knife, Trowels, Sanding Block, Drywall Saw", desc: "Cut damaged section, install new board, tape, compound, sand and paint" },
           
-          // Flooring
-          deck_build: {
-            title: "Deck Construction",
-            materials: "Treated Pine/Hardwood Decking, Joists, Posts, Concrete, Galv Screws/Nails",
-            tools: "Circular Saw, Drill, Level, Post Hole Digger, String Line",
-            desc: "Site preparation, post installation, frame construction, decking installation"
-          },
-          laminate_flooring: {
-            title: "Laminate/Vinyl Flooring Installation",
-            materials: "Laminate/Vinyl Planks, Underlay, Skirting Boards, Adhesive (if required)",
-            tools: "Jigsaw, Spacers, Tapping Block, Pull Bar, Measuring Tape",
-            desc: "Remove old flooring, level subfloor, install underlay and planks, fit skirting"
-          },
+          // Flooring & Outdoor
+          deck_build: { title: "Deck Construction", materials: "Treated Pine/Hardwood Decking, Joists, Posts, Concrete, Screws", tools: "Circular Saw, Drill, Level, Post Hole Digger, String Line", desc: "Site prep, post installation, frame build, decking installation" },
+          laminate_flooring: { title: "Laminate/Vinyl Flooring", materials: "Laminate/Vinyl Planks, Underlay, Skirting Boards, Adhesive", tools: "Jigsaw, Spacers, Tapping Block, Pull Bar, Measuring Tape", desc: "Remove old flooring, level subfloor, install underlay and planks" },
+          fencing: { title: "Fence Installation", materials: "Timber Palings/Colorbond, Steel/Timber Posts, Concrete, Rails, Screws", tools: "Post Hole Digger, Level, String Line, Power Drill, Saw", desc: "Mark line, dig holes, set posts in concrete, install rails and palings" },
+          pressure_washing: { title: "Pressure Washing", materials: "Industrial Degreaser, Surface Cleaner Solution", tools: "Petrol Pressure Washer, Turbo Nozzle, Surface Cleaner", desc: "Deep clean driveways, paths, decks, exteriors, remove mould" },
+          gutter_cleaning: { title: "Gutter Cleaning & Repair", materials: "Gutter Guard (optional), Sealant, Replacement Brackets", tools: "Ladder, Scoop, Hose, Safety Harness", desc: "Remove debris, flush gutters, check downpipes, repair leaks" },
           
-          // Outdoor/External
-          fencing: {
-            title: "Fence Installation & Repair",
-            materials: "Timber Palings/Colorbond Sheets, Steel/Timber Posts, Concrete, Rails, Screws",
-            tools: "Post Hole Digger, Level, String Line, Power Drill, Circular Saw",
-            desc: "Mark fence line, dig post holes, set posts in concrete, install rails and palings"
-          },
-          pressure_washing: {
-            title: "Pressure Washing",
-            materials: "Industrial Degreaser, Surface Cleaner Solution, Water",
-            tools: "Petrol/Electric Pressure Washer, Turbo Nozzle, Surface Cleaner Attachment",
-            desc: "Deep clean driveways, paths, decks, house exteriors, remove mould and grime"
-          },
-          gutter_cleaning: {
-            title: "Gutter Cleaning & Repair",
-            materials: "Gutter Guard (optional), Sealant, Replacement Brackets",
-            tools: "Ladder, Scoop/Trowel, Hose, Safety Harness",
-            desc: "Remove debris, flush gutters, check downpipes, repair leaks, install guards"
-          },
-          
-          // Carpentry
-          door_installation: {
-            title: "Door Installation/Replacement",
-            materials: "Door & Frame, Hinges, Door Handle/Lock, Screws, Wood Filler",
-            tools: "Chisel, Drill, Level, Saw, Plane, Measuring Tape",
-            desc: "Remove old door, fit frame, hang door, install hardware, adjust for clearance"
-          },
-          shelving_storage: {
-            title: "Shelving & Storage Solutions",
-            materials: "Timber/MDF Boards, Brackets, Screws, Wall Anchors, Wood Stain/Paint",
-            tools: "Drill, Level, Stud Finder, Saw, Measuring Tape",
-            desc: "Measure space, cut shelves to size, install brackets, secure shelving, finish"
-          },
-          
-          // Electrical (basic - non-licensed work only)
-          light_fixtures: {
-            title: "Light Fixture Installation",
-            materials: "Light Fixtures, Mounting Hardware, Wire Nuts, Electrical Tape",
-            tools: "Screwdriver, Wire Strippers, Voltage Tester, Ladder",
-            desc: "Replace existing fixtures (no new wiring), test connections, secure mounting"
-          },
-          
-          // Plumbing (basic - non-licensed work only)
-          tap_replacement: {
-            title: "Tap/Faucet Replacement",
-            materials: "New Tap/Faucet, Plumber's Tape, Flexible Hoses, Washers",
-            tools: "Adjustable Wrench, Basin Wrench, Bucket, Towels",
-            desc: "Shut off water, remove old tap, install new tap, test for leaks"
-          },
-          
-          // Assembly & Installation
-          furniture_assembly: {
-            title: "Furniture Assembly & Installation",
-            materials: "Furniture Kit, Additional Screws/Fixings (if needed), Wall Anchors",
-            tools: "Allen Keys, Screwdrivers, Drill, Level, Rubber Mallet",
-            desc: "Unpack items, follow assembly instructions, secure to walls if required"
-          },
-          tv_mounting: {
-            title: "TV Wall Mounting",
-            materials: "TV Mount Bracket, Wall Anchors, Screws, Cable Management",
-            tools: "Stud Finder, Level, Drill, Socket Set, Cable Tester",
-            desc: "Find studs, mount bracket, attach TV, conceal cables, test security"
-          },
-          
-          // General Maintenance
-          general_repairs: {
-            title: "General Handyman Repairs",
-            materials: "Various (depends on job scope)",
-            tools: "Basic Hand Tools, Power Tools as Required",
-            desc: "Multiple small repair tasks - door adjustments, hole filling, minor fixes"
-          }
+          // Carpentry & Installation
+          door_installation: { title: "Door Installation", materials: "Door & Frame, Hinges, Handle/Lock, Screws, Wood Filler", tools: "Chisel, Drill, Level, Saw, Plane, Measuring Tape", desc: "Remove old door, fit frame, hang door, install hardware" },
+          shelving_storage: { title: "Shelving & Storage", materials: "Timber/MDF Boards, Brackets, Screws, Wall Anchors, Paint/Stain", tools: "Drill, Level, Stud Finder, Saw, Measuring Tape", desc: "Measure space, cut shelves, install brackets, secure and finish" },
+          tap_replacement: { title: "Tap/Faucet Replacement", materials: "New Tap, Plumber's Tape, Flexible Hoses, Washers", tools: "Adjustable Wrench, Basin Wrench, Bucket, Towels", desc: "Shut off water, remove old tap, install new tap, test for leaks" },
+          furniture_assembly: { title: "Furniture Assembly", materials: "Furniture Kit, Additional Screws, Wall Anchors", tools: "Allen Keys, Screwdrivers, Drill, Level, Rubber Mallet", desc: "Unpack, assemble per instructions, secure to walls if needed" },
+          tv_mounting: { title: "TV Wall Mounting", materials: "TV Mount Bracket, Wall Anchors, Screws, Cable Management", tools: "Stud Finder, Level, Drill, Socket Set", desc: "Find studs, mount bracket, attach TV, conceal cables" },
+          general_repairs: { title: "General Repairs", materials: "Various (depends on scope)", tools: "Basic Hand Tools, Power Tools as Required", desc: "Multiple small tasks - adjustments, hole filling, minor fixes" }
         },
         
         handover: {
-          painting_interior: {
-            title: "Interior Painting",
-            materials: "Paint (premium/standard), Primer, Drop Sheets, Painter's Tape, Filler",
-            tools: "Brushes, Rollers, Extension Poles, Sandpaper, Spray Gun (optional)",
-            desc: "Surface preparation, filling holes/cracks, primer coat, and 2 finish coats"
-          },
-          painting_exterior: {
-            title: "Exterior Painting",
-            materials: "Exterior Paint, Primer, Weatherproof Filler, Drop Sheets",
-            tools: "Pressure Washer, Scrapers, Brushes, Rollers, Ladders/Scaffolding",
-            desc: "Pressure wash, scrape old paint, repair surfaces, prime and 2 finish coats"
-          },
-          drywall_repair: {
-            title: "Drywall/Gyprock Repair",
-            materials: "Plasterboard Sheets, Joint Compound, Mesh Tape, Sandpaper, Paint",
-            tools: "Utility Knife, Trowels, Sanding Block, Drywall Saw",
-            desc: "Cut out damaged section, install new board, tape joints, compound, sand and paint"
-          },
-          
-          // Flooring
-          deck_build: {
-            title: "Deck Construction",
-            materials: "Treated Pine/Hardwood Decking, Joists, Posts, Concrete, Galv Screws/Nails",
-            tools: "Circular Saw, Drill, Level, Post Hole Digger, String Line",
-            desc: "Site preparation, post installation, frame construction, decking installation"
-          },
-          laminate_flooring: {
-            title: "Laminate/Vinyl Flooring Installation",
-            materials: "Laminate/Vinyl Planks, Underlay, Skirting Boards, Adhesive (if required)",
-            tools: "Jigsaw, Spacers, Tapping Block, Pull Bar, Measuring Tape",
-            desc: "Remove old flooring, level subfloor, install underlay and planks, fit skirting"
-          },
-          
-          // Outdoor/External
-          fencing: {
-            title: "Fence Installation & Repair",
-            materials: "Timber Palings/Colorbond Sheets, Steel/Timber Posts, Concrete, Rails, Screws",
-            tools: "Post Hole Digger, Level, String Line, Power Drill, Circular Saw",
-            desc: "Mark fence line, dig post holes, set posts in concrete, install rails and palings"
-          },
-          pressure_washing: {
-            title: "Pressure Washing",
-            materials: "Industrial Degreaser, Surface Cleaner Solution, Water",
-            tools: "Petrol/Electric Pressure Washer, Turbo Nozzle, Surface Cleaner Attachment",
-            desc: "Deep clean driveways, paths, decks, house exteriors, remove mould and grime"
-          },
-          gutter_cleaning: {
-            title: "Gutter Cleaning & Repair",
-            materials: "Gutter Guard (optional), Sealant, Replacement Brackets",
-            tools: "Ladder, Scoop/Trowel, Hose, Safety Harness",
-            desc: "Remove debris, flush gutters, check downpipes, repair leaks, install guards"
-          },
-          
-          // Carpentry
-          door_installation: {
-            title: "Door Installation/Replacement",
-            materials: "Door & Frame, Hinges, Door Handle/Lock, Screws, Wood Filler",
-            tools: "Chisel, Drill, Level, Saw, Plane, Measuring Tape",
-            desc: "Remove old door, fit frame, hang door, install hardware, adjust for clearance"
-          },
-          shelving_storage: {
-            title: "Shelving & Storage Solutions",
-            materials: "Timber/MDF Boards, Brackets, Screws, Wall Anchors, Wood Stain/Paint",
-            tools: "Drill, Level, Stud Finder, Saw, Measuring Tape",
-            desc: "Measure space, cut shelves to size, install brackets, secure shelving, finish"
-          },
-          
-          // Electrical (basic - non-licensed work only)
-          light_fixtures: {
-            title: "Light Fixture Installation",
-            materials: "Light Fixtures, Mounting Hardware, Wire Nuts, Electrical Tape",
-            tools: "Screwdriver, Wire Strippers, Voltage Tester, Ladder",
-            desc: "Replace existing fixtures (no new wiring), test connections, secure mounting"
-          },
-          
-          // Plumbing (basic - non-licensed work only)
-          tap_replacement: {
-            title: "Tap/Faucet Replacement",
-            materials: "New Tap/Faucet, Plumber's Tape, Flexible Hoses, Washers",
-            tools: "Adjustable Wrench, Basin Wrench, Bucket, Towels",
-            desc: "Shut off water, remove old tap, install new tap, test for leaks"
-          },
-          
-          // Assembly & Installation
-          furniture_assembly: {
-            title: "Furniture Assembly & Installation",
-            materials: "Furniture Kit, Additional Screws/Fixings (if needed), Wall Anchors",
-            tools: "Allen Keys, Screwdrivers, Drill, Level, Rubber Mallet",
-            desc: "Unpack items, follow assembly instructions, secure to walls if required"
-          },
-          tv_mounting: {
-            title: "TV Wall Mounting",
-            materials: "TV Mount Bracket, Wall Anchors, Screws, Cable Management",
-            tools: "Stud Finder, Level, Drill, Socket Set, Cable Tester",
-            desc: "Find studs, mount bracket, attach TV, conceal cables, test security"
-          },
-          
-          // General Maintenance
-          general_repairs: {
-            title: "General Handyman Repairs",
-            materials: "Various (depends on job scope)",
-            tools: "Basic Hand Tools, Power Tools as Required",
-            desc: "Multiple small repair tasks - door adjustments, hole filling, minor fixes"
-          }
-        },
-          
-          cleanup_handover: {
-            title: "Site Cleanup & Handover",
-            materials: "Cleaning supplies, Vacuum, Mop",
-            tools: "Minor weather delay (1 day)",
-            desc: "Comprehensive site cleanup completed. All debris removed, surfaces cleaned, area left client-ready.",
-            checklist: "Debris removed, Surfaces cleaned, Flooring vacuumed/mopped, Client access restored"
-          }
+          painting_interior: { title: "Interior Painting", materials: "N/A", tools: "No delays", desc: "All surfaces painted to specification. Touch-up paint provided to client." },
+          painting_exterior: { title: "Exterior Painting", materials: "N/A", tools: "No delays", desc: "Exterior surfaces completed. All equipment removed from site." },
+          drywall_repair: { title: "Drywall/Gyprock Repair", materials: "N/A", tools: "No delays", desc: "Repairs completed and painted to match existing. Surface smooth and ready." },
+          deck_build: { title: "Deck Construction", materials: "N/A", tools: "No delays", desc: "Deck construction complete. All safety checks passed. Client briefed on maintenance." },
+          laminate_flooring: { title: "Laminate/Vinyl Flooring", materials: "N/A", tools: "No delays", desc: "Flooring installed. Skirting fitted. Excess materials removed." },
+          fencing: { title: "Fence Installation", materials: "N/A", tools: "No delays", desc: "Fence installed to specifications. Posts secured. Site cleaned of debris." },
+          pressure_washing: { title: "Pressure Washing", materials: "N/A", tools: "No delays", desc: "All surfaces cleaned. Water run-off managed. Area left clean and dry." },
+          gutter_cleaning: { title: "Gutter Cleaning & Repair", materials: "N/A", tools: "No delays", desc: "Gutters cleared and tested. Repairs completed. Downpipes flowing freely." },
+          door_installation: { title: "Door Installation", materials: "N/A", tools: "No delays", desc: "Door installed and operating smoothly. Hardware fitted and tested." },
+          shelving_storage: { title: "Shelving & Storage", materials: "N/A", tools: "No delays", desc: "Shelving installed securely. Level checked. Weight capacity advised to client." },
+          tap_replacement: { title: "Tap/Faucet Replacement", materials: "N/A", tools: "No delays", desc: "Tap installed and tested for leaks. Water pressure confirmed normal." },
+          furniture_assembly: { title: "Furniture Assembly", materials: "N/A", tools: "No delays", desc: "Furniture assembled per manufacturer specs. Secured to walls where required." },
+          tv_mounting: { title: "TV Wall Mounting", materials: "N/A", tools: "No delays", desc: "TV mounted securely to studs. Cables managed. Viewing angle confirmed with client." },
+          general_repairs: { title: "General Repairs", materials: "N/A", tools: "No delays", desc: "All repair items completed as per quote. Work area cleaned." },
+          cleanup: { title: "Site Cleanup", materials: "Cleaning supplies", tools: "Minor weather delay", desc: "Site cleaned of all debris. Surfaces wiped down. Client access restored." }
         }
       };
 
