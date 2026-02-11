@@ -1,423 +1,234 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0f172a" />
-    <title>JobSite Master | Log</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+<html lang="en-AU">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handee Solutions | Premium Construction & Asset Maintenance</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
     <style>
-      body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
-      @media print {
-        @page { margin: 8mm; size: A4; }
-        body { background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .no-print, button, .action-btns, .fixed { display: none !important; }
-        .print-only { display: block !important; }
-        .print-card { break-inside: avoid; border: 2px solid #0f172a !important; margin-bottom: 15px; border-radius: 10px; overflow: hidden; page-break-inside: avoid; }
-        img { max-width: 100% !important; height: auto !important; }
-      }
-      .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@18.2.0",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "lucide-react": "https://esm.sh/lucide-react@0.344.0",
-        "idb-keyval": "https://esm.sh/idb-keyval@6.2.1"
-      }
-    }
-    </script>
-  </head>
-  <body>
-    <div id="root"></div>
-
-    <script type="text/babel" data-type="module">
-      import React, { useState, useEffect } from 'react';
-      import ReactDOM from 'react-dom/client';
-      import { get, set } from 'idb-keyval';
-      import { 
-        Trash2, ImageIcon, Printer, Plus, X, Hammer, 
-        ChevronRight, Sparkles, MapPin, Pencil, Save, HardDrive, CheckCircle2, Clock
-      } from 'lucide-react';
-
-      const DB_KEY = 'jobsite-master-v3';
-
-      // Templates grouped by Job Type
-      const TEMPLATES = {
-        quote: {
-          // Interior Work
-          painting_interior: { title: "Interior Painting", materials: "Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools: "Brushes, Rollers, Extension Poles, Sandpaper", desc: "Surface prep, fill holes, prime and 2 finish coats" },
-          painting_exterior: { title: "Exterior Painting", materials: "Exterior Paint, Primer, Weatherproof Filler, Drop Sheets", tools: "Pressure Washer, Scrapers, Brushes, Rollers, Ladders", desc: "Pressure wash, scrape, repair, prime and 2 coats" },
-          drywall_repair: { title: "Drywall/Gyprock Repair", materials: "Plasterboard, Joint Compound, Mesh Tape, Sandpaper, Paint", tools: "Utility Knife, Trowels, Sanding Block, Drywall Saw", desc: "Cut damaged section, install new board, tape, compound, sand and paint" },
-          
-          // Flooring & Outdoor
-          deck_build: { title: "Deck Construction", materials: "Treated Pine/Hardwood Decking, Joists, Posts, Concrete, Screws", tools: "Circular Saw, Drill, Level, Post Hole Digger, String Line", desc: "Site prep, post installation, frame build, decking installation" },
-          laminate_flooring: { title: "Laminate/Vinyl Flooring", materials: "Laminate/Vinyl Planks, Underlay, Skirting Boards, Adhesive", tools: "Jigsaw, Spacers, Tapping Block, Pull Bar, Measuring Tape", desc: "Remove old flooring, level subfloor, install underlay and planks" },
-          fencing: { title: "Fence Installation", materials: "Timber Palings/Colorbond, Steel/Timber Posts, Concrete, Rails, Screws", tools: "Post Hole Digger, Level, String Line, Power Drill, Saw", desc: "Mark line, dig holes, set posts in concrete, install rails and palings" },
-          pressure_washing: { title: "Pressure Washing", materials: "Industrial Degreaser, Surface Cleaner Solution", tools: "Petrol Pressure Washer, Turbo Nozzle, Surface Cleaner", desc: "Deep clean driveways, paths, decks, exteriors, remove mould" },
-          gutter_cleaning: { title: "Gutter Cleaning & Repair", materials: "Gutter Guard (optional), Sealant, Replacement Brackets", tools: "Ladder, Scoop, Hose, Safety Harness", desc: "Remove debris, flush gutters, check downpipes, repair leaks" },
-          
-          // Carpentry & Installation
-          door_installation: { title: "Door Installation", materials: "Door & Frame, Hinges, Handle/Lock, Screws, Wood Filler", tools: "Chisel, Drill, Level, Saw, Plane, Measuring Tape", desc: "Remove old door, fit frame, hang door, install hardware" },
-          shelving_storage: { title: "Shelving & Storage", materials: "Timber/MDF Boards, Brackets, Screws, Wall Anchors, Paint/Stain", tools: "Drill, Level, Stud Finder, Saw, Measuring Tape", desc: "Measure space, cut shelves, install brackets, secure and finish" },
-          tap_replacement: { title: "Tap/Faucet Replacement", materials: "New Tap, Plumber's Tape, Flexible Hoses, Washers", tools: "Adjustable Wrench, Basin Wrench, Bucket, Towels", desc: "Shut off water, remove old tap, install new tap, test for leaks" },
-          furniture_assembly: { title: "Furniture Assembly", materials: "Furniture Kit, Additional Screws, Wall Anchors", tools: "Allen Keys, Screwdrivers, Drill, Level, Rubber Mallet", desc: "Unpack, assemble per instructions, secure to walls if needed" },
-          tv_mounting: { title: "TV Wall Mounting", materials: "TV Mount Bracket, Wall Anchors, Screws, Cable Management", tools: "Stud Finder, Level, Drill, Socket Set", desc: "Find studs, mount bracket, attach TV, conceal cables" },
-          general_repairs: { title: "General Repairs", materials: "Various (depends on scope)", tools: "Basic Hand Tools, Power Tools as Required", desc: "Multiple small tasks - adjustments, hole filling, minor fixes" }
-        },
-        
-        handover: {
-          painting_interior: { title: "Interior Painting", materials: "N/A", tools: "No delays", desc: "All surfaces painted to specification. Touch-up paint provided to client." },
-          painting_exterior: { title: "Exterior Painting", materials: "N/A", tools: "No delays", desc: "Exterior surfaces completed. All equipment removed from site." },
-          drywall_repair: { title: "Drywall/Gyprock Repair", materials: "N/A", tools: "No delays", desc: "Repairs completed and painted to match existing. Surface smooth and ready." },
-          deck_build: { title: "Deck Construction", materials: "N/A", tools: "No delays", desc: "Deck construction complete. All safety checks passed. Client briefed on maintenance." },
-          laminate_flooring: { title: "Laminate/Vinyl Flooring", materials: "N/A", tools: "No delays", desc: "Flooring installed. Skirting fitted. Excess materials removed." },
-          fencing: { title: "Fence Installation", materials: "N/A", tools: "No delays", desc: "Fence installed to specifications. Posts secured. Site cleaned of debris." },
-          pressure_washing: { title: "Pressure Washing", materials: "N/A", tools: "No delays", desc: "All surfaces cleaned. Water run-off managed. Area left clean and dry." },
-          gutter_cleaning: { title: "Gutter Cleaning & Repair", materials: "N/A", tools: "No delays", desc: "Gutters cleared and tested. Repairs completed. Downpipes flowing freely." },
-          door_installation: { title: "Door Installation", materials: "N/A", tools: "No delays", desc: "Door installed and operating smoothly. Hardware fitted and tested." },
-          shelving_storage: { title: "Shelving & Storage", materials: "N/A", tools: "No delays", desc: "Shelving installed securely. Level checked. Weight capacity advised to client." },
-          tap_replacement: { title: "Tap/Faucet Replacement", materials: "N/A", tools: "No delays", desc: "Tap installed and tested for leaks. Water pressure confirmed normal." },
-          furniture_assembly: { title: "Furniture Assembly", materials: "N/A", tools: "No delays", desc: "Furniture assembled per manufacturer specs. Secured to walls where required." },
-          tv_mounting: { title: "TV Wall Mounting", materials: "N/A", tools: "No delays", desc: "TV mounted securely to studs. Cables managed. Viewing angle confirmed with client." },
-          general_repairs: { title: "General Repairs", materials: "N/A", tools: "No delays", desc: "All repair items completed as per quote. Work area cleaned." },
-          cleanup: { title: "Site Cleanup", materials: "Cleaning supplies", tools: "Minor weather delay", desc: "Site cleaned of all debris. Surfaces wiped down. Client access restored." }
+        :root {
+            --brand-dark: #121212;
+            --brand-gray: #f4f4f4;
+            --brand-accent: #2563eb; /* Professional Engineering Blue */
+            --text-main: #333333;
+            --border: #e5e7eb;
+            --transition: all 0.25s ease;
         }
-      };
 
-      const compressImage = (file) => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target.result;
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const MAX_WIDTH = 800;
-              let width = img.width;
-              let height = img.height;
-              if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-              canvas.width = width;
-              canvas.height = height;
-              const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', 0.6));
-            };
-          };
-        });
-      };
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #ffffff; 
+            color: var(--text-main); 
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
 
-      const App = () => {
-        const [jobs, setJobs] = useState([]);
-        const [activeJobId, setActiveJobId] = useState(null);
-        const [viewMode, setViewMode] = useState('dashboard');
-        const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
-        const [editingTaskId, setEditingTaskId] = useState(null);
-        const [dbSize, setDbSize] = useState('0 MB');
-        const [taskData, setTaskData] = useState({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
+        h1, h2, h3 { font-family: 'Archivo', sans-serif; text-transform: uppercase; letter-spacing: -0.02em; }
 
-        useEffect(() => { loadJobs(); }, []);
+        /* Navigation - Minimalist & Fixed */
+        nav { 
+            position: fixed; width: 100%; padding: 20px 5%; 
+            display: flex; justify-content: space-between; align-items: center; 
+            z-index: 1000; background: white; border-bottom: 1px solid var(--border);
+        }
+        .logo { font-size: 1.1rem; font-weight: 900; letter-spacing: 2px; }
+        .logo span { color: var(--brand-accent); }
+        .nav-links a { 
+            color: var(--text-main); text-decoration: none; font-size: 0.8rem; 
+            font-weight: 600; margin-left: 30px; text-transform: uppercase;
+        }
 
-        const loadJobs = async () => {
-          const data = await get(DB_KEY) || [];
-          setJobs(data);
-          updateStorageMetric(data);
-        };
+        /* Hero - Power & Precision */
+        .hero { 
+            height: 100vh; display: flex; align-items: center; 
+            padding: 0 10%; background: #fafafa;
+            border-bottom: 1px solid var(--border);
+        }
+        .hero-content { max-width: 850px; }
+        .hero h1 { font-size: clamp(3rem, 8vw, 6rem); line-height: 0.85; margin-bottom: 30px; color: var(--brand-dark); }
+        .hero p { font-size: 1.25rem; max-width: 600px; margin-bottom: 40px; color: #666; font-weight: 300; }
 
-        const updateStorageMetric = (data) => {
-          const string = JSON.stringify(data);
-          const size = (new TextEncoder().encode(string).length / 1024 / 1024).toFixed(2);
-          setDbSize(`${size} MB`);
-        };
+        .btn { 
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 20px 40px; background: var(--brand-dark); color: white; 
+            text-decoration: none; font-weight: 700; border-radius: 0; transition: var(--transition);
+        }
+        .btn:hover { background: var(--brand-accent); }
 
-        const saveToDB = (newJobs) => { setJobs(newJobs); set(DB_KEY, newJobs); updateStorageMetric(newJobs); };
+        /* Performance Metrics Section */
+        .metrics { 
+            display: grid; grid-template-columns: repeat(3, 1fr); 
+            background: var(--brand-dark); color: white; padding: 60px 10%;
+        }
+        .metric-item h2 { font-size: 3rem; color: var(--brand-accent); }
+        .metric-item p { font-size: 0.8rem; text-transform: uppercase; opacity: 0.7; }
 
-        const activeJob = jobs.find(j => j.id === activeJobId);
+        /* Services - Focused on Solutions */
+        .section { padding: 120px 10%; }
+        .section-header { margin-bottom: 80px; border-left: 5px solid var(--brand-accent); padding-left: 30px; }
+        .service-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+        .service-card { background: white; padding: 60px; transition: var(--transition); }
+        .service-card:hover { background: #fcfcfc; }
+        .service-card h3 { margin-bottom: 20px; font-size: 1.5rem; }
+        .service-card ul { list-style: none; font-size: 0.9rem; color: #777; }
+        .service-card li { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
 
-        const getAggregatedTotals = (tasks) => {
-          let totalMins = 0;
-          tasks.forEach(t => {
-            const timeVal = parseFloat(t.time) || 0;
-            if (t.time?.toLowerCase().includes('m')) totalMins += timeVal;
-            else totalMins += timeVal * 60;
-          });
-          const h = Math.floor(totalMins / 60);
-          const m = Math.round(totalMins % 60);
-          return { h, m, string: `${h}h ${m}m` };
-        };
+        /* The "Expertise" Narrative */
+        .narrative { background: var(--brand-gray); display: grid; grid-template-columns: 1fr 1fr; align-items: center; }
+        .narrative-text { padding: 100px; }
+        .narrative-image { height: 100%; min-height: 500px; background: url('https://images.unsplash.com/photo-1541888946425-d81bb19480c5?auto=format&fit=crop&q=80&w=1500') center/cover; }
 
-        const createNewJob = (type) => {
-          const label = type === 'handover' ? 'Completed Works' : 'Field Report';
-          const addr = prompt(`${label.toUpperCase()} - Job Address:`);
-          if(!addr) return;
-          const client = prompt("Client Name:");
-          const newJob = { id: Date.now(), type, address: addr, clientName: client, tasks: [] };
-          saveToDB([...jobs, newJob]);
-        };
+        /* Contact Section */
+        .contact-box { background: #fff; padding: 80px; border: 1px solid var(--border); margin-top: -100px; position: relative; z-index: 10; box-shadow: 0 30px 60px rgba(0,0,0,0.05); }
+        input, textarea { width: 100%; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; font-family: inherit; font-size: 1rem; }
+        
+        footer { padding: 100px 10% 50px; background: white; border-top: 1px solid var(--border); }
+        .footer-bottom { margin-top: 60px; display: flex; justify-content: space-between; font-size: 0.8rem; color: #999; }
 
-        const handleSaveTask = () => {
-          if (!taskData.title) return alert("Title Required");
-          const updatedTasks = editingTaskId 
-            ? activeJob.tasks.map(t => t.id === editingTaskId ? { ...taskData, id: editingTaskId } : t)
-            : [...activeJob.tasks, { ...taskData, id: Date.now() }];
-          saveToDB(jobs.map(j => j.id === activeJobId ? { ...j, tasks: updatedTasks } : j));
-          closeTaskModal();
-        };
+        @media (max-width: 900px) {
+            .hero { padding: 120px 5% 60px; height: auto; }
+            .narrative { grid-template-columns: 1fr; }
+            .metrics { grid-template-columns: 1fr; gap: 40px; }
+            .contact-box { padding: 40px; margin-top: 0; }
+        }
+    </style>
+</head>
+<body>
 
-        const closeTaskModal = () => {
-          setIsTaskFormOpen(false);
-          setEditingTaskId(null);
-          setTaskData({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
-        };
+    <nav>
+        <div class="logo">HANDEE<span>SOLUTIONS</span></div>
+        <div class="nav-links">
+            <a href="#services">Capabilities</a>
+            <a href="#about">The Standard</a>
+            <a href="#contact">Consultation</a>
+        </div>
+    </nav>
 
-        const handleImageUpload = async (e) => {
-          const files = Array.from(e.target.files);
-          const compressedStrings = await Promise.all(files.map(file => compressImage(file)));
-          setTaskData(prev => ({ ...prev, images: [...prev.images, ...compressedStrings] }));
-        };
+    <section class="hero">
+        <div class="hero-content">
+            <h1 data-aos="fade-up">Precision <br>Construction.</h1>
+            <p data-aos="fade-up" data-aos-delay="100">Licensed building contractors delivering structural excellence and high-value property renovations across North Brisbane and the Bayside.</p>
+            <a href="#contact" class="btn" data-aos="fade-up" data-aos-delay="200">
+                REQUEST CAPABILITY STATEMENT <i data-lucide="arrow-right" size="18"></i>
+            </a>
+        </div>
+    </section>
 
-        return (
-          <div className="min-h-screen">
-            {/* Header with Memory Counter */}
-            <header className="bg-slate-900 text-white p-4 no-print flex justify-between items-center shadow-lg sticky top-0 z-50">
-              <div className="flex items-center gap-2 cursor-pointer" onClick={() => setViewMode('dashboard')}>
-                <div className="bg-orange-500 p-2 rounded-xl text-white shadow-inner"><Hammer size={22} /></div>
-                <h1 className="font-black text-xl tracking-tight uppercase">Jobsite</h1>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                  <HardDrive size={12} className="text-slate-400"/> {dbSize} USED
+    <div class="metrics">
+        <div class="metric-item" data-aos="fade-up">
+            <h2>25+</h2>
+            <p>Years Industry Leadership</p>
+        </div>
+        <div class="metric-item" data-aos="fade-up" data-aos-delay="100">
+            <h2>100%</h2>
+            <p>Compliance & Safety Record</p>
+        </div>
+        <div class="metric-item" data-aos="fade-up" data-aos-delay="200">
+            <h2>QBCC</h2>
+            <p>Licensed Specialist (15462565)</p>
+        </div>
+    </div>
+
+    <section id="services" class="section">
+        <div class="section-header" data-aos="fade-right">
+            <p style="text-transform: uppercase; font-weight: 700; color: var(--brand-accent); margin-bottom: 10px;">Our Capabilities</p>
+            <h2>Strategic Building Solutions</h2>
+        </div>
+        
+        <div class="service-grid">
+            <div class="service-card" data-aos="fade-up">
+                <h3>Asset Maintenance</h3>
+                <p>Specialized structural repairs and long-term maintenance for Body Corporate and high-end residential estates.</p>
+                <br>
+                <ul>
+                    <li><i data-lucide="check" size="14"></i> Remedial Carpentry</li>
+                    <li><i data-lucide="check" size="14"></i> Timber Rot Mitigation</li>
+                    <li><i data-lucide="check" size="14"></i> Structural Reinforcement</li>
+                </ul>
+            </div>
+            <div class="service-card" data-aos="fade-up" data-aos-delay="100">
+                <h3>Technical Waterproofing</h3>
+                <p>Certified liquid-applied and sheet membrane systems. We identify and neutralize water ingress at the substrate level.</p>
+                <br>
+                <ul>
+                    <li><i data-lucide="check" size="14"></i> Wet Area Compliance</li>
+                    <li><i data-lucide="check" size="14"></i> External Membrane Systems</li>
+                    <li><i data-lucide="check" size="14"></i> Certified Inspections</li>
+                </ul>
+            </div>
+            <div class="service-card" data-aos="fade-up" data-aos-delay="200">
+                <h3>Capital Renovations</h3>
+                <p>High-yield kitchen and bathroom transformations managed with surgical precision from design to handover.</p>
+                <br>
+                <ul>
+                    <li><i data-lucide="check" size="14"></i> Full Turnkey Management</li>
+                    <li><i data-lucide="check" size="14"></i> Custom Joinery Integration</li>
+                    <li><i data-lucide="check" size="14"></i> Layout Optimization</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="about" class="narrative">
+        <div class="narrative-text" data-aos="fade-right">
+            <h2>The Handee <span style="color:var(--brand-accent)">Standard</span></h2>
+            <br>
+            <p>Founded on the principle of <strong>Absolute Integrity</strong>, Handee Solutions provides more than just building services—we provide peace of mind for property owners and managers.</p>
+            <br>
+            <p>Under the direct leadership of Tony, our team operates with a focus on longevity. We understand that a building is an asset, and our work is designed to enhance its value and structural lifespan. We don't just "do jobs"—we implement solutions.</p>
+        </div>
+        <div class="narrative-image" data-aos="fade-left"></div>
+    </section>
+
+    <section id="contact" class="section" style="background: var(--brand-dark);">
+        <div class="contact-box" data-aos="zoom-in">
+            <h2 style="margin-bottom: 40px;">Initiate Project Consultation</h2>
+            <form>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <input type="text" placeholder="Full Name">
+                    <input type="email" placeholder="Email Address">
                 </div>
-                {viewMode === 'detail' && (
-                  <button onClick={() => window.print()} className="bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 uppercase shadow-sm active:scale-95">
-                    <Printer size={16} /> Print
-                  </button>
-                )}
-              </div>
-            </header>
+                <input type="text" placeholder="Project Type (e.g. Remedial, Renovation, Waterproofing)">
+                <textarea rows="4" placeholder="Brief Description of Scope"></textarea>
+                <button type="submit" class="btn" style="width: 100%; justify-content: center;">SUBMIT REQUEST</button>
+            </form>
+        </div>
+    </section>
 
-            {viewMode === 'dashboard' ? (
-              <main className="p-4 max-w-2xl mx-auto">
-                <div className="mb-8">
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-4 uppercase">Projects</h2>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => createNewJob('quote')} className="bg-white border-2 border-slate-200 text-slate-900 p-4 rounded-3xl text-xs font-black shadow-sm flex flex-col items-center gap-2 active:scale-95 transition-all uppercase">
-                       <Plus size={24} className="text-orange-500" /> New Quote
-                    </button>
-                    <button onClick={() => createNewJob('handover')} className="bg-slate-900 text-white p-4 rounded-3xl text-xs font-black shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all uppercase">
-                       <CheckCircle2 size={24} className="text-emerald-400" /> Completed Job
-                    </button>
-                  </div>
+    <footer>
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 40px;">
+            <div>
+                <div class="logo">HANDEE<span>SOLUTIONS</span></div>
+                <p style="margin-top: 20px; max-width: 300px; color: #666;">High-performance building and construction services based in Brighton, QLD.</p>
+            </div>
+            <div style="display: flex; gap: 80px;">
+                <div>
+                    <h4 style="margin-bottom: 20px;">Compliance</h4>
+                    <p style="font-size: 0.9rem; color: #666;">QBCC Lic. 15462565</p>
+                    <p style="font-size: 0.9rem; color: #666;">ABN 85 679 291 797</p>
                 </div>
-
-                <div className="grid gap-4">
-                  {jobs.sort((a,b) => b.id - a.id).map(j => (
-                    <div key={j.id} onClick={() => { setActiveJobId(j.id); setViewMode('detail'); }} className={`bg-white p-6 rounded-[2rem] border-2 transition-all cursor-pointer flex justify-between items-center shadow-sm ${j.type === 'handover' ? 'border-emerald-100 hover:border-emerald-500' : 'border-slate-100 hover:border-orange-500'}`}>
-                      <div className="flex-1">
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type === 'handover' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
-                          {j.type === 'handover' ? 'Completed Works' : 'Field Report'}
-                        </span>
-                        <p className="font-black text-slate-900 text-lg mt-1 truncate max-w-[200px]">{j.address}</p>
-                      </div>
-                      <div className="text-right flex items-center gap-4">
-                        <div className="flex flex-col items-end">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">Total Hours</span>
-                            <span className="font-black text-slate-900">{getAggregatedTotals(j.tasks).string}</span>
-                        </div>
-                        <ChevronRight size={20} className="text-slate-300" />
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                    <h4 style="margin-bottom: 20px;">Operations</h4>
+                    <p style="font-size: 0.9rem; color: #666;">Bayside / North Brisbane</p>
+                    <p style="font-size: 0.9rem; color: #666;">tony@handeesolutions.com.au</p>
                 </div>
-              </main>
-            ) : (
-              <main className="p-4 max-w-2xl mx-auto no-print">
-                <div className="flex justify-between items-center mb-6">
-                  <button onClick={() => setViewMode('dashboard')} className="text-slate-400 font-bold text-xs flex items-center gap-1 uppercase tracking-widest">
-                    <ChevronRight size={14} className="rotate-180" /> Dashboard
-                  </button>
-                  <button onClick={() => { if(confirm("Permanently delete project?")) { saveToDB(jobs.filter(x => x.id !== activeJobId)); setViewMode('dashboard'); }}} className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase">
-                    <Trash2 size={14}/> Delete
-                  </button>
-                </div>
-                
-                <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-8 relative overflow-hidden bg-white ${activeJob?.type === 'handover' ? 'border-emerald-200' : 'border-slate-200'}`}>
-                  <div className="flex justify-between items-start relative z-10">
-                    <div>
-                      <h2 className="text-3xl font-black text-slate-900 leading-tight">{activeJob?.address}</h2>
-                      <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">{activeJob?.clientName}</p>
-                    </div>
-                    <div className="bg-slate-900 text-white p-4 rounded-2xl flex flex-col items-center min-w-[100px] shadow-lg border-b-4 border-orange-500">
-                        <Clock size={16} className="mb-1 text-orange-500"/>
-                        <span className="text-[10px] font-black uppercase text-slate-400">Total Hours</span>
-                        <span className="text-xl font-black">{getAggregatedTotals(activeJob?.tasks || []).string}</span>
-                    </div>
-                  </div>
-                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 Handee Solutions Pty Ltd.</p>
+            <p>Built for the Professional Standard.</p>
+        </div>
+    </footer>
 
-                <div className="space-y-6 mb-32">
-                  {activeJob?.tasks.map((t, i) => (
-                    <div key={t.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                      <div className="bg-slate-50 p-4 border-b flex justify-between items-center px-6">
-                        <span className="font-black text-slate-400 text-[10px] tracking-widest uppercase">Entry #{i+1}</span>
-                        <div className="flex gap-2">
-                           <button onClick={() => { setEditingTaskId(t.id); setTaskData(t); setIsTaskFormOpen(true); }} className="p-2 text-slate-400 hover:text-blue-500"><Pencil size={18}/></button>
-                           <button onClick={() => { if(confirm("Delete log?")) saveToDB(jobs.map(j => j.id === activeJobId ? { ...j, tasks: j.tasks.filter(tk => tk.id !== t.id) } : j)); }} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18}/></button>
-                        </div>
-                      </div>
-                      <div className="p-6">
-                        <div className="flex justify-between items-start mb-2">
-                           <h3 className="font-black text-xl text-slate-900">{t.title}</h3>
-                           <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-black">{t.time}</span>
-                        </div>
-                        <p className="text-slate-500 text-sm leading-relaxed mb-4">{t.desc}</p>
-                        {t.images?.length > 0 && (
-                          <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                            {t.images.map((img, idx) => (
-                              <img key={idx} src={img} className="h-24 w-24 object-cover rounded-2xl border flex-shrink-0 shadow-sm" />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {activeJob?.tasks.length === 0 && <div className="text-center py-20 text-slate-300 font-black uppercase tracking-widest">No Log Entries Yet</div>}
-                </div>
-
-                <button onClick={() => setIsTaskFormOpen(true)} className={`fixed bottom-8 right-8 text-white w-20 h-20 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-4 border-white ${activeJob?.type === 'handover' ? 'bg-emerald-600' : 'bg-slate-900'}`}>
-                  <Plus size={40} />
-                </button>
-              </main>
-            )}
-
-            {isTaskFormOpen && (
-              <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md p-4 overflow-y-auto">
-                <div className="bg-white rounded-[3rem] max-w-md mx-auto p-8 shadow-2xl mt-4">
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-black text-slate-900">{editingTaskId ? 'Edit' : 'New'} {activeJob?.type === 'handover' ? 'Works Record' : 'Report Entry'}</h2>
-                    <button onClick={closeTaskModal} className="bg-slate-100 p-2 rounded-full text-slate-400"><X size={20}/></button>
-                  </div>
-
-                  {/* RESTORED TEMPLATES LOGIC */}
-                  <div className="mb-6">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Quick Templates</label>
-                    <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                      {Object.keys(TEMPLATES[activeJob.type] || {}).map(key => (
-                        <button key={key} onClick={() => setTaskData({...taskData, ...TEMPLATES[activeJob.type][key]})} className="whitespace-nowrap bg-white border-2 border-slate-100 px-4 py-2 rounded-2xl text-[12px] font-black text-slate-700 uppercase tracking-widest hover:border-orange-500 transition-all">
-                          <Sparkles size={14} className="inline mr-1 text-orange-500"/> {key}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <input placeholder="Task / Item Title" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
-                    
-                    <div className="flex gap-4">
-                      <input placeholder="Hours (e.g. 2h)" className="w-32 p-4 bg-slate-50 rounded-2xl outline-none font-black text-center" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
-                      <label className="flex-1 bg-slate-100 p-4 rounded-2xl cursor-pointer flex items-center justify-center">
-                        <ImageIcon className="text-slate-600 mr-2" />
-                        <span className="text-xs font-black text-slate-500 uppercase">Photos</span>
-                        <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
-                      </label>
-                    </div>
-
-                    {taskData.images.length > 0 && (
-                      <div className="img-preview-grid">
-                        {taskData.images.map((img, i) => (
-                          <div key={i} className="relative aspect-square">
-                            <img src={img} className="w-full h-full object-cover rounded-2xl border" />
-                            <button onClick={() => setTaskData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X size={10}/></button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium" value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} />
-                    
-                    <input 
-                      placeholder={activeJob?.type === 'handover' ? "Notes / Delays" : "Tools Used"} 
-                      className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300" 
-                      value={taskData.tools} 
-                      onChange={e => setTaskData({...taskData, tools: e.target.value})} 
-                    />
-
-                    <textarea 
-                      placeholder="Full details..." 
-                      className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium h-28 resize-none" 
-                      value={taskData.desc} 
-                      onChange={e => setTaskData({...taskData, desc: e.target.value})} 
-                    />
-                    
-                    <button onClick={handleSaveTask} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all ${activeJob?.type === 'handover' ? 'bg-emerald-600' : 'bg-slate-900'}`}>
-                      <Save size={20} /> SAVE ENTRY
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* --- PRINT SECTION --- */}
-            {activeJob && (
-              <div className="print-only hidden p-4">
-                <div className={`border-b-[8px] pb-4 mb-4 flex justify-between items-end ${activeJob.type === 'handover' ? 'border-emerald-600' : 'border-slate-900'}`}>
-                  <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">
-                      {activeJob.type === 'handover' ? 'Completed Works' : 'Field Report'}
-                    </h1>
-                    <p className="text-slate-400 font-black text-xs uppercase tracking-widest mt-2">{new Date().toLocaleDateString('en-AU', { dateStyle: 'full' })}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-black text-slate-900 uppercase">{activeJob.address}</p>
-                    <p className="text-slate-500 font-bold text-sm">TOTAL TIME: {getAggregatedTotals(activeJob.tasks).string}</p>
-                  </div>
-                </div>
-
-                {activeJob.tasks.map((t, idx) => (
-                  <div key={t.id} className="print-card">
-                    <div className={`px-5 py-3 font-black border-b flex justify-between items-center text-lg uppercase ${activeJob.type === 'handover' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-50 text-slate-800'}`}>
-                      <span>{idx + 1}. {t.title}</span>
-                      <span className="text-sm">{t.time}</span>
-                    </div>
-                    <div className="p-6">
-                      <p className="text-[14px] text-slate-700 mb-6 leading-relaxed border-l-4 border-slate-200 pl-4 italic font-medium">"{t.desc}"</p>
-                      <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="p-4 bg-slate-50 rounded-xl border">
-                          <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
-                          <span className="text-[12px] font-bold text-slate-600 uppercase leading-tight">{t.materials || 'None'}</span>
-                        </div>
-                        <div className="p-4 bg-slate-50 rounded-xl border">
-                          <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">
-                            {activeJob.type === 'handover' ? 'Notes/Delays' : 'Tools Used'}
-                          </label>
-                          <span className="text-[12px] font-bold text-slate-600 uppercase leading-tight">{t.tools || 'None'}</span>
-                        </div>
-                      </div>
-                      {t.images?.length > 0 && (
-                        <div className="grid grid-cols-2 gap-4">
-                          {t.images.map((img, i) => (
-                            <div key={i} className="rounded-xl overflow-hidden border h-64 shadow-sm">
-                              <img src={img} className="w-full h-full object-cover" />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      };
-
-      ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true });
+        lucide.createIcons();
     </script>
-  </body>
+</body>
 </html>
