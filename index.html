@@ -4,23 +4,44 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#0f172a" />
-    <title>JobSite Master | Log</title>
+    <title>JobSite Master | Professional Reports</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
     <style>
-      body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; -webkit-tap-highlight-color: transparent; }
+      body { font-family: 'Inter', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+      
+      /* Print Styling Enhancements */
       @media print {
-        @page { margin: 8mm; size: A4; }
-        body { background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .no-print, button, .action-btns, .fixed { display: none !important; }
+        @page { margin: 12mm; size: A4; }
+        body { background-color: white !important; color: #000; }
+        .no-print { display: none !important; }
         .print-only { display: block !important; }
-        .print-card { break-inside: avoid; border: 2px solid #0f172a !important; margin-bottom: 15px; border-radius: 10px; overflow: hidden; page-break-inside: avoid; }
-        img { max-width: 100% !important; height: auto !important; }
+        
+        .report-card { 
+          break-inside: avoid; 
+          border: 1px solid #e2e8f0; 
+          margin-bottom: 20px; 
+          border-radius: 8px; 
+          overflow: hidden;
+          page-break-inside: avoid;
+        }
+        
+        /* The "No-Crop" Image Fix */
+        .print-image {
+          width: 100%;
+          max-height: 350px;
+          object-fit: contain; /* Keeps aspect ratio, no cropping */
+          background: #f1f5f9;
+          border-radius: 6px;
+        }
+
+        .text-gradient { background: none !important; color: #000 !important; }
       }
-      .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
+
+      .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .custom-shadow { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); }
     </style>
     <script type="importmap">
     {
@@ -42,51 +63,21 @@
       import { get, set } from 'idb-keyval';
       import { 
         Trash2, ImageIcon, Printer, Plus, X, Hammer, 
-        ChevronRight, Sparkles, MapPin, Pencil, Save, HardDrive, CheckCircle2, Clock
+        ChevronRight, Sparkles, MapPin, Pencil, Save, HardDrive, CheckCircle2, Clock, FileText, User
       } from 'lucide-react';
 
       const DB_KEY = 'jobsite-master-v3';
 
-      // Templates grouped by Job Type
       const TEMPLATES = {
         quote: {
-          // Interior Work
-          painting_interior: { title: "Interior Painting", materials: "Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools: "Brushes, Rollers, Extension Poles, Sandpaper", desc: "Surface prep, fill holes, prime and 2 finish coats" },
-          painting_exterior: { title: "Exterior Painting", materials: "Exterior Paint, Primer, Weatherproof Filler, Drop Sheets", tools: "Pressure Washer, Scrapers, Brushes, Rollers, Ladders", desc: "Pressure wash, scrape, repair, prime and 2 coats" },
-          drywall_repair: { title: "Drywall/Gyprock Repair", materials: "Plasterboard, Joint Compound, Mesh Tape, Sandpaper, Paint", tools: "Utility Knife, Trowels, Sanding Block, Drywall Saw", desc: "Cut damaged section, install new board, tape, compound, sand and paint" },
-          
-          // Flooring & Outdoor
-          deck_build: { title: "Deck Construction", materials: "Treated Pine/Hardwood Decking, Joists, Posts, Concrete, Screws", tools: "Circular Saw, Drill, Level, Post Hole Digger, String Line", desc: "Site prep, post installation, frame build, decking installation" },
-          laminate_flooring: { title: "Laminate/Vinyl Flooring", materials: "Laminate/Vinyl Planks, Underlay, Skirting Boards, Adhesive", tools: "Jigsaw, Spacers, Tapping Block, Pull Bar, Measuring Tape", desc: "Remove old flooring, level subfloor, install underlay and planks" },
-          fencing: { title: "Fence Installation", materials: "Timber Palings/Colorbond, Steel/Timber Posts, Concrete, Rails, Screws", tools: "Post Hole Digger, Level, String Line, Power Drill, Saw", desc: "Mark line, dig holes, set posts in concrete, install rails and palings" },
-          pressure_washing: { title: "Pressure Washing", materials: "Industrial Degreaser, Surface Cleaner Solution", tools: "Petrol Pressure Washer, Turbo Nozzle, Surface Cleaner", desc: "Deep clean driveways, paths, decks, exteriors, remove mould" },
-          gutter_cleaning: { title: "Gutter Cleaning & Repair", materials: "Gutter Guard (optional), Sealant, Replacement Brackets", tools: "Ladder, Scoop, Hose, Safety Harness", desc: "Remove debris, flush gutters, check downpipes, repair leaks" },
-          
-          // Carpentry & Installation
-          door_installation: { title: "Door Installation", materials: "Door & Frame, Hinges, Handle/Lock, Screws, Wood Filler", tools: "Chisel, Drill, Level, Saw, Plane, Measuring Tape", desc: "Remove old door, fit frame, hang door, install hardware" },
-          shelving_storage: { title: "Shelving & Storage", materials: "Timber/MDF Boards, Brackets, Screws, Wall Anchors, Paint/Stain", tools: "Drill, Level, Stud Finder, Saw, Measuring Tape", desc: "Measure space, cut shelves, install brackets, secure and finish" },
-          tap_replacement: { title: "Tap/Faucet Replacement", materials: "New Tap, Plumber's Tape, Flexible Hoses, Washers", tools: "Adjustable Wrench, Basin Wrench, Bucket, Towels", desc: "Shut off water, remove old tap, install new tap, test for leaks" },
-          furniture_assembly: { title: "Furniture Assembly", materials: "Furniture Kit, Additional Screws, Wall Anchors", tools: "Allen Keys, Screwdrivers, Drill, Level, Rubber Mallet", desc: "Unpack, assemble per instructions, secure to walls if needed" },
-          tv_mounting: { title: "TV Wall Mounting", materials: "TV Mount Bracket, Wall Anchors, Screws, Cable Management", tools: "Stud Finder, Level, Drill, Socket Set", desc: "Find studs, mount bracket, attach TV, conceal cables" },
-          general_repairs: { title: "General Repairs", materials: "Various (depends on scope)", tools: "Basic Hand Tools, Power Tools as Required", desc: "Multiple small tasks - adjustments, hole filling, minor fixes" }
+          painting: { title: "Interior Painting", materials: "Premium Low-VOC Paint, Primer, Gap Filler", tools: "Rollers, Brushes, Drop Sheets", desc: "Prep all walls, sand back imperfections, 1 coat primer, 2 coats washable acrylic finish." },
+          drywall: { title: "Drywall Repair", materials: "Base coat, Finish coat, Mesh tape, 10mm Gyprock", tools: "Plastering knives, Sanding pole", desc: "Cut out water-damaged section, install new board, 3-coat plaster system, sand smooth." },
+          decking: { title: "Deck Restoration", materials: "Decking Oil, Wood Cleaner, Decking Screws", tools: "Pressure Washer, Applicator pad", desc: "Deep chemical clean, light sand, apply 2 coats of high-quality decking oil." },
+          general: { title: "General Maintenance", materials: "Misc Hardware, Sealants", tools: "Hand Tools", desc: "Address various small maintenance items as discussed with client on-site." }
         },
-        
         handover: {
-          painting_interior: { title: "Interior Painting", materials: "N/A", tools: "No delays", desc: "All surfaces painted to specification. Touch-up paint provided to client." },
-          painting_exterior: { title: "Exterior Painting", materials: "N/A", tools: "No delays", desc: "Exterior surfaces completed. All equipment removed from site." },
-          drywall_repair: { title: "Drywall/Gyprock Repair", materials: "N/A", tools: "No delays", desc: "Repairs completed and painted to match existing. Surface smooth and ready." },
-          deck_build: { title: "Deck Construction", materials: "N/A", tools: "No delays", desc: "Deck construction complete. All safety checks passed. Client briefed on maintenance." },
-          laminate_flooring: { title: "Laminate/Vinyl Flooring", materials: "N/A", tools: "No delays", desc: "Flooring installed. Skirting fitted. Excess materials removed." },
-          fencing: { title: "Fence Installation", materials: "N/A", tools: "No delays", desc: "Fence installed to specifications. Posts secured. Site cleaned of debris." },
-          pressure_washing: { title: "Pressure Washing", materials: "N/A", tools: "No delays", desc: "All surfaces cleaned. Water run-off managed. Area left clean and dry." },
-          gutter_cleaning: { title: "Gutter Cleaning & Repair", materials: "N/A", tools: "No delays", desc: "Gutters cleared and tested. Repairs completed. Downpipes flowing freely." },
-          door_installation: { title: "Door Installation", materials: "N/A", tools: "No delays", desc: "Door installed and operating smoothly. Hardware fitted and tested." },
-          shelving_storage: { title: "Shelving & Storage", materials: "N/A", tools: "No delays", desc: "Shelving installed securely. Level checked. Weight capacity advised to client." },
-          tap_replacement: { title: "Tap/Faucet Replacement", materials: "N/A", tools: "No delays", desc: "Tap installed and tested for leaks. Water pressure confirmed normal." },
-          furniture_assembly: { title: "Furniture Assembly", materials: "N/A", tools: "No delays", desc: "Furniture assembled per manufacturer specs. Secured to walls where required." },
-          tv_mounting: { title: "TV Wall Mounting", materials: "N/A", tools: "No delays", desc: "TV mounted securely to studs. Cables managed. Viewing angle confirmed with client." },
-          general_repairs: { title: "General Repairs", materials: "N/A", tools: "No delays", desc: "All repair items completed as per quote. Work area cleaned." },
-          cleanup: { title: "Site Cleanup", materials: "Cleaning supplies", tools: "Minor weather delay", desc: "Site cleaned of all debris. Surfaces wiped down. Client access restored." }
+          completed: { title: "Work Completed", materials: "All applied as quoted", tools: "No issues", desc: "All work completed to Australian standards. Site cleared of all trade waste and debris." },
+          delayed: { title: "Partial Completion", materials: "Pending final items", tools: "Weather delay", desc: "Main works finished. Final coat pending dry weather conditions. Client notified." }
         }
       };
 
@@ -94,12 +85,12 @@
         return new Promise((resolve) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
-          reader.onload = (event) => {
+          reader.onload = (e) => {
             const img = new Image();
-            img.src = event.target.result;
+            img.src = e.target.result;
             img.onload = () => {
               const canvas = document.createElement('canvas');
-              const MAX_WIDTH = 800;
+              const MAX_WIDTH = 1000; // Slightly higher for better print quality
               let width = img.width;
               let height = img.height;
               if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
@@ -107,7 +98,7 @@
               canvas.height = height;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0, width, height);
-              resolve(canvas.toDataURL('image/jpeg', 0.6));
+              resolve(canvas.toDataURL('image/jpeg', 0.7)); // 0.7 is sweet spot for quality vs size
             };
           };
         });
@@ -131,8 +122,7 @@
         };
 
         const updateStorageMetric = (data) => {
-          const string = JSON.stringify(data);
-          const size = (new TextEncoder().encode(string).length / 1024 / 1024).toFixed(2);
+          const size = (new TextEncoder().encode(JSON.stringify(data)).length / 1024 / 1024).toFixed(2);
           setDbSize(`${size} MB`);
         };
 
@@ -140,24 +130,20 @@
 
         const activeJob = jobs.find(j => j.id === activeJobId);
 
-        const getAggregatedTotals = (tasks) => {
+        const getTotals = (tasks) => {
           let totalMins = 0;
-          tasks.forEach(t => {
-            const timeVal = parseFloat(t.time) || 0;
-            if (t.time?.toLowerCase().includes('m')) totalMins += timeVal;
-            else totalMins += timeVal * 60;
+          (tasks || []).forEach(t => {
+            const val = parseFloat(t.time) || 0;
+            totalMins += t.time?.toLowerCase().includes('m') ? val : val * 60;
           });
-          const h = Math.floor(totalMins / 60);
-          const m = Math.round(totalMins % 60);
-          return { h, m, string: `${h}h ${m}m` };
+          return `${Math.floor(totalMins/60)}h ${Math.round(totalMins%60)}m`;
         };
 
-        const createNewJob = (type) => {
-          const label = type === 'handover' ? 'Completed Works' : 'Field Report';
-          const addr = prompt(`${label.toUpperCase()} - Job Address:`);
+        const createJob = (type) => {
+          const addr = prompt("Job Address:");
           if(!addr) return;
           const client = prompt("Client Name:");
-          const newJob = { id: Date.now(), type, address: addr, clientName: client, tasks: [] };
+          const newJob = { id: Date.now(), type, address: addr, clientName: client || 'Private Client', tasks: [], date: new Date().toISOString() };
           saveToDB([...jobs, newJob]);
         };
 
@@ -167,250 +153,297 @@
             ? activeJob.tasks.map(t => t.id === editingTaskId ? { ...taskData, id: editingTaskId } : t)
             : [...activeJob.tasks, { ...taskData, id: Date.now() }];
           saveToDB(jobs.map(j => j.id === activeJobId ? { ...j, tasks: updatedTasks } : j));
-          closeTaskModal();
+          closeModal();
         };
 
-        const closeTaskModal = () => {
+        const closeModal = () => {
           setIsTaskFormOpen(false);
           setEditingTaskId(null);
           setTaskData({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
         };
 
-        const handleImageUpload = async (e) => {
+        const handleImages = async (e) => {
           const files = Array.from(e.target.files);
-          const compressedStrings = await Promise.all(files.map(file => compressImage(file)));
-          setTaskData(prev => ({ ...prev, images: [...prev.images, ...compressedStrings] }));
+          const compressed = await Promise.all(files.map(f => compressImage(f)));
+          setTaskData(prev => ({ ...prev, images: [...prev.images, ...compressed] }));
         };
 
         return (
-          <div className="min-h-screen">
-            {/* Header with Memory Counter */}
-            <header className="bg-slate-900 text-white p-4 no-print flex justify-between items-center shadow-lg sticky top-0 z-50">
-              <div className="flex items-center gap-2 cursor-pointer" onClick={() => setViewMode('dashboard')}>
-                <div className="bg-orange-500 p-2 rounded-xl text-white shadow-inner"><Hammer size={22} /></div>
-                <h1 className="font-black text-xl tracking-tight uppercase">Jobsite</h1>
+          <div className="min-h-screen pb-20">
+            {/* Nav */}
+            <header className="bg-slate-900 text-white p-5 no-print flex justify-between items-center sticky top-0 z-50 shadow-xl">
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewMode('dashboard')}>
+                <div className="bg-orange-500 p-2 rounded-xl shadow-lg shadow-orange-900/20"><Hammer size={20} strokeWidth={3} /></div>
+                <h1 className="font-black text-xl tracking-tighter uppercase italic">JobSite</h1>
               </div>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                  <HardDrive size={12} className="text-slate-400"/> {dbSize} USED
+                <div className="hidden sm:flex flex-col items-end mr-2">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Storage Used</span>
+                  <span className="text-xs font-bold text-orange-400">{dbSize} / 5MB</span>
                 </div>
                 {viewMode === 'detail' && (
-                  <button onClick={() => window.print()} className="bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-black flex items-center gap-2 uppercase shadow-sm active:scale-95">
-                    <Printer size={16} /> Print
+                  <button onClick={() => window.print()} className="bg-emerald-500 hover:bg-emerald-400 text-white px-5 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 uppercase transition-all active:scale-95 shadow-lg shadow-emerald-900/20">
+                    <Printer size={16} /> Print Report
                   </button>
                 )}
               </div>
             </header>
 
             {viewMode === 'dashboard' ? (
-              <main className="p-4 max-w-2xl mx-auto">
-                <div className="mb-8">
-                  <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-4 uppercase">Projects</h2>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => createNewJob('quote')} className="bg-white border-2 border-slate-200 text-slate-900 p-4 rounded-3xl text-xs font-black shadow-sm flex flex-col items-center gap-2 active:scale-95 transition-all uppercase">
-                       <Plus size={24} className="text-orange-500" /> New Quote
+              <main className="p-6 max-w-2xl mx-auto">
+                <div className="mb-10">
+                  <h2 className="text-sm font-black text-slate-400 tracking-[0.2em] mb-4 uppercase">New Reporting</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button onClick={() => createJob('quote')} className="bg-white border-2 border-slate-200 hover:border-orange-500 p-6 rounded-[2rem] text-xs font-black shadow-sm flex flex-col items-center gap-3 transition-all active:scale-95 text-slate-700 uppercase">
+                       <FileText size={32} className="text-orange-500" /> Site Report
                     </button>
-                    <button onClick={() => createNewJob('handover')} className="bg-slate-900 text-white p-4 rounded-3xl text-xs font-black shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all uppercase">
-                       <CheckCircle2 size={24} className="text-emerald-400" /> Completed Job
+                    <button onClick={() => createJob('handover')} className="bg-slate-900 hover:bg-slate-800 text-white p-6 rounded-[2rem] text-xs font-black shadow-xl flex flex-col items-center gap-3 transition-all active:scale-95 uppercase border-2 border-slate-900">
+                       <CheckCircle2 size={32} className="text-emerald-400" /> Completion
                     </button>
                   </div>
                 </div>
 
+                <h2 className="text-sm font-black text-slate-400 tracking-[0.2em] mb-4 uppercase">Recent Projects</h2>
                 <div className="grid gap-4">
                   {jobs.sort((a,b) => b.id - a.id).map(j => (
-                    <div key={j.id} onClick={() => { setActiveJobId(j.id); setViewMode('detail'); }} className={`bg-white p-6 rounded-[2rem] border-2 transition-all cursor-pointer flex justify-between items-center shadow-sm ${j.type === 'handover' ? 'border-emerald-100 hover:border-emerald-500' : 'border-slate-100 hover:border-orange-500'}`}>
-                      <div className="flex-1">
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type === 'handover' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
-                          {j.type === 'handover' ? 'Completed Works' : 'Field Report'}
-                        </span>
-                        <p className="font-black text-slate-900 text-lg mt-1 truncate max-w-[200px]">{j.address}</p>
-                      </div>
-                      <div className="text-right flex items-center gap-4">
-                        <div className="flex flex-col items-end">
-                            <span className="text-[10px] font-black text-slate-400 uppercase">Total Hours</span>
-                            <span className="font-black text-slate-900">{getAggregatedTotals(j.tasks).string}</span>
+                    <div key={j.id} onClick={() => { setActiveJobId(j.id); setViewMode('detail'); }} className="bg-white p-6 rounded-[2rem] border-2 border-transparent hover:border-slate-200 transition-all cursor-pointer flex justify-between items-center custom-shadow">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${j.type === 'handover' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}`}>
+                            {j.type === 'handover' ? 'Handover' : 'Report'}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-bold">{new Date(j.id).toLocaleDateString()}</span>
                         </div>
-                        <ChevronRight size={20} className="text-slate-300" />
+                        <p className="font-black text-slate-900 text-lg truncate pr-4">{j.address}</p>
+                        <div className="flex items-center gap-1 text-slate-400 text-xs font-bold uppercase">
+                          <User size={12} /> {j.clientName}
+                        </div>
                       </div>
+                      <ChevronRight size={20} className="text-slate-300 flex-shrink-0" />
                     </div>
                   ))}
                 </div>
               </main>
             ) : (
-              <main className="p-4 max-w-2xl mx-auto no-print">
+              <main className="p-4 max-w-3xl mx-auto no-print">
                 <div className="flex justify-between items-center mb-6">
-                  <button onClick={() => setViewMode('dashboard')} className="text-slate-400 font-bold text-xs flex items-center gap-1 uppercase tracking-widest">
-                    <ChevronRight size={14} className="rotate-180" /> Dashboard
+                  <button onClick={() => setViewMode('dashboard')} className="bg-slate-200 text-slate-600 px-4 py-2 rounded-full font-black text-[10px] flex items-center gap-1 uppercase tracking-widest active:scale-95">
+                    <ChevronRight size={14} className="rotate-180" /> Back
                   </button>
-                  <button onClick={() => { if(confirm("Permanently delete project?")) { saveToDB(jobs.filter(x => x.id !== activeJobId)); setViewMode('dashboard'); }}} className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase">
-                    <Trash2 size={14}/> Delete
+                  <button onClick={() => { if(confirm("Delete this entire project?")) { saveToDB(jobs.filter(x => x.id !== activeJobId)); setViewMode('dashboard'); }}} className="text-red-400 hover:text-red-500 p-2 transition-colors">
+                    <Trash2 size={20}/>
                   </button>
                 </div>
                 
-                <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-8 relative overflow-hidden bg-white ${activeJob?.type === 'handover' ? 'border-emerald-200' : 'border-slate-200'}`}>
-                  <div className="flex justify-between items-start relative z-10">
+                <div className={`p-8 rounded-[2.5rem] shadow-xl mb-8 relative overflow-hidden text-white ${activeJob?.type === 'handover' ? 'bg-emerald-600' : 'bg-slate-900'}`}>
+                  <div className="relative z-10 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
                     <div>
-                      <h2 className="text-3xl font-black text-slate-900 leading-tight">{activeJob?.address}</h2>
-                      <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">{activeJob?.clientName}</p>
+                      <h2 className="text-3xl font-black leading-tight mb-2 tracking-tight">{activeJob?.address}</h2>
+                      <div className="flex items-center gap-4 opacity-80 font-bold uppercase text-xs tracking-widest">
+                        <span className="flex items-center gap-1"><User size={14}/> {activeJob?.clientName}</span>
+                        <span className="flex items-center gap-1"><Clock size={14}/> {getTotals(activeJob?.tasks)}</span>
+                      </div>
                     </div>
-                    <div className="bg-slate-900 text-white p-4 rounded-2xl flex flex-col items-center min-w-[100px] shadow-lg border-b-4 border-orange-500">
-                        <Clock size={16} className="mb-1 text-orange-500"/>
-                        <span className="text-[10px] font-black uppercase text-slate-400">Total Hours</span>
-                        <span className="text-xl font-black">{getAggregatedTotals(activeJob?.tasks || []).string}</span>
+                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex flex-col items-center min-w-[120px] border border-white/20">
+                      <span className="text-[10px] font-black uppercase opacity-60">Total Logs</span>
+                      <span className="text-3xl font-black">{activeJob?.tasks.length}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-6 mb-32">
                   {activeJob?.tasks.map((t, i) => (
-                    <div key={t.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                      <div className="bg-slate-50 p-4 border-b flex justify-between items-center px-6">
-                        <span className="font-black text-slate-400 text-[10px] tracking-widest uppercase">Entry #{i+1}</span>
+                    <div key={t.id} className="bg-white rounded-[2rem] border border-slate-100 overflow-hidden custom-shadow">
+                      <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                        <span className="font-black text-slate-400 text-[10px] tracking-widest uppercase">Entry Log #{i+1}</span>
                         <div className="flex gap-2">
-                           <button onClick={() => { setEditingTaskId(t.id); setTaskData(t); setIsTaskFormOpen(true); }} className="p-2 text-slate-400 hover:text-blue-500"><Pencil size={18}/></button>
-                           <button onClick={() => { if(confirm("Delete log?")) saveToDB(jobs.map(j => j.id === activeJobId ? { ...j, tasks: j.tasks.filter(tk => tk.id !== t.id) } : j)); }} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18}/></button>
+                           <button onClick={() => { setEditingTaskId(t.id); setTaskData(t); setIsTaskFormOpen(true); }} className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><Pencil size={18}/></button>
+                           <button onClick={() => { if(confirm("Delete this log?")) saveToDB(jobs.map(j => j.id === activeJobId ? { ...j, tasks: j.tasks.filter(tk => tk.id !== t.id) } : j)); }} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={18}/></button>
                         </div>
                       </div>
                       <div className="p-6">
-                        <div className="flex justify-between items-start mb-2">
-                           <h3 className="font-black text-xl text-slate-900">{t.title}</h3>
-                           <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-black">{t.time}</span>
+                        <div className="flex justify-between items-start mb-4">
+                           <h3 className="font-black text-xl text-slate-900 pr-4">{t.title}</h3>
+                           <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg text-[10px] font-black whitespace-nowrap uppercase tracking-tighter leading-none flex items-center justify-center min-h-[24px]">{t.time}</span>
                         </div>
-                        <p className="text-slate-500 text-sm leading-relaxed mb-4">{t.desc}</p>
+                        <p className="text-slate-600 text-sm leading-relaxed mb-6 font-medium">{t.desc}</p>
                         {t.images?.length > 0 && (
                           <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                             {t.images.map((img, idx) => (
-                              <img key={idx} src={img} className="h-24 w-24 object-cover rounded-2xl border flex-shrink-0 shadow-sm" />
+                              <img key={idx} src={img} className="h-28 w-28 object-cover rounded-2xl border-2 border-slate-50 flex-shrink-0 shadow-sm" />
                             ))}
                           </div>
                         )}
                       </div>
                     </div>
                   ))}
-                  {activeJob?.tasks.length === 0 && <div className="text-center py-20 text-slate-300 font-black uppercase tracking-widest">No Log Entries Yet</div>}
+                  {activeJob?.tasks.length === 0 && (
+                    <div className="text-center py-20 border-4 border-dashed border-slate-100 rounded-[3rem]">
+                      <Sparkles size={48} className="mx-auto text-slate-200 mb-4" />
+                      <p className="text-slate-400 font-black uppercase tracking-widest">Add your first job entry</p>
+                    </div>
+                  )}
                 </div>
 
-                <button onClick={() => setIsTaskFormOpen(true)} className={`fixed bottom-8 right-8 text-white w-20 h-20 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-4 border-white ${activeJob?.type === 'handover' ? 'bg-emerald-600' : 'bg-slate-900'}`}>
-                  <Plus size={40} />
+                <button onClick={() => setIsTaskFormOpen(true)} className={`fixed bottom-8 right-8 text-white w-20 h-20 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-4 border-white hover:scale-105 ${activeJob?.type === 'handover' ? 'bg-emerald-500' : 'bg-orange-500'}`}>
+                  <Plus size={40} strokeWidth={3} />
                 </button>
               </main>
             )}
 
+            {/* Modal Form */}
             {isTaskFormOpen && (
-              <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md p-4 overflow-y-auto">
-                <div className="bg-white rounded-[3rem] max-w-md mx-auto p-8 shadow-2xl mt-4">
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-black text-slate-900">{editingTaskId ? 'Edit' : 'New'} {activeJob?.type === 'handover' ? 'Works Record' : 'Report Entry'}</h2>
-                    <button onClick={closeTaskModal} className="bg-slate-100 p-2 rounded-full text-slate-400"><X size={20}/></button>
+              <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-sm p-4 overflow-y-auto">
+                <div className="bg-white rounded-[3rem] max-w-md mx-auto p-8 shadow-2xl mt-4 relative">
+                  <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">{editingTaskId ? 'Update' : 'New'} Log</h2>
+                    <button onClick={closeModal} className="bg-slate-100 p-2 rounded-full text-slate-400"><X size={20}/></button>
                   </div>
 
-                  {/* RESTORED TEMPLATES LOGIC */}
-                  <div className="mb-6">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Quick Templates</label>
+                  <div className="mb-8">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3">Quick Templates</label>
                     <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
                       {Object.keys(TEMPLATES[activeJob.type] || {}).map(key => (
-                        <button key={key} onClick={() => setTaskData({...taskData, ...TEMPLATES[activeJob.type][key]})} className="whitespace-nowrap bg-white border-2 border-slate-100 px-4 py-2 rounded-2xl text-[12px] font-black text-slate-700 uppercase tracking-widest hover:border-orange-500 transition-all">
-                          <Sparkles size={14} className="inline mr-1 text-orange-500"/> {key}
+                        <button key={key} onClick={() => setTaskData({...taskData, ...TEMPLATES[activeJob.type][key]})} className="whitespace-nowrap bg-slate-50 border-2 border-transparent hover:border-orange-500 px-4 py-2 rounded-xl text-[11px] font-black text-slate-600 uppercase transition-all active:scale-95">
+                          {key}
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div className="space-y-4">
-                    <input placeholder="Task / Item Title" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Entry Name</label>
+                      <input placeholder="Ex: Painting Walls" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-bold text-slate-800 focus:ring-2 ring-orange-500 transition-all" value={taskData.title} onChange={e => setTaskData({...taskData, title: e.target.value})} />
+                    </div>
                     
                     <div className="flex gap-4">
-                      <input placeholder="Hours (e.g. 2h)" className="w-32 p-4 bg-slate-50 rounded-2xl outline-none font-black text-center" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
-                      <label className="flex-1 bg-slate-100 p-4 rounded-2xl cursor-pointer flex items-center justify-center">
-                        <ImageIcon className="text-slate-600 mr-2" />
-                        <span className="text-xs font-black text-slate-500 uppercase">Photos</span>
-                        <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
-                      </label>
+                      <div className="w-32 space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Hours</label>
+                        <input placeholder="2.5h" className="w-full p-4 bg-slate-50 rounded-2xl outline-none font-black text-slate-800 text-center" value={taskData.time} onChange={e => setTaskData({...taskData, time: e.target.value})} />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                         <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Attachments</label>
+                         <label className="w-full bg-slate-100 p-4 rounded-2xl cursor-pointer flex items-center justify-center hover:bg-slate-200 transition-colors">
+                            <ImageIcon className="text-slate-500 mr-2" size={18} />
+                            <span className="text-[10px] font-black text-slate-500 uppercase">Add Photos</span>
+                            <input type="file" multiple accept="image/*" className="hidden" onChange={handleImages} />
+                         </label>
+                      </div>
                     </div>
 
                     {taskData.images.length > 0 && (
-                      <div className="img-preview-grid">
+                      <div className="img-preview-grid py-2">
                         {taskData.images.map((img, i) => (
                           <div key={i} className="relative aspect-square">
-                            <img src={img} className="w-full h-full object-cover rounded-2xl border" />
-                            <button onClick={() => setTaskData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"><X size={10}/></button>
+                            <img src={img} className="w-full h-full object-cover rounded-xl border-2 border-slate-100 shadow-sm" />
+                            <button onClick={() => setTaskData(p => ({...p, images: p.images.filter((_, idx) => idx !== i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md"><X size={12}/></button>
                           </div>
                         ))}
                       </div>
                     )}
                     
-                    <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium" value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} />
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Materials Used</label>
+                      <input placeholder="List materials..." className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700" value={taskData.materials} onChange={e => setTaskData({...taskData, materials: e.target.value})} />
+                    </div>
                     
-                    <input 
-                      placeholder={activeJob?.type === 'handover' ? "Notes / Delays" : "Tools Used"} 
-                      className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300" 
-                      value={taskData.tools} 
-                      onChange={e => setTaskData({...taskData, tools: e.target.value})} 
-                    />
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">{activeJob?.type === 'handover' ? 'Notes/Next Steps' : 'Tools Used'}</label>
+                      <input placeholder="..." className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-bold text-slate-700" value={taskData.tools} onChange={e => setTaskData({...taskData, tools: e.target.value})} />
+                    </div>
 
-                    <textarea 
-                      placeholder="Full details..." 
-                      className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium h-28 resize-none" 
-                      value={taskData.desc} 
-                      onChange={e => setTaskData({...taskData, desc: e.target.value})} 
-                    />
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Description</label>
+                      <textarea placeholder="Specific details of work performed..." className="w-full p-4 bg-slate-50 rounded-2xl outline-none text-sm font-medium h-24 resize-none text-slate-600 leading-relaxed" value={taskData.desc} onChange={e => setTaskData({...taskData, desc: e.target.value})} />
+                    </div>
                     
-                    <button onClick={handleSaveTask} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all ${activeJob?.type === 'handover' ? 'bg-emerald-600' : 'bg-slate-900'}`}>
-                      <Save size={20} /> SAVE ENTRY
+                    <button onClick={handleSaveTask} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-95 ${activeJob?.type === 'handover' ? 'bg-emerald-600' : 'bg-slate-900'}`}>
+                      <Save size={20} /> SAVE LOG ENTRY
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* --- PRINT SECTION --- */}
+            {/* --- CLEAN PROFESSIONAL PRINT SECTION --- */}
             {activeJob && (
-              <div className="print-only hidden p-4">
-                <div className={`border-b-[8px] pb-4 mb-4 flex justify-between items-end ${activeJob.type === 'handover' ? 'border-emerald-600' : 'border-slate-900'}`}>
+              <div className="print-only hidden font-serif">
+                <div className={`border-b-4 pb-6 mb-8 flex justify-between items-start ${activeJob.type === 'handover' ? 'border-emerald-600' : 'border-slate-900'}`}>
                   <div>
-                    <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">
-                      {activeJob.type === 'handover' ? 'Completed Works' : 'Field Report'}
+                    <h1 className="text-3xl font-black uppercase tracking-tight text-slate-900 mb-1">
+                      {activeJob.type === 'handover' ? 'Completion Certificate' : 'Site Field Report'}
                     </h1>
-                    <p className="text-slate-400 font-black text-xs uppercase tracking-widest mt-2">{new Date().toLocaleDateString('en-AU', { dateStyle: 'full' })}</p>
+                    <div className="flex items-center gap-3 text-sm text-slate-500 font-bold uppercase tracking-wider">
+                      <span>Ref: #{activeJob.id.toString().slice(-6)}</span>
+                      <span>•</span>
+                      <span>{new Date().toLocaleDateString('en-AU', { dateStyle: 'long' })}</span>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-black text-slate-900 uppercase">{activeJob.address}</p>
-                    <p className="text-slate-500 font-bold text-sm">TOTAL TIME: {getAggregatedTotals(activeJob.tasks).string}</p>
+                    <div className="text-xs font-black text-slate-400 uppercase mb-1">Project Site</div>
+                    <div className="text-lg font-black text-slate-900 leading-none">{activeJob.address}</div>
+                    <div className="text-sm font-bold text-slate-500 mt-1 uppercase tracking-tight">Client: {activeJob.clientName}</div>
+                  </div>
+                </div>
+
+                <div className="mb-8 grid grid-cols-2 gap-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">Project Status</span>
+                    <span className="text-sm font-black uppercase text-slate-700">{activeJob.type === 'handover' ? 'Final Handover' : 'In Progress / Maintenance'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">Total Labor Time</span>
+                    <span className="text-sm font-black uppercase text-slate-700">{getTotals(activeJob.tasks)} recorded</span>
                   </div>
                 </div>
 
                 {activeJob.tasks.map((t, idx) => (
-                  <div key={t.id} className="print-card">
-                    <div className={`px-5 py-3 font-black border-b flex justify-between items-center text-lg uppercase ${activeJob.type === 'handover' ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-50 text-slate-800'}`}>
-                      <span>{idx + 1}. {t.title}</span>
-                      <span className="text-sm">{t.time}</span>
+                  <div key={t.id} className="report-card">
+                    <div className={`px-6 py-3 border-b flex justify-between items-center ${activeJob.type === 'handover' ? 'bg-emerald-50' : 'bg-slate-50'}`}>
+                      <h3 className="font-black text-slate-900 uppercase text-sm tracking-tight">{idx + 1}. {t.title}</h3>
+                      <span className="bg-white px-3 py-1 rounded-md text-[10px] font-black border border-slate-200">{t.time}</span>
                     </div>
+                    
                     <div className="p-6">
-                      <p className="text-[14px] text-slate-700 mb-6 leading-relaxed border-l-4 border-slate-200 pl-4 italic font-medium">"{t.desc}"</p>
+                      <div className="mb-4 text-sm text-slate-700 leading-relaxed font-medium">
+                        {t.desc}
+                      </div>
+                      
                       <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="p-4 bg-slate-50 rounded-xl border">
-                          <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
-                          <span className="text-[12px] font-bold text-slate-600 uppercase leading-tight">{t.materials || 'None'}</span>
+                        <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                          <span className="text-[9px] font-black uppercase text-slate-400 block mb-1">Materials Used</span>
+                          <span className="text-xs font-bold text-slate-800 uppercase leading-tight italic">{t.materials || 'N/A'}</span>
                         </div>
-                        <div className="p-4 bg-slate-50 rounded-xl border">
-                          <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">
-                            {activeJob.type === 'handover' ? 'Notes/Delays' : 'Tools Used'}
-                          </label>
-                          <span className="text-[12px] font-bold text-slate-600 uppercase leading-tight">{t.tools || 'None'}</span>
+                        <div className="p-3 bg-white border border-slate-100 rounded-lg">
+                          <span className="text-[9px] font-black uppercase text-slate-400 block mb-1">
+                            {activeJob.type === 'handover' ? 'Completion Notes' : 'Tools/Equipment'}
+                          </span>
+                          <span className="text-xs font-bold text-slate-800 uppercase leading-tight italic">{t.tools || 'Standard Hand Tools'}</span>
                         </div>
                       </div>
+
                       {t.images?.length > 0 && (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className={`grid ${t.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                           {t.images.map((img, i) => (
-                            <div key={i} className="rounded-xl overflow-hidden border h-64 shadow-sm">
-                              <img src={img} className="w-full h-full object-cover" />
-                            </div>
+                            <img key={i} src={img} className="print-image border border-slate-200 shadow-sm" />
                           ))}
                         </div>
                       )}
                     </div>
                   </div>
                 ))}
+
+                <div className="mt-12 pt-8 border-t-2 border-dashed border-slate-200 grid grid-cols-2 gap-12">
+                   <div>
+                      <div className="h-16 border-b border-slate-300 mb-2"></div>
+                      <span className="text-[10px] font-black uppercase text-slate-400">Site Supervisor Signature</span>
+                   </div>
+                   <div>
+                      <div className="h-16 border-b border-slate-300 mb-2"></div>
+                      <span className="text-[10px] font-black uppercase text-slate-400">Client / Agent Acknowledgement</span>
+                   </div>
+                </div>
               </div>
             )}
           </div>
