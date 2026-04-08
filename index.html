@@ -21,7 +21,6 @@
     <style>
       body { -webkit-tap-highlight-color: transparent; transition: background-color 0.3s; }
       
-      /* Print Styles Updated to keep color coding */
       @media print {
         @page { margin: 8mm; size: A4; }
         html, body { 
@@ -70,7 +69,7 @@
   import { 
     Trash2, ImageIcon, Printer, Plus, X, Hammer, 
     ChevronRight, Sparkles, Pencil, Save, HardDrive, CheckCircle2, Clock,
-    Download, Upload, Moon, Sun, Edit3
+    Moon, Sun, Edit3, Undo, RefreshCcw
   } from 'lucide-react';
 
   const DB_KEY = 'jobsite-master-v3';
@@ -128,10 +127,21 @@
     const [taskData, setTaskData] = useState({ title: '', time: '', materials: '', tools: '', desc: '', images: [] });
     
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+    
+    // Canvas Editor State
     const [editingImageIdx, setEditingImageIdx] = useState(null);
     const canvasRef = useRef(null);
     const [isDrawing, setIsDrawing] = useState(false);
-    const fileInputRef = useRef(null);
+    const [penColor, setPenColor] = useState('#ef4444'); // Default Red
+    const [undoStack, setUndoStack] = useState([]);
+
+    const colors = [
+      { hex: '#ef4444', name: 'Red' },
+      { hex: '#22c55e', name: 'Green' },
+      { hex: '#eab308', name: 'Yellow' },
+      { hex: '#ffffff', name: 'White' },
+      { hex: '#000000', name: 'Black' }
+    ];
 
     useEffect(() => { loadJobs(); }, []);
 
@@ -206,37 +216,7 @@
       setTaskData(prev => ({ ...prev, images: [...prev.images, ...compressedStrings] }));
     };
 
-    const exportData = () => {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(jobs));
-      const downloadAnchorNode = document.createElement('a');
-      downloadAnchorNode.setAttribute("href", dataStr);
-      downloadAnchorNode.setAttribute("download", `jobsite_backup_${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchorNode);
-      downloadAnchorNode.click();
-      downloadAnchorNode.remove();
-    };
-
-    const importData = (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const importedJobs = JSON.parse(e.target.result);
-          if (Array.isArray(importedJobs)) {
-            saveToDB(importedJobs);
-            alert("Backup restored successfully!");
-          } else {
-            alert("Invalid backup file format.");
-          }
-        } catch (err) {
-          alert("Error reading file.");
-        }
-      };
-      reader.readAsText(file);
-    };
-
-    // Canvas Editor Functions
+    // Improved Canvas Editor Functions
     useEffect(() => {
       if (editingImageIdx !== null && canvasRef.current) {
         const canvas = canvasRef.current;
@@ -247,10 +227,7 @@
           canvas.width = img.width;
           canvas.height = img.height;
           ctx.drawImage(img, 0, 0, img.width, img.height);
-          ctx.strokeStyle = '#ef4444'; 
-          ctx.lineWidth = Math.max(3, img.width / 100); 
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
+          setUndoStack([canvas.toDataURL()]); // Save initial clean state
         };
       }
     }, [editingImageIdx]);
@@ -273,6 +250,10 @@
       setIsDrawing(true);
       const { x, y } = getDrawingCoords(e);
       const ctx = canvasRef.current.getContext('2d');
+      ctx.strokeStyle = penColor; 
+      ctx.lineWidth = Math.max(3, canvasRef.current.width / 100); 
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
       ctx.moveTo(x, y);
     };
@@ -286,7 +267,42 @@
       ctx.stroke();
     };
 
-    const stopDrawing = () => setIsDrawing(false);
+    const stopDrawing = () => {
+      if (!isDrawing) return;
+      setIsDrawing(false);
+      setUndoStack(prev => [...prev, canvasRef.current.toDataURL()]);
+    };
+
+    const handleUndo = () => {
+      if (undoStack.length <= 1) return; // Can't undo past original image
+      const newStack = [...undoStack];
+      newStack.pop(); // Remove current state
+      const previousState = newStack[newStack.length - 1];
+      
+      const img = new Image();
+      img.src = previousState;
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setUndoStack(newStack);
+      };
+    };
+
+    const handleClearCanvas = () => {
+      if (undoStack.length <= 1) return;
+      const baseImage = undoStack[0];
+      const img = new Image();
+      img.src = baseImage;
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setUndoStack([baseImage]);
+      };
+    };
 
     const saveAnnotatedImage = () => {
       const updatedImage = canvasRef.current.toDataURL('image/webp', 0.8);
@@ -297,7 +313,7 @@
     };
 
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen pb-6">
         <header className="bg-slate-900 dark:bg-slate-950 text-white p-4 no-print flex justify-between items-center shadow-lg sticky top-0 z-50 border-b border-slate-800">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => setViewMode('dashboard')}>
             <div className="bg-orange-500 p-2 rounded-xl text-white shadow-inner"><Hammer size={22} /></div>
@@ -307,13 +323,6 @@
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="text-slate-400 hover:text-white transition-colors">
               {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
-            {viewMode === 'dashboard' && (
-              <div className="flex items-center gap-3">
-                <button onClick={() => fileInputRef.current.click()} className="text-slate-400 hover:text-white transition-colors" title="Import"><Upload size={18} /></button>
-                <input type="file" ref={fileInputRef} onChange={importData} accept=".json" className="hidden" />
-                <button onClick={exportData} className="text-slate-400 hover:text-white transition-colors" title="Export"><Download size={18} /></button>
-              </div>
-            )}
             <div className="flex items-center gap-1 text-slate-500 text-[10px] font-black uppercase tracking-widest bg-slate-800 dark:bg-slate-900 px-2 py-1 rounded-lg border border-slate-700">
               <HardDrive size={12} className={parseFloat(dbSize) > 4 ? "text-red-400" : "text-emerald-400"}/> {dbSize}
             </div>
@@ -493,16 +502,19 @@
           </div>
         )}
 
+        {/* FULLSCREEN EDITOR */}
         {editingImageIdx !== null && (
           <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col touch-none">
+            {/* Top Bar */}
             <div className="flex justify-between items-center p-4 bg-slate-900 border-b border-slate-800 shadow-md z-10">
               <button onClick={() => setEditingImageIdx(null)} className="text-slate-300 hover:text-white font-bold text-sm px-4 py-2">CANCEL</button>
-              <div className="flex items-center gap-2 text-red-500 text-xs font-black uppercase tracking-widest">
-                <span className="w-3 h-3 rounded-full bg-red-500 inline-block animate-pulse"></span> Mark Defects
+              <div className="flex items-center gap-2 text-white text-xs font-black uppercase tracking-widest">
+                <Edit3 size={14} className="text-orange-500" /> Mark Defects
               </div>
               <button onClick={saveAnnotatedImage} className="bg-orange-500 text-white font-bold text-sm px-4 py-2 rounded-xl shadow-sm">SAVE</button>
             </div>
             
+            {/* Canvas Area */}
             <div className="flex-1 overflow-hidden relative flex items-center justify-center bg-slate-950">
               <canvas 
                 ref={canvasRef}
@@ -516,13 +528,43 @@
                 className="max-w-full max-h-full object-contain cursor-crosshair shadow-2xl"
               />
             </div>
+
+            {/* Bottom Toolbar */}
+            <div className="bg-slate-900 border-t border-slate-800 p-4 z-10 flex justify-between items-center px-6">
+              <div className="flex gap-3">
+                {colors.map(c => (
+                  <button 
+                    key={c.name}
+                    onClick={() => setPenColor(c.hex)}
+                    className={`w-8 h-8 rounded-full shadow-inner transition-transform ${penColor === c.hex ? 'scale-125 border-2 border-white' : 'opacity-70 hover:opacity-100'}`}
+                    style={{ backgroundColor: c.hex }}
+                    title={c.name}
+                  />
+                ))}
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={handleUndo} 
+                  disabled={undoStack.length <= 1}
+                  className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase ${undoStack.length <= 1 ? 'text-slate-700' : 'text-slate-300 hover:text-white'}`}
+                >
+                  <Undo size={20} /> Undo
+                </button>
+                <button 
+                  onClick={handleClearCanvas} 
+                  disabled={undoStack.length <= 1}
+                  className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase ${undoStack.length <= 1 ? 'text-slate-700' : 'text-red-400 hover:text-red-300'}`}
+                >
+                  <RefreshCcw size={20} /> Clear All
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* --- PRINT VIEW HTML --- */}
+        {/* PRINT VIEW */}
         {activeJob && (
           <div className="print-only hidden p-4">
-            {/* Using print:border colors to explicitly maintain the theme in print mode */}
             <div className={`border-b-[8px] pb-4 mb-4 flex justify-between items-end ${activeJob.type === 'handover' ? 'border-emerald-500 print:border-emerald-500' : 'border-orange-500 print:border-orange-500'}`}>
               <div>
                 <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">
