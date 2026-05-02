@@ -24,12 +24,19 @@
         .fixed.bottom-8 { bottom: calc(2rem + env(safe-area-inset-bottom)); }
       }
 
-      /* ── Print Overhaul ── */
       @media print {
         @page { margin: 12mm; size: A4; }
         html, body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         body > *:not(#print-container) { display: none !important; }
-        #print-container { display: block !important; padding: 0; margin: 0; position: static; }
+        #print-container {
+          position: static !important;
+          display: block !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background: white !important;
+          overflow: visible !important;
+        }
+        .no-print { display: none !important; }
         .print-card { break-inside: avoid; page-break-inside: avoid; border: 2px solid #cbd5e1 !important; margin-bottom: 12px; border-radius: 8px; overflow: hidden; background: white !important; }
         .print-img-container { break-inside: avoid; page-break-inside: avoid; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
         .print-img-container img { width: 100%; height: auto; max-height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; page-break-inside: avoid; }
@@ -48,6 +55,7 @@
       "imports": {
         "react": "https://esm.sh/react@18.2.0",
         "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "react-dom": "https://esm.sh/react-dom@18.2.0",
         "lucide-react": "https://esm.sh/lucide-react@0.344.0",
         "idb-keyval": "https://esm.sh/idb-keyval@6.2.1"
       }
@@ -56,8 +64,6 @@
   </head>
   <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
     <div id="root"></div>
-
-    <!-- Service Worker (offline) -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -80,28 +86,26 @@
         });
       }
     </script>
-
-    <!-- App Script -->
     <script type="text/babel" data-type="module">
   import React, { useState, useEffect, useRef, Component } from 'react';
-  import ReactDOM, { createPortal } from 'react-dom/client';
+  import ReactDOM from 'react-dom/client';
+  import { createPortal } from 'react-dom';
   import { get, set } from 'idb-keyval';
   import {
-    Trash2, ImageIcon, Printer, Plus, X, Hammer, ChevronRight, Sparkles,
+    Trash2, ImageIcon, Printer, Plus, X, Hammer, ChevronRight, ChevronDown, Sparkles,
     Pencil, Save, HardDrive, CheckCircle2, Clock, Moon, Sun, Edit3, Undo,
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert,
-    Bookmark, Package, PlusCircle, ChevronDown
+    Bookmark, Package, PlusCircle
   } from 'lucide-react';
 
-  const DB_KEY_JOBS   = 'jobsite-master-v4'; // backward compatible
+  const DB_KEY_JOBS   = 'jobsite-master-v4';
   const DB_KEY_TEMPL  = 'joblog-templates';
   const DB_KEY_MATS   = 'joblog-materials';
   const MAX_STOPS     = 12;
   const GST_RATE      = 0.1;
 
-  // ─── Utilities ─────────────────────────────────────────────────────────────
   const parseTimeToMinutes = (str) => {
     if (!str) return 0;
     const s = str.toLowerCase().trim();
@@ -147,7 +151,6 @@
     };
   });
 
-  // ── Built‑in Templates (fallback) ──────────────────────────────────────────
   const TEMPLATES = {
     quote: {
       painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools:"Brushes, Rollers, Extension Poles, Sandpaper", desc:"Surface prep, fill holes, prime and 2 finish coats" },
@@ -176,7 +179,6 @@
   ];
   const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
 
-  // ── Error Boundary ─────────────────────────────────────────────────────────
   class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, error: null }; }
     static getDerivedStateFromError(error) { return { hasError: true, error }; }
@@ -195,7 +197,6 @@
     }
   }
 
-  // ── Confirm Dialog ──────────────────────────────────────────────────────────
   const ConfirmDialog = ({ message, confirmLabel = 'Delete', onConfirm, onCancel, danger = true }) => (
     <div className="fixed inset-0 z-[350] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6">
       <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 w-full max-w-xs shadow-2xl border dark:border-slate-800">
@@ -208,7 +209,6 @@
     </div>
   );
 
-  // ── Template & Material Managers (inside Settings) ──────────────────────────
   const TemplateManager = ({ templates, onSave, onClose }) => {
     const [list, setList] = useState([...templates]);
     const [editing, setEditing] = useState(null);
@@ -309,7 +309,6 @@
     );
   };
 
-  // ── Settings Modal (with library management) ────────────────────────────────
   const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
@@ -328,7 +327,6 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
           <div className="space-y-6">
-            {/* Appearance */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
               <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700">
@@ -342,7 +340,6 @@
               </button>
             </div>
 
-            {/* Data Management */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Backup & Restore</label>
               <div className="grid grid-cols-2 gap-3">
@@ -356,7 +353,6 @@
               </div>
             </div>
 
-            {/* Templates & Materials Management */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Your Library</label>
               <div className="grid grid-cols-2 gap-3">
@@ -371,7 +367,6 @@
 
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"></div>
 
-            {/* Google AI Integration */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
               <div className="flex items-start gap-3 p-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl">
@@ -403,7 +398,6 @@
             </button>
           </div>
 
-          {/* Sub-modals */}
           {showTemplates && (
             <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)} />
           )}
@@ -415,7 +409,6 @@
     );
   };
 
-  // ── Template Popover (quick‑select in task form) ────────────────────────────
   const TemplatePopover = ({ type, userTemplates, onSelect, onClose }) => {
     const allTemplates = [
       ...userTemplates.map(t => ({ ...t, isUser: true })),
@@ -452,7 +445,6 @@
     );
   };
 
-  // ── Material Picker Dropdown ────────────────────────────────────────────────
   const MaterialPicker = ({ materials, onSelect, onClose }) => {
     return (
       <div className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-64 max-h-48 overflow-y-auto p-2">
@@ -473,7 +465,6 @@
     );
   };
 
-  // ── New Job Modal (unchanged) ──────────────────────────────────────────────
   const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel }) => {
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
@@ -589,7 +580,6 @@
     );
   };
 
-  // ── Print Preview Modal (fixed with portal) ─────────────────────────────────
   const PrintPreview = ({ job, onClose }) => {
     const [tasks, setTasks] = useState(job.tasks.map(t => ({...t})));
     const [header, setHeader] = useState({
@@ -610,7 +600,7 @@
     const totalHours = tasks.reduce((a,t)=>a+parseTimeToMinutes(t.time),0);
 
     return createPortal(
-      <div className="fixed inset-0 z-[250] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
+      <div id="print-container" className="print-preview-overlay fixed inset-0 z-[250] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
         <div className="max-w-2xl mx-auto">
           <div className="flex justify-between items-center mb-6 no-print">
             <h2 className="text-xl font-black">Edit & Print Report</h2>
@@ -620,8 +610,7 @@
             </div>
           </div>
 
-          <div id="print-container" className="print-only-block">
-            {/* Print Header */}
+          <div className="print-only-block">
             <div className="print-header border-b-2 border-slate-300 pb-3 mb-4">
               <div className="flex justify-between text-xs font-black uppercase text-slate-500 mb-2">
                 <span>{job.type==='handover' ? 'Completed Works' : 'Field Report'}</span>
@@ -642,7 +631,6 @@
               </div>
             </div>
 
-            {/* Task Cards */}
             {tasks.map((t, idx) => {
               const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
               const mats = parseFloat(t.materialsCost)||0;
@@ -709,7 +697,6 @@
     );
   };
 
-  // ── Main App ────────────────────────────────────────────────────────────────
   const App = () => {
     const [jobs, setJobs] = useState([]);
     const [userTemplates, setUserTemplates] = useState([]);
@@ -744,7 +731,6 @@
     const [rateError, setRateError] = useState(false);
     const [matError, setMatError] = useState(false);
 
-    // Canvas state (unchanged)
     const [editingImageIdx, setEditingImageIdx] = useState(null);
     const canvasRef    = useRef(null);
     const [isDrawing, setIsDrawing]   = useState(false);
@@ -765,11 +751,9 @@
       { hex:'#000000', name:'Black' }
     ];
 
-    // Template & material popover controls
     const [showTemplatePop, setShowTemplatePop] = useState(false);
     const [showMaterialPop, setShowMaterialPop] = useState(false);
 
-    // ── Data loading & saving ──────────────────────────────────────────────
     const loadJobs = async () => {
       const d = await get(DB_KEY_JOBS) || [];
       setJobs(d);
@@ -805,7 +789,6 @@
     const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
     const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled) : null;
 
-    // ── Voice recognition (unchanged) ────────────────────────────────────
     const toggleVoice = () => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) return alert('Voice dictation not supported.');
@@ -831,7 +814,6 @@
       localStorage.setItem('geminiApiKey', trimmedKey); localStorage.setItem('geminiModel', trimmedModel);
     };
 
-    // ── AI Task Suggest ──────────────────────────────────────────────────
     const [isAiSuggesting, setIsAiSuggesting] = useState(false);
     const handleAiSuggest = async () => {
       if (!taskData.title.trim() && !taskData.desc.trim()) {
@@ -871,7 +853,6 @@
       finally { setIsAiSuggesting(false); }
     };
 
-    // ── Template saving (direct, no prompt) ──────────────────────────────
     const [saveTemplateName, setSaveTemplateName] = useState('');
     const [isNamingTemplate, setIsNamingTemplate] = useState(false);
     const handleSaveAsTemplate = () => {
@@ -890,15 +871,13 @@
       setIsNamingTemplate(false);
     };
 
-    // ── Material saving (direct) ─────────────────────────────────────────
     const handleSaveMaterial = () => {
       if (!taskData.materials.trim() || !taskData.materialsCost.trim()) return;
       const exists = userMaterials.find(m => m.name === taskData.materials && m.price === taskData.materialsCost);
-      if (exists) return; // already saved
+      if (exists) return;
       saveUserMaterials([...userMaterials, { name: taskData.materials, price: taskData.materialsCost }]);
     };
 
-    // ── Data export/import (unchanged) ───────────────────────────────────
     const exportData = () => {
       const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -923,7 +902,6 @@
       reader.readAsText(file);
     };
 
-    // ── CRUD Helpers ──────────────────────────────────────────────────────
     const handleCreateJob = (address, clientName, tasks = []) => {
       const newJob = {
         id: Date.now(),
@@ -991,7 +969,6 @@
     };
     const dismissConfirm = () => setConfirmDialog(null);
 
-    // ── Route planning (unchanged) ────────────────────────────────────────
     const exitSelectionMode = () => { setSelectionMode(false); setSelectedJobs([]); setLocStatus('idle'); setCurrentCoords(null); };
     const toggleSelectionMode = () => selectionMode ? exitSelectionMode() : setSelectionMode(true);
     const toggleJobSelection = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
@@ -1030,7 +1007,6 @@
       .filter(j => !searchQ.trim() || j.address.toLowerCase().includes(searchQ.toLowerCase()) || (j.clientName||'').toLowerCase().includes(searchQ.toLowerCase()))
       .sort((a,b) => b.id-a.id);
 
-    // ── Canvas (unchanged) ────────────────────────────────────────────────
     const resetView = () => { setCanvasZoom(1); zoomRef.current=1; setCanvasPan({x:0,y:0}); panRef.current={x:0,y:0}; setCanvasMode('draw'); modeRef.current='draw'; };
     useEffect(() => {
       if (editingImageIdx!==null && canvasRef.current) {
@@ -1138,7 +1114,6 @@
             onConfirm={() => { confirmDialog.onConfirm(); dismissConfirm(); }} onCancel={dismissConfirm}/>
         )}
 
-        {/* ── Header ── */}
         <header className="bg-slate-900 dark:bg-slate-950 text-white px-4 py-3 no-print flex justify-between items-center shadow-lg sticky top-0 z-50 border-b border-slate-800">
           <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }}>
             <div className="bg-orange-500 p-1.5 rounded-xl"><Hammer size={20}/></div>
@@ -1165,7 +1140,6 @@
           </div>
         </header>
 
-        {/* ══════════════ DASHBOARD ══════════════ */}
         {viewMode==='dashboard' ? (
           <main className="p-4 max-w-2xl mx-auto">
             {selectionMode && (
@@ -1271,7 +1245,6 @@
             </div>
           </main>
         ) : (
-          /* ══════════════ DETAIL VIEW ══════════════ */
           <main className="p-4 max-w-2xl mx-auto no-print">
             <div className="flex justify-between items-center mb-6">
               <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300">
@@ -1281,7 +1254,6 @@
                 className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase"><Trash2 size={14}/> Delete</button>
             </div>
 
-            {/* Job header card (unchanged) */}
             <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
@@ -1335,7 +1307,6 @@
               )}
             </div>
 
-            {/* Quote summary (unchanged) */}
             {activeJob?.type==='quote' && quoteTotals && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
@@ -1362,7 +1333,6 @@
               </div>
             )}
 
-            {/* Task list */}
             <div className="space-y-6 mb-32">
               {activeJob?.tasks.map((t, i) => {
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
@@ -1408,7 +1378,6 @@
           </main>
         )}
 
-        {/* ── Route planning sticky bar ── */}
         {selectionMode && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 p-4 no-print safe-pb">
             {selectedJobs.length>0 && (
@@ -1439,7 +1408,6 @@
           </div>
         )}
 
-        {/* ══ Settings Modal ══ */}
         {showSettings && (
           <SettingsModal
             apiKey={apiKey}
@@ -1457,12 +1425,10 @@
           />
         )}
 
-        {/* ══ New Job Modal ══ */}
         {newJobModal && (
           <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)}/>
         )}
 
-        {/* ══ Task Form Modal ══ */}
         {isTaskFormOpen && (
           <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md p-4 overflow-y-auto">
             <div className="bg-white dark:bg-slate-900 rounded-[3rem] max-w-md mx-auto p-8 shadow-2xl mt-4 border dark:border-slate-800">
@@ -1471,7 +1437,6 @@
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
 
-              {/* Templates: compact popover button */}
               <div className="mb-4 relative">
                 <button
                   onClick={() => setShowTemplatePop(!showTemplatePop)}
@@ -1526,7 +1491,6 @@
                           onChange={e => { const v=e.target.value; setTaskData(p=>({...p,materialsCost:v})); validateMat(v); }}
                           onBlur={e => validateMat(e.target.value)}
                         />
-                        {/* Material picker button */}
                         {userMaterials.length > 0 && (
                           <div className="relative ml-1">
                             <button
@@ -1584,7 +1548,6 @@
                 <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
                 <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
 
-                {/* Voice Dictation */}
                 <div className="relative">
                   <textarea placeholder="Full details…" className="w-full p-4 pr-12 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-28 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
                   <button onClick={toggleVoice} type="button" className={`absolute right-3 bottom-4 p-2.5 rounded-full text-white shadow-md transition-all ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Tap to dictate">
@@ -1592,12 +1555,10 @@
                   </button>
                 </div>
 
-                {/* AI Suggest button */}
                 <button onClick={handleAiSuggest} disabled={isAiSuggesting || !apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 ${apiKey ? 'bg-purple-600 hover:bg-purple-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
                   <Sparkles size={16}/> {isAiSuggesting ? 'Thinking…' : 'AI Suggest Details'}
                 </button>
 
-                {/* Save as Template & Save Material inline */}
                 <div className="flex gap-3">
                   <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                     <Bookmark size={16}/> Save as Template
@@ -1609,7 +1570,6 @@
                   )}
                 </div>
 
-                {/* Naming popup for template */}
                 {isNamingTemplate && (
                   <div className="absolute inset-0 bg-slate-900/80 rounded-[3rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm p-6">
                     <h3 className="text-white font-black text-xl mb-4">Template Name</h3>
@@ -1636,7 +1596,6 @@
           </div>
         )}
 
-        {/* ══ Canvas Editor (unchanged) ══ */}
         {editingImageIdx!==null && (
           <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col">
             <div className="flex justify-between items-center p-4 bg-slate-900 border-b border-slate-800 shadow-md z-10 flex-shrink-0">
@@ -1681,7 +1640,6 @@
           </div>
         )}
 
-        {/* ══ Print Preview Modal (rendered via portal) ══ */}
         {printPreviewJob && (
           <PrintPreview job={printPreviewJob} onClose={() => setPrintPreviewJob(null)}/>
         )}
