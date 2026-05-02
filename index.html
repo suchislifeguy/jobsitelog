@@ -97,7 +97,7 @@
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert,
-    Bookmark, Package, PlusCircle
+    Bookmark, Package, PlusCircle, Calendar
   } from 'lucide-react';
 
   const DB_KEY_JOBS   = 'jobsite-master-v4';
@@ -117,6 +117,7 @@
   const fmtMins = (m) => { const h = Math.floor(m/60), r = Math.round(m%60); if (!h) return `${r}m`; if (!r) return `${h}h`; return `${h}h ${r}m`; };
   const fmtAUD  = (n) => `$${Number(n||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU') : '';
+  const fmtDateShort = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'}) : '';
 
   const getQuoteTotals = (tasks, gstEnabled) => {
     let labour = 0, mats = 0;
@@ -459,42 +460,72 @@
     );
   };
 
+  // ── Updated NewJobModal with additional text and AI‑create button ──────────
   const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel }) => {
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
+    const [additionalText, setAdditionalText] = useState('');
+    const [dueDate, setDueDate] = useState('');
+    const [files, setFiles] = useState([]);
     const [isImporting, setIsImporting] = useState(false);
     const fileInputRef = useRef(null);
 
-    const go = () => addr.trim() && onSave(addr.trim(), client, []);
-
-    const handleImportFile = async (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length === 0) return;
+    const handleFiles = (e) => {
+      const selected = Array.from(e.target.files);
+      setFiles(prev => [...prev, ...selected]);
       e.target.value = '';
+    };
+
+    const removeFile = (index) => setFiles(prev => prev.filter((_,i) => i!==index));
+
+    const createManual = () => {
+      if (!addr.trim()) return;
+      onSave(addr.trim(), client.trim(), [], dueDate);
+    };
+
+    const createWithAI = async () => {
       if (!apiKey) { alert('Please save a Gemini API key in Settings first.'); return; }
       setIsImporting(true);
       try {
-        const fileParts = await Promise.all(
-          files.map(async (file) => {
+        const fileParts = [];
+        for (const file of files) {
+          if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
             const base64Data = await new Promise((resolve, reject) => {
               const reader = new FileReader();
               reader.onload = () => resolve(reader.result.split(',')[1]);
               reader.onerror = reject;
               reader.readAsDataURL(file);
             });
-            return { inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } };
-          })
-        );
-        const textPart = {
-          text: 'Extract job address, client name, and tasks (title, time, rate, materialsCost, materials, tools, desc). Return ONLY a valid JSON object with keys "address", "clientName", "tasks". No markdown.'
-        };
+            fileParts.push({
+              inlineData: { mimeType: file.type || 'application/pdf', data: base64Data }
+            });
+          } else {
+            // treat as text file or .docx — not perfect, but we can try reading as text
+            const text = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsText(file);
+            });
+            fileParts.push({ text });
+          }
+        }
+
+        const textPrompt = `Extract the following from the provided document(s) and additional text.
+          Return ONLY a valid JSON object with keys:
+          "address" (job site address),
+          "clientName" (client or customer name),
+          "tasks" (array of objects with: "title", "time" (e.g. "2h 30m"), "rate" (string, e.g. "85"), "materialsCost" (string, e.g. "320"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (string)).
+          Use the fields from the documents as defaults, but respect any overrides in the additional text.
+          Additional text provided by the user: ${additionalText || 'None'}`;
+
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [textPart, ...fileParts] }],
+              contents: [{ parts: [{ text: textPrompt }, ...fileParts] }],
               generationConfig: { temperature: 0, response_mime_type: 'application/json' }
             })
           }
@@ -505,11 +536,10 @@
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
         const tasks = (json.tasks || []).map(t => ({
           title: t.title || '', time: t.time || '', rate: String(t.rate || ''),
-          materialsCost: String(t.materialsCost || ''), materials: t.materials || '',
-          tools: t.tools || '', desc: t.desc || '', images: [],
+          materialsCost: String(t.materialsCost || ''), materials: String(t.materials || ''), tools: String(t.tools || ''), desc: t.desc || '', images: [],
         }));
-        onSave(json.address || '', json.clientName || '', tasks);
-      } catch (err) { alert(`Import failed: ${err.message}`); }
+        onSave(json.address || addr, json.clientName || client, tasks, dueDate);
+      } catch (err) { alert(`AI import failed: ${err.message}`); }
       finally { setIsImporting(false); }
     };
 
@@ -520,7 +550,7 @@
           {isImporting && (
             <div className="absolute inset-0 bg-slate-900/80 rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
-              <p className="text-white font-black text-sm uppercase">Processing files…</p>
+              <p className="text-white font-black text-sm uppercase">Processing with AI…</p>
             </div>
           )}
           <div className="flex justify-between items-center mb-6">
@@ -536,38 +566,60 @@
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Job Address *</label>
               <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
-                placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)} onKeyDown={e => e.key==='Enter' && go()}/>
+                placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Client Name</label>
               <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
-                placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)} onKeyDown={e => e.key==='Enter' && go()}/>
+                placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Due Date (optional)</label>
+              <input type="date" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" value={dueDate} onChange={e => setDueDate(e.target.value)}/>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or</span><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
+              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or use AI</span><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
             </div>
             <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div>
-                  <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto-Fill</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Combine multiple files (PDF, images).</p>
-                </div>
-                {!apiKey && <span className="text-[9px] font-black text-amber-500 uppercase bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/40 px-2 py-1 rounded-lg whitespace-nowrap">Key needed</span>}
+              <div className="mb-2">
+                <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Attach files (PDF, images, docs) and add any extra details below.</p>
               </div>
-              <button onClick={() => fileInputRef.current?.click()} disabled={isImporting || !apiKey}
-                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
-                  apiKey ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
-                <FileText size={14}/> {apiKey ? 'Choose File(s)' : 'Add API Key in Settings'}
-              </button>
-              <input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleImportFile}/>
+              <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 transition-colors text-xs font-black uppercase">
+                <Upload size={14}/> Choose Files
+                <input ref={fileInputRef} type="file" multiple accept=".pdf,.docx,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/>
+              </label>
+              {files.length > 0 && (
+                <div className="mb-2">
+                  {files.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1">
+                      <span className="text-xs truncate flex-1">{f.name}</span>
+                      <button onClick={() => removeFile(i)} className="text-red-400"><X size={14}/></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <textarea
+                className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400"
+                placeholder="Additional details (e.g. client wants acoustic underlay, job must finish by Friday)"
+                value={additionalText}
+                onChange={e => setAdditionalText(e.target.value)}
+              />
             </div>
-            <button onClick={go} disabled={!addr.trim() || isImporting}
-              className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all ${
-                addr.trim() && !isImporting
-                  ? isHandover ? 'bg-emerald-600 hover:bg-emerald-500 active:scale-95' : 'bg-slate-900 hover:bg-slate-800 dark:bg-orange-500 dark:hover:bg-orange-400 active:scale-95'
-                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
-              <Plus size={20}/> Create Project
-            </button>
+            <div className="flex gap-3">
+              <button onClick={createManual} disabled={!addr.trim()}
+                className={`flex-1 p-5 rounded-[2rem] font-black text-lg shadow-xl transition-all ${
+                  addr.trim() ? 'bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                }`}>
+                Create Project
+              </button>
+              {apiKey && files.length > 0 && (
+                <button onClick={createWithAI} disabled={isImporting}
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
+                  <Sparkles size={20}/> Create with AI
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -580,6 +632,7 @@
       address: job.address,
       clientName: job.clientName,
       clientRef: job.clientRef || '',
+      dueDate: job.dueDate || '',
       projectNotes: job.projectNotes || '',
       projectPhotos: job.projectPhotos || [],
     });
@@ -591,6 +644,7 @@
     };
 
     const totals = getQuoteTotals(tasks, job.gstEnabled);
+    const showCosts = job.type === 'handover' ? job.showCosts : true;
     const totalHours = tasks.reduce((a,t)=>a+parseTimeToMinutes(t.time),0);
 
     return createPortal(
@@ -612,6 +666,7 @@
               <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
               {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
               <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
+              {header.dueDate && <div className="text-sm font-bold text-amber-600 mb-2">Due: {fmtDate(header.dueDate)}</div>}
               {header.projectNotes && <textarea className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.projectNotes} onChange={e => setHeader({...header, projectNotes: e.target.value})} placeholder="Project notes"/>}
               {header.projectPhotos?.length > 0 && (
                 <div className="print-project-photo-row flex gap-2 mt-2 overflow-x-auto">
@@ -620,7 +675,7 @@
               )}
               <div className="flex gap-4 mt-2 text-sm font-medium">
                 <span>TOTAL TIME: {fmtMins(totalHours)}</span>
-                {totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
+                {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
               </div>
             </div>
             {tasks.map((t, idx) => {
@@ -632,7 +687,7 @@
                   <div className={`px-5 py-3 font-black border-b flex justify-between items-center text-lg uppercase ${job.type==='handover' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-800 border-slate-200'}`}>
                     <input className="flex-1 font-black bg-transparent border-none" value={t.title} onChange={e => updateTask(idx, 'title', e.target.value)}/>
                     <input className="w-20 text-sm bg-transparent border-none text-right" value={t.time} onChange={e => updateTask(idx, 'time', e.target.value)}/>
-                    {subtotal > 0 && <span className="text-sm text-emerald-700 ml-4">{fmtAUD(subtotal)}</span>}
+                    {showCosts && subtotal > 0 && <span className="text-sm text-emerald-700 ml-4">{fmtAUD(subtotal)}</span>}
                   </div>
                   <div className="p-6">
                     <textarea className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent resize-none" rows={2} value={t.desc} onChange={e => updateTask(idx, 'desc', e.target.value)}/>
@@ -645,11 +700,23 @@
                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}</label>
                         <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)}/>
                       </div>
-                      {job.type==='quote' && (labour>0||mats>0) && (
+                      {showCosts && job.type==='quote' && (labour>0||mats>0) && (
                         <>
                           <div className="p-4 bg-slate-50 rounded-xl border">
                             <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
                             <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)} ({t.rate ? `$${t.rate}/hr` : '-'})</span>
+                          </div>
+                          <div className="p-4 bg-slate-50 rounded-xl border">
+                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label>
+                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(mats)}</span>
+                          </div>
+                        </>
+                      )}
+                      {showCosts && job.type==='handover' && (labour>0||mats>0) && (
+                        <>
+                          <div className="p-4 bg-slate-50 rounded-xl border">
+                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
+                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}</span>
                           </div>
                           <div className="p-4 bg-slate-50 rounded-xl border">
                             <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label>
@@ -667,7 +734,7 @@
                 </div>
               );
             })}
-            {job.type==='quote' && totals.total>0 && (
+            {showCosts && job.type==='quote' && totals.total>0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
                   <p className="font-black uppercase text-slate-500 text-sm">Labour: {fmtAUD(totals.labour)}</p>
@@ -702,7 +769,7 @@
     const [searchQ, setSearchQ] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [isEditingHeader, setIsEditingHeader] = useState(false);
-    const [headerDraft, setHeaderDraft] = useState({ address:'', clientName:'', clientRef:'', projectNotes:'', projectPhotos:[] });
+    const [headerDraft, setHeaderDraft] = useState({ address:'', clientName:'', clientRef:'', dueDate:'', projectNotes:'', projectPhotos:[] });
     const [isLoading, setIsLoading] = useState(true);
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef(null);
@@ -747,8 +814,10 @@
 
     const loadJobs = async () => {
       const d = await get(DB_KEY_JOBS) || [];
-      setJobs(d);
-      updMetric(d);
+      // ensure legacy jobs have showCosts field
+      const migrated = d.map(j => j.type === 'handover' && j.showCosts === undefined ? { ...j, showCosts: false } : j);
+      setJobs(migrated);
+      updMetric(migrated);
       setIsLoading(false);
     };
     const loadTemplates = async () => {
@@ -889,7 +958,8 @@
           const imported = JSON.parse(ev.target.result);
           if (!Array.isArray(imported)) throw new Error('Invalid format');
           showConfirm(`Found ${imported.length} project(s). This will replace ALL current data. Are you sure?`, async () => {
-            await saveToDB(imported);
+            const migrated = imported.map(j => j.type === 'handover' && j.showCosts === undefined ? { ...j, showCosts: false } : j);
+            await saveToDB(migrated);
             window.location.reload();
           }, 'Replace All');
         } catch { alert('Invalid backup file.'); }
@@ -897,33 +967,54 @@
       reader.readAsText(file);
     };
 
-    const handleCreateJob = (address, clientName, tasks = []) => {
+    const handleCreateJob = (address, clientName, tasks = [], dueDate = '') => {
       const newJob = {
         id: Date.now(),
         date: new Date().toISOString(),
         type: newJobModal,
         address, clientName,
-        clientRef: '', projectNotes: '', projectPhotos: [],
+        clientRef: '', dueDate: dueDate || '',
+        projectNotes: '', projectPhotos: [],
         tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })),
         status: 'draft',
         gstEnabled: false,
+        showCosts: newJobModal === 'handover' ? false : true,
       };
       saveToDB([...jobs, newJob]);
       setNewJobModal(null);
     };
+
     const cycleStatus = (id) => {
       const j = jobs.find(x=>x.id===id), idx = STATUSES.findIndex(s=>s.key===(j.status||'draft'));
       saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x));
     };
     const toggleGST = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
+    const toggleCosts = (id) => {
+      saveToDB(jobs.map(j => j.id===id && j.type==='handover' ? {...j, showCosts: !j.showCosts} : j));
+    };
 
     const startEditHeader = () => {
-      setHeaderDraft({ address:activeJob.address, clientName:activeJob.clientName, clientRef:activeJob.clientRef||'', projectNotes:activeJob.projectNotes||'', projectPhotos:activeJob.projectPhotos||[] });
+      setHeaderDraft({
+        address: activeJob.address,
+        clientName: activeJob.clientName,
+        clientRef: activeJob.clientRef || '',
+        dueDate: activeJob.dueDate || '',
+        projectNotes: activeJob.projectNotes || '',
+        projectPhotos: activeJob.projectPhotos || []
+      });
       setIsEditingHeader(true);
     };
     const saveHeaderEdit = () => {
       if (!headerDraft.address.trim()) return;
-      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j));
+      saveToDB(jobs.map(j => j.id===activeJobId ? {
+        ...j,
+        address: headerDraft.address.trim(),
+        clientName: headerDraft.clientName,
+        clientRef: headerDraft.clientRef,
+        dueDate: headerDraft.dueDate,
+        projectNotes: headerDraft.projectNotes,
+        projectPhotos: headerDraft.projectPhotos
+      } : j));
       setIsEditingHeader(false);
     };
     const handleProjectPhotoUpload = async (e) => {
@@ -1191,9 +1282,13 @@
               {filteredJobs.map(j => {
                 const status = getStatus(j.status||'draft');
                 const qt = j.type==='quote' ? getQuoteTotals(j.tasks, j.gstEnabled) : null;
+                const handoverQt = (j.type==='handover' && j.showCosts) ? getQuoteTotals(j.tasks, j.gstEnabled) : null;
                 const stopIdx = selectedJobs.indexOf(j.id);
                 const isSelected = stopIdx !== -1;
                 const canSelect = !atStopLimit || isSelected;
+                const dueDate = j.dueDate ? new Date(j.dueDate) : null;
+                const isDueSoon = dueDate && (dueDate - Date.now()) < 2 * 24 * 60 * 60 * 1000 && (dueDate - Date.now()) > 0;
+                const isOverdue = dueDate && dueDate < Date.now();
                 return (
                   <div key={j.id}
                     onClick={() => { if (selectionMode) { if (canSelect) toggleJobSelection(j.id); } else { setActiveJobId(j.id); setViewMode('detail'); setIsEditingHeader(false); }}}
@@ -1215,21 +1310,24 @@
                               </span>
                               <button onClick={e => { e.stopPropagation(); cycleStatus(j.id); }} className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
                               {j.gstEnabled && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
+                              {isDueSoon && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">Due soon</span>}
+                              {isOverdue && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300">Overdue</span>}
                             </div>
                           )}
                           <p className={`font-black text-slate-900 dark:text-white text-lg truncate ${selectionMode?'':'mt-1'}`}>{j.address}</p>
                           <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">{j.clientName||'—'}{!selectionMode&&` · ${fmtDate(j.date)}`}</p>
+                          {j.dueDate && !selectionMode && <p className="text-xs font-black text-amber-600 mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDateShort(j.dueDate)}</p>}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Hours</span>
                         <span className="font-black text-slate-900 dark:text-slate-200 text-sm">{getTotals(j.tasks).str}</span>
-                        {qt && qt.total>0 && (
-                          <div className="flex flex-col items-end">
-                            <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD(qt.total)}</span>
-                            {j.gstEnabled && <span className="text-[9px] text-slate-400 font-black uppercase">inc. GST</span>}
-                          </div>
-                        )}
+                          {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && (
+                            <div className="flex flex-col items-end">
+                              <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt || handoverQt).total)}</span>
+                              {j.gstEnabled && <span className="text-[9px] text-slate-400 font-black uppercase">inc. GST</span>}
+                            </div>
+                          )}
                         {!selectionMode && <ChevronRight size={16} className="text-slate-300 dark:text-slate-600 mt-1"/>}
                       </div>
                     </div>
@@ -1255,6 +1353,10 @@
                   <input className="w-full text-2xl font-black bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e => setHeaderDraft(d=>({...d,address:e.target.value}))}/>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Name" value={headerDraft.clientName} onChange={e => setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e => setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
+                  <div className="mb-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Due Date</label>
+                    <input type="date" className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none font-medium dark:text-white" value={headerDraft.dueDate} onChange={e => setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/>
+                  </div>
                   <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e => setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
                   <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase">
                     <ImageIcon size={14}/> Add Project Photos
@@ -1281,6 +1383,7 @@
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">{activeJob?.address}</h2>
                     <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm mt-1">{activeJob?.clientName}</p>
                     {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
+                    {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDate(activeJob.dueDate)}</p>}
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
                     {activeJob?.projectPhotos?.length>0 && <div className="flex gap-2 mt-2 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-12 rounded-lg"/>)}</div>}
                     <button onClick={startEditHeader} className="mt-3 flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors group">
@@ -1296,40 +1399,56 @@
                     <button onClick={() => cycleStatus(activeJobId)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-black text-[11px] uppercase tracking-widest border-2 transition-all active:scale-95 ${getStatus(activeJob?.status||'draft').cls}`}>
                       <Tag size={12}/> {getStatus(activeJob?.status||'draft').label}
                     </button>
+                    {activeJob?.type==='handover' && (
+                      <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
+                        <DollarSign size={12}/> Costs {activeJob.showCosts ? 'ON' : 'OFF'}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
             </div>
-            {activeJob?.type==='quote' && quoteTotals && (
+
+            {/* Quote summary – only if applicable */}
+            {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && activeJob && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled).total > 0 && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2"><DollarSign size={16} className="text-orange-500"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quote Summary</span></div>
+                  <div className="flex items-center gap-2"><DollarSign size={16} className="text-orange-500"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cost Summary</span></div>
                   <button onClick={() => toggleGST(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.gstEnabled?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'}`}>
                     <Receipt size={12}/> GST {activeJob.gstEnabled?'On':'Off'}
                   </button>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-base">{fmtAUD(quoteTotals.labour)}</p></div>
-                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-base">{fmtAUD(quoteTotals.mats)}</p></div>
-                  {activeJob.gstEnabled ? (
-                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-base">{fmtAUD(quoteTotals.subtotal)}</p></div>
-                  ) : (
-                    <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base">{fmtAUD(quoteTotals.total)}</p></div>
-                  )}
-                </div>
-                {activeJob.gstEnabled && (
-                  <div className="grid grid-cols-2 gap-3 mt-3">
-                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base">{fmtAUD(quoteTotals.gst)}</p></div>
-                    <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-base">{fmtAUD(quoteTotals.total)}</p></div>
-                  </div>
-                )}
+                {(() => {
+                  const qt = getQuoteTotals(activeJob.tasks, activeJob.gstEnabled);
+                  return (
+                    <>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-base">{fmtAUD(qt.labour)}</p></div>
+                        <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-base">{fmtAUD(qt.mats)}</p></div>
+                        {activeJob.gstEnabled ? (
+                          <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-base">{fmtAUD(qt.subtotal)}</p></div>
+                        ) : (
+                          <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
+                        )}
+                      </div>
+                      {activeJob.gstEnabled && (
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base">{fmtAUD(qt.gst)}</p></div>
+                          <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
+
             <div className="space-y-6 mb-32">
               {activeJob?.tasks.map((t, i) => {
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
                 const mats = parseFloat(t.materialsCost)||0;
                 const subtotal = labour+mats;
+                const showCosts = activeJob.type === 'handover' ? activeJob.showCosts : true;
                 return (
                   <div key={t.id} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-b dark:border-slate-700 flex justify-between items-center px-6">
@@ -1345,7 +1464,7 @@
                         <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-black ml-2 flex-shrink-0">{t.time}</span>
                       </div>
                       <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3">{t.desc}</p>
-                      {activeJob.type==='quote' && subtotal>0 && (
+                      {showCosts && subtotal>0 && (
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {labour>0 && <span className="text-[11px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-full">Labour {fmtAUD(labour)}</span>}
                           {mats>0   && <span className="text-[11px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-3 py-1 rounded-full">Materials {fmtAUD(mats)}</span>}
@@ -1363,6 +1482,7 @@
               })}
               {activeJob?.tasks.length===0 && <div className="text-center py-20 text-slate-300 dark:text-slate-700 font-black uppercase tracking-widest">No Log Entries Yet</div>}
             </div>
+
             <button onClick={() => setIsTaskFormOpen(true)} className={`fixed bottom-8 right-8 text-white w-20 h-20 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-4 border-white dark:border-slate-800 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`}>
               <Plus size={40}/>
             </button>
@@ -1417,7 +1537,13 @@
         )}
 
         {newJobModal && (
-          <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)}/>
+          <NewJobModal
+            type={newJobModal}
+            apiKey={apiKey}
+            geminiModel={geminiModel}
+            onSave={handleCreateJob}
+            onClose={() => setNewJobModal(null)}
+          />
         )}
 
         {isTaskFormOpen && (
@@ -1460,7 +1586,8 @@
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/>
                   </label>
                 </div>
-                {activeJob?.type==='quote' && (
+
+                {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && (
                   <div className="flex gap-3 mt-2">
                     <div className="flex-1 relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
@@ -1503,7 +1630,8 @@
                     </div>
                   </div>
                 )}
-                {activeJob?.type==='quote' && (() => {
+
+                {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && (() => {
                   const hrs=parseTimeToMinutes(taskData.time)/60;
                   const labour=hrs*(parseFloat(taskData.rate)||0);
                   const mats=parseFloat(taskData.materialsCost)||0;
@@ -1518,6 +1646,7 @@
                     </div>
                   ) : null;
                 })()}
+
                 {taskData.images.length>0 && (
                   <div className="mt-6 img-preview-grid">
                     {taskData.images.map((img,i) => (
@@ -1530,17 +1659,21 @@
                     <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
                   </div>
                 )}
+
                 <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
                 <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
+
                 <div className="relative">
                   <textarea placeholder="Full details…" className="w-full p-4 pr-12 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-28 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
                   <button onClick={toggleVoice} type="button" className={`absolute right-3 bottom-4 p-2.5 rounded-full text-white shadow-md transition-all ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Tap to dictate">
                     <Mic size={16}/>
                   </button>
                 </div>
+
                 <button onClick={handleAiSuggest} disabled={isAiSuggesting || !apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 ${apiKey ? 'bg-purple-600 hover:bg-purple-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
                   <Sparkles size={16}/> {isAiSuggesting ? 'Thinking…' : 'AI Suggest Details'}
                 </button>
+
                 <div className="flex gap-3">
                   <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                     <Bookmark size={16}/> Save as Template
@@ -1551,6 +1684,7 @@
                     </button>
                   )}
                 </div>
+
                 {isNamingTemplate && (
                   <div className="absolute inset-0 bg-slate-900/80 rounded-[3rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm p-6">
                     <h3 className="text-white font-black text-xl mb-4">Template Name</h3>
@@ -1568,6 +1702,7 @@
                     </div>
                   </div>
                 )}
+
                 <button onClick={handleSaveTask} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600'}`}>
                   <Save size={20}/> SAVE ENTRY
                 </button>
