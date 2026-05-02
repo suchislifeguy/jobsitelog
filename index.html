@@ -13,8 +13,7 @@
       }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- pdf.js loaded before babel/react so pdfjsLib is available globally -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Babel for React -->
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
     <style>
       body { -webkit-tap-highlight-color: transparent; transition: background-color 0.3s; }
@@ -57,14 +56,8 @@
     Pencil, Save, HardDrive, CheckCircle2, Clock, Moon, Sun, Edit3, Undo,
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
-    Download, Upload, Settings, FileText
+    Download, Upload, Settings, FileText, Image as ImageIcon2
   } from 'lucide-react';
-
-  // ── Set pdf.js worker after scripts have loaded ───────────────────────────
-  if (typeof pdfjsLib !== 'undefined') {
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-  }
 
   const DB_KEY    = 'jobsite-master-v4';
   const MAX_STOPS = 12;
@@ -145,9 +138,10 @@
   const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
 
   // ── Settings Modal ─────────────────────────────────────────────────────────
-  const SettingsModal = ({ apiKey, onSave, onClose }) => {
+  const SettingsModal = ({ apiKey, onSave, onClose, isDarkMode, toggleTheme, exportData, importData }) => {
     const [draft, setDraft] = useState(apiKey);
     const save = () => { onSave(draft); onClose(); };
+
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
         <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800">
@@ -158,18 +152,52 @@
             </div>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
-          <div className="space-y-5">
+          
+          <div className="space-y-6">
+            
+            {/* Appearance */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
+              <button 
+                onClick={toggleTheme}
+                className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700"
+              >
+                <div className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-200">
+                  {isDarkMode ? <Moon size={18} className="text-indigo-400"/> : <Sun size={18} className="text-amber-500"/>}
+                  {isDarkMode ? 'Dark Mode Active' : 'Light Mode Active'}
+                </div>
+                <div className={`w-12 h-6 rounded-full transition-all flex items-center px-1 ${isDarkMode ? 'bg-indigo-500 justify-end' : 'bg-slate-300 justify-start'}`}>
+                  <div className="w-4 h-4 rounded-full bg-white shadow"/>
+                </div>
+              </button>
+            </div>
+
+            {/* Data Management */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Backup & Restore</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={exportData} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                  <Download size={16}/> Export Data
+                </button>
+                <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer">
+                  <Upload size={16}/> Import Data
+                  <input type="file" accept=".json" className="hidden" onChange={importData}/>
+                </label>
+              </div>
+            </div>
+
+            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"></div>
+
             {/* Gemini API Key */}
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Gemini API Key</label>
-              <p className="text-[11px] text-slate-400 mb-2">
-                Required for <strong className="text-orange-500">PDF Import</strong>. Free tier available at{' '}
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Gemini AI Key</label>
+              <p className="text-[11px] text-slate-400 mb-2 leading-relaxed">
+                Required for <strong className="text-orange-500">PDF & Image Import</strong>. Free tier available at{' '}
                 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="underline text-blue-400 hover:text-blue-300">Google AI Studio</a>.
-                Key is stored only in your browser's localStorage.
               </p>
               <input
                 type="password"
-                className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
+                className="w-full p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
                 placeholder="Paste your Gemini API key…"
                 value={draft}
                 onChange={e => setDraft(e.target.value)}
@@ -185,21 +213,11 @@
               )}
             </div>
 
-            {/* PDF import note */}
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-4">
-              <p className="text-[11px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                <AlertTriangle size={12}/> PDF Import Note
-              </p>
-              <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 leading-relaxed">
-                Only works with <strong>text-based PDFs</strong> (digitally created). Scanned image PDFs will not extract correctly. Gemini will parse what text is found — always review imported data.
-              </p>
-            </div>
-
             <button
               onClick={save}
               className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
             >
-              <Check size={16}/> Save Settings
+              <Check size={16}/> Save & Close
             </button>
           </div>
         </div>
@@ -207,7 +225,7 @@
     );
   };
 
-  // ── New Job Modal (with optional PDF import via Gemini) ───────────────────
+  // ── New Job Modal (with optional AI import) ─────────────────────────────────
   const NewJobModal = ({ type, onSave, onClose, apiKey }) => {
     const [addr, setAddr]         = useState('');
     const [client, setClient]     = useState('');
@@ -218,59 +236,58 @@
 
     const go = () => addr.trim() && onSave(addr.trim(), client, []);
 
-    const handleImportPDF = async (e) => {
+    const handleImportFile = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      // Reset input so the same file can be re-imported if needed
-      e.target.value = '';
+      e.target.value = ''; // Reset input
 
       if (!apiKey) {
         alert('Please save a Gemini API key in Settings (⚙️) first.');
         return;
       }
-      if (typeof pdfjsLib === 'undefined') {
-        alert('PDF library failed to load. Please refresh the page.');
-        return;
-      }
 
       setIsImporting(true);
-      setImportMsg('Reading PDF…');
+      setImportMsg('Sending to Gemini AI…');
 
       try {
-        // Extract text via pdf.js
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = '';
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const content = await page.getTextContent();
-          fullText += content.items.map(item => item.str).join(' ') + '\n';
-        }
-        if (!fullText.trim()) {
-          throw new Error('No text found in this PDF. It may be a scanned image — try a digitally created PDF.');
-        }
+        // 1. Convert File to Base64
+        const base64Data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const b64 = reader.result.split(',')[1];
+            resolve(b64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
 
-        setImportMsg('Sending to Gemini…');
+        // 2. Get MIME type
+        const mimeType = file.type || 'application/pdf';
 
+        // 3. Send direct to Gemini 1.5 Flash (Supports native PDFs & Images)
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [{ text:
-                'Extract the following from this trade quote or work order. ' +
-                'Return ONLY a valid JSON object with these exact keys:\n' +
-                '"address" (job site address as a string),\n' +
-                '"clientName" (client or customer name as a string),\n' +
-                '"tasks" (array of objects, each with: "title" string, "time" string like "2h 30m", ' +
-                '"rate" string (dollars per hour, digits only e.g. "85"), ' +
-                '"materialsCost" string (dollars, digits only e.g. "320"), ' +
-                '"materials" string, "tools" string, "desc" string).\n' +
-                'If a field is not found, use an empty string or empty array. ' +
-                'Do not include markdown, backticks, or any text outside the JSON.\n\n' +
-                'Document text:\n' + fullText.slice(0, 12000) // cap to avoid token overrun
-              }] }],
+              contents: [{
+                parts: [
+                  { text: 
+                    'Extract the following from this document. ' +
+                    'Return ONLY a valid JSON object with these exact keys:\n' +
+                    '"address" (job site address as a string),\n' +
+                    '"clientName" (client or customer name as a string),\n' +
+                    '"tasks" (array of objects, each with: "title" string, "time" string like "2h 30m", ' +
+                    '"rate" string (dollars per hour, digits only e.g. "85"), ' +
+                    '"materialsCost" string (dollars, digits only e.g. "320"), ' +
+                    '"materials" string, "tools" string, "desc" string).\n' +
+                    'If a field is not found, use an empty string or empty array. ' +
+                    'Do not include markdown, backticks, or any text outside the JSON.' 
+                  },
+                  { inlineData: { mimeType: mimeType, data: base64Data } }
+                ]
+              }],
               generationConfig: { temperature: 0, response_mime_type: 'application/json' }
             })
           }
@@ -285,7 +302,7 @@
         const raw  = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         if (!raw) throw new Error('Gemini returned an empty response. Check your API key and quota.');
 
-        // Strip any accidental markdown fences
+        // Strip any markdown
         const cleaned = raw.replace(/```json\n?|```/g, '').trim();
         const json    = JSON.parse(cleaned);
 
@@ -300,11 +317,11 @@
           images: [],
         }));
 
-        // Fire-and-forget: pass extracted data back up
+        // Fire-and-forget
         onSave(json.address || '', json.clientName || '', tasks);
 
       } catch (err) {
-        alert('PDF import failed:\n' + err.message);
+        alert('Import failed:\n' + err.message);
       } finally {
         setIsImporting(false);
         setImportMsg('');
@@ -317,7 +334,7 @@
 
           {/* Loading overlay */}
           {isImporting && (
-            <div className="absolute inset-0 bg-slate-900/70 rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-slate-900/80 rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
               <p className="text-white font-black text-sm uppercase tracking-widest">{importMsg}</p>
             </div>
@@ -363,14 +380,14 @@
               <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
             </div>
 
-            {/* PDF Import */}
+            {/* AI Import */}
             <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div>
                   <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
-                    <FileText size={12} className="text-blue-500"/> Import from PDF
+                    <Sparkles size={12} className="text-orange-500"/> AI Auto-Fill
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Auto-fills address, client & line items via Gemini AI. Text-based PDFs only.</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Supports PDFs, scanned documents, and images.</p>
                 </div>
                 {!apiKey && (
                   <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/40 px-2 py-1 rounded-lg whitespace-nowrap">
@@ -387,9 +404,9 @@
                     : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                 }`}
               >
-                <FileText size={14}/> {apiKey ? 'Choose PDF File' : 'Add API Key in Settings First'}
+                <FileText size={14}/> {apiKey ? 'Choose File (PDF/Image)' : 'Add API Key in Settings'}
               </button>
-              <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={handleImportPDF}/>
+              <input ref={fileInputRef} type="file" accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleImportFile}/>
             </div>
 
             <button
@@ -526,7 +543,6 @@
     };
 
     // ── Job CRUD ──────────────────────────────────────────────────────────────
-    // tasks array can be pre-populated from PDF import (defaults to [])
     const handleCreateJob = (address, clientName, tasks = []) => {
       const newJob = {
         id: Date.now(),
@@ -722,7 +738,8 @@
             <div className="bg-orange-500 p-1.5 rounded-xl"><Hammer size={20}/></div>
             <h1 className="font-black text-lg tracking-tight uppercase">Jobsite</h1>
           </div>
-          <div className="flex items-center gap-1.5">
+          
+          <div className="flex items-center gap-2">
             {viewMode==='dashboard' && (
               <button onClick={toggleSelectionMode} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide transition-all border ${selectionMode ? 'bg-blue-500 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'}`}>
                 <MapPinned size={13}/> {selectionMode ? 'Done' : 'Route'}
@@ -733,16 +750,7 @@
                 <Printer size={13}/> Print
               </button>
             )}
-            <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700">
-              {isDarkMode ? <Sun size={15}/> : <Moon size={15}/>}
-            </button>
-            <button onClick={exportData} className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700" title="Export backup">
-              <Download size={15}/>
-            </button>
-            <label className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700 cursor-pointer" title="Import backup">
-              <Upload size={15}/>
-              <input type="file" accept=".json" className="hidden" onChange={importData}/>
-            </label>
+            
             {/* Settings — dot indicator when no API key set */}
             <button
               onClick={() => setShowSettings(true)}
@@ -754,6 +762,8 @@
                 <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full"/>
               )}
             </button>
+            
+            {/* DB Size Indicator */}
             <div className={`flex items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-slate-800 border-red-900' : 'text-slate-500 bg-slate-800 border-slate-700'}`}>
               <HardDrive size={10} className={parseFloat(dbSize)>4?"text-red-400":"text-emerald-500"}/> {dbSize}
             </div>
@@ -1073,6 +1083,10 @@
         {showSettings && (
           <SettingsModal
             apiKey={apiKey}
+            isDarkMode={isDarkMode}
+            toggleTheme={() => setIsDarkMode(!isDarkMode)}
+            exportData={exportData}
+            importData={importData}
             onSave={saveApiKey}
             onClose={() => setShowSettings(false)}
           />
