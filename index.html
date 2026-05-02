@@ -56,7 +56,7 @@
     Pencil, Save, HardDrive, CheckCircle2, Clock, Moon, Sun, Edit3, Undo,
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
-    Download, Upload, Settings, FileText, Image as ImageIcon2
+    Download, Upload, Settings, FileText
   } from 'lucide-react';
 
   const DB_KEY    = 'jobsite-master-v4';
@@ -128,7 +128,6 @@
     }
   };
 
-  // ── Statuses ───────────────────────────────────────────────────────────────
   const STATUSES = [
     { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
     { key:'sent',     label:'Sent',     cls:'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
@@ -177,10 +176,10 @@
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Backup & Restore</label>
               <div className="grid grid-cols-2 gap-3">
                 <button onClick={exportData} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  <Download size={16}/> Export Data
+                  <Download size={16}/> Export
                 </button>
                 <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer">
-                  <Upload size={16}/> Import Data
+                  <Upload size={16}/> Import
                   <input type="file" accept=".json" className="hidden" onChange={importData}/>
                 </label>
               </div>
@@ -264,9 +263,9 @@
         // 2. Get MIME type
         const mimeType = file.type || 'application/pdf';
 
-        // 3. Send direct to Gemini 1.5 Flash (Supports native PDFs & Images)
+        // 3. Send direct to Gemini 2.0 Flash (Supports native PDFs & Images)
         const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -295,7 +294,17 @@
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData?.error?.message || `Gemini API error ${res.status}`);
+          const msg = errData?.error?.message || `API error ${res.status}`;
+          
+          // Check for EU/UK Region Lock or Quota errors
+          if (res.status === 429 || msg.toLowerCase().includes('quota')) {
+            throw new Error(
+              "Google denied the request (Quota exceeded or Limit is 0).\n\n" +
+              "IMPORTANT: If you are in the UK, EU, or Switzerland, Google disables the Free Tier completely. " +
+              "To fix this, you must go to Google Cloud console and add a billing credit card (it costs fractions of a penny to use, but removes the region lock)."
+            );
+          }
+          throw new Error(msg);
         }
 
         const data = await res.json();
@@ -321,7 +330,7 @@
         onSave(json.address || '', json.clientName || '', tasks);
 
       } catch (err) {
-        alert('Import failed:\n' + err.message);
+        alert('Import failed:\n\n' + err.message);
       } finally {
         setIsImporting(false);
         setImportMsg('');
@@ -336,7 +345,7 @@
           {isImporting && (
             <div className="absolute inset-0 bg-slate-900/80 rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
-              <p className="text-white font-black text-sm uppercase tracking-widest">{importMsg}</p>
+              <p className="text-white font-black text-sm uppercase tracking-widest text-center px-4">{importMsg}</p>
             </div>
           )}
 
@@ -381,13 +390,13 @@
             </div>
 
             {/* AI Import */}
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
               <div className="flex items-start justify-between gap-3 mb-2">
                 <div>
                   <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
                     <Sparkles size={12} className="text-orange-500"/> AI Auto-Fill
                   </p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Supports PDFs, scanned documents, and images.</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">Supports PDFs, scanned documents, and images of quotes.</p>
                 </div>
                 {!apiKey && (
                   <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/40 px-2 py-1 rounded-lg whitespace-nowrap">
