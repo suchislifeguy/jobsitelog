@@ -29,7 +29,7 @@
         @page { margin: 12mm; size: A4; }
         html, body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         body > *:not(#print-container) { display: none !important; }
-        #print-container { display: block !important; padding: 0; margin: 0; }
+        #print-container { display: block !important; padding: 0; margin: 0; position: static; }
         .print-card { break-inside: avoid; page-break-inside: avoid; border: 2px solid #cbd5e1 !important; margin-bottom: 12px; border-radius: 8px; overflow: hidden; background: white !important; }
         .print-img-container { break-inside: avoid; page-break-inside: avoid; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
         .print-img-container img { width: 100%; height: auto; max-height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; page-break-inside: avoid; }
@@ -42,7 +42,6 @@
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       .canvas-editor-area { touch-action: none; }
-      .content-editable:empty:before { content: attr(data-placeholder); color: #9ca3af; }
     </style>
     <script type="importmap">
     {
@@ -85,7 +84,7 @@
     <!-- App Script -->
     <script type="text/babel" data-type="module">
   import React, { useState, useEffect, useRef, Component } from 'react';
-  import ReactDOM from 'react-dom/client';
+  import ReactDOM, { createPortal } from 'react-dom/client';
   import { get, set } from 'idb-keyval';
   import {
     Trash2, ImageIcon, Printer, Plus, X, Hammer, ChevronRight, Sparkles,
@@ -93,10 +92,10 @@
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert,
-    Bookmark, Package, PlusCircle
+    Bookmark, Package, PlusCircle, ChevronDown
   } from 'lucide-react';
 
-  const DB_KEY_JOBS   = 'jobsite-master-v4'; // keep for backward compatibility
+  const DB_KEY_JOBS   = 'jobsite-master-v4'; // backward compatible
   const DB_KEY_TEMPL  = 'joblog-templates';
   const DB_KEY_MATS   = 'joblog-materials';
   const MAX_STOPS     = 12;
@@ -148,7 +147,7 @@
     };
   });
 
-  // ── Built‑in Templates (kept as fallback) ──────────────────────────────────
+  // ── Built‑in Templates (fallback) ──────────────────────────────────────────
   const TEMPLATES = {
     quote: {
       painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools:"Brushes, Rollers, Extension Poles, Sandpaper", desc:"Surface prep, fill holes, prime and 2 finish coats" },
@@ -209,9 +208,110 @@
     </div>
   );
 
-  // ── Settings Modal (includes Template & Materials management) ───────────────
+  // ── Template & Material Managers (inside Settings) ──────────────────────────
+  const TemplateManager = ({ templates, onSave, onClose }) => {
+    const [list, setList] = useState([...templates]);
+    const [editing, setEditing] = useState(null);
+    const [form, setForm] = useState({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' });
+
+    const addNew = () => { setEditing(-1); setForm({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' }); };
+    const editTemplate = (index) => { setEditing(index); setForm({...list[index].data, name: list[index].name}); };
+    const deleteTemplate = (index) => { const nl = list.filter((_,i)=>i!==index); setList(nl); onSave(nl); };
+    const saveForm = () => {
+      if (!form.name.trim() || !form.title.trim()) return;
+      const tpl = { name: form.name.trim(), type: 'quote', data: { title: form.title, time: form.time, rate: form.rate, materialsCost: form.materialsCost, materials: form.materials, tools: form.tools, desc: form.desc } };
+      let updated;
+      if (editing >= 0) { updated = list.map((t,i)=>i===editing?tpl:t); } else { updated = [...list, tpl]; }
+      setList(updated); onSave(updated); setEditing(null);
+    };
+
+    return (
+      <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-black text-lg">Task Templates</h3>
+            <button onClick={onClose} className="p-1"><X size={20}/></button>
+          </div>
+          {editing === null ? (
+            <>
+              <button onClick={addNew} className="w-full bg-orange-500 text-white py-2 rounded-xl font-black text-sm mb-4 flex items-center justify-center gap-2"><PlusCircle size={16}/> New Template</button>
+              {list.map((t, i) => (
+                <div key={i} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl mb-2">
+                  <div><span className="font-black text-sm">{t.name}</span><p className="text-[10px] text-slate-400">{t.data.title}</p></div>
+                  <div className="flex gap-2">
+                    <button onClick={() => editTemplate(i)} className="text-blue-500"><Pencil size={14}/></button>
+                    <button onClick={() => deleteTemplate(i)} className="text-red-500"><Trash2 size={14}/></button>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div className="space-y-3">
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold" placeholder="Template Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Task Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Time (e.g. 2h)" value={form.time} onChange={e=>setForm({...form,time:e.target.value})}/>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Rate/hr" value={form.rate} onChange={e=>setForm({...form,rate:e.target.value})}/>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Materials $" value={form.materialsCost} onChange={e=>setForm({...form,materialsCost:e.target.value})}/>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Materials list" value={form.materials} onChange={e=>setForm({...form,materials:e.target.value})}/>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Tools" value={form.tools} onChange={e=>setForm({...form,tools:e.target.value})}/>
+              <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Description" value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})}/>
+              <div className="flex gap-3">
+                <button onClick={saveForm} className="flex-1 bg-orange-500 text-white py-3 rounded-xl font-black">Save Template</button>
+                <button onClick={() => setEditing(null)} className="flex-1 bg-slate-100 dark:bg-slate-800 py-3 rounded-xl font-black">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const MaterialManager = ({ materials, onSave, onClose }) => {
+    const [list, setList] = useState([...materials]);
+    const [newName, setNewName] = useState('');
+    const [newPrice, setNewPrice] = useState('');
+
+    const addMaterial = () => {
+      if (!newName.trim() || !newPrice.trim()) return;
+      const updated = [...list, { name: newName.trim(), price: newPrice.trim() }];
+      setList(updated); onSave(updated); setNewName(''); setNewPrice('');
+    };
+    const deleteMaterial = (index) => {
+      const updated = list.filter((_,i)=>i!==index);
+      setList(updated); onSave(updated);
+    };
+
+    return (
+      <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-black text-lg">Saved Materials</h3>
+            <button onClick={onClose} className="p-1"><X size={20}/></button>
+          </div>
+          <div className="flex gap-2 mb-4">
+            <input className="flex-1 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Material name" value={newName} onChange={e=>setNewName(e.target.value)}/>
+            <input className="w-24 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Price" value={newPrice} onChange={e=>setNewPrice(e.target.value)}/>
+            <button onClick={addMaterial} className="bg-orange-500 text-white px-3 py-2 rounded-xl font-black text-xs">Add</button>
+          </div>
+          <div className="space-y-2">
+            {list.map((m, i) => (
+              <div key={i} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
+                <span className="text-sm font-medium">{m.name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-black text-sm">{fmtAUD(parseFloat(m.price))}</span>
+                  <button onClick={() => deleteMaterial(i)} className="text-red-400"><Trash2 size={14}/></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ── Settings Modal (with library management) ────────────────────────────────
   const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials }) => {
-    const [draftKey, setDraftKey]   = useState(apiKey);
+    const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
     const [showTemplates, setShowTemplates] = useState(false);
     const [showMaterials, setShowMaterials] = useState(false);
@@ -227,7 +327,6 @@
             </div>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
-
           <div className="space-y-6">
             {/* Appearance */}
             <div>
@@ -304,128 +403,72 @@
             </button>
           </div>
 
-          {/* Template Management Sub-Modal */}
+          {/* Sub-modals */}
           {showTemplates && (
-            <TemplateManager
-              templates={userTemplates}
-              onSave={saveUserTemplates}
-              onClose={() => setShowTemplates(false)}
-            />
+            <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)} />
           )}
-          {/* Material Management Sub-Modal */}
           {showMaterials && (
-            <MaterialManager
-              materials={userMaterials}
-              onSave={saveUserMaterials}
-              onClose={() => setShowMaterials(false)}
-            />
+            <MaterialManager materials={userMaterials} onSave={saveUserMaterials} onClose={() => setShowMaterials(false)} />
           )}
         </div>
       </div>
     );
   };
 
-  // ── Template Manager Modal ──────────────────────────────────────────────────
-  const TemplateManager = ({ templates, onSave, onClose }) => {
-    const [list, setList] = useState([...templates]);
-    const [editing, setEditing] = useState(null); // index or null
-    const [form, setForm] = useState({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' });
-
-    const addNew = () => { setEditing(-1); setForm({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' }); };
-    const editTemplate = (index) => { setEditing(index); setForm({...list[index].data, name: list[index].name}); };
-    const deleteTemplate = (index) => { const nl = list.filter((_,i)=>i!==index); setList(nl); onSave(nl); };
-    const saveForm = () => {
-      if (!form.name.trim() || !form.title.trim()) return;
-      const tpl = { name: form.name.trim(), type: 'quote', data: { title: form.title, time: form.time, rate: form.rate, materialsCost: form.materialsCost, materials: form.materials, tools: form.tools, desc: form.desc } };
-      let updated;
-      if (editing >= 0) { updated = list.map((t,i)=>i===editing?tpl:t); } else { updated = [...list, tpl]; }
-      setList(updated); onSave(updated); setEditing(null);
-    };
+  // ── Template Popover (quick‑select in task form) ────────────────────────────
+  const TemplatePopover = ({ type, userTemplates, onSelect, onClose }) => {
+    const allTemplates = [
+      ...userTemplates.map(t => ({ ...t, isUser: true })),
+      ...Object.keys(TEMPLATES[type]||{}).map(key => ({
+        name: key.replace(/_/g, ' '),
+        data: TEMPLATES[type][key],
+        isUser: false
+      }))
+    ];
 
     return (
-      <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-black text-lg">Task Templates</h3>
-            <button onClick={onClose} className="p-1"><X size={20}/></button>
-          </div>
-          {editing === null ? (
-            <>
-              <button onClick={addNew} className="w-full bg-orange-500 text-white py-2 rounded-xl font-black text-sm mb-4 flex items-center justify-center gap-2"><PlusCircle size={16}/> New Template</button>
-              {list.map((t, i) => (
-                <div key={i} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl mb-2">
-                  <div>
-                    <span className="font-black text-sm">{t.name}</span>
-                    <p className="text-[10px] text-slate-400">{t.data.title}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => editTemplate(i)} className="text-blue-500"><Pencil size={14}/></button>
-                    <button onClick={() => deleteTemplate(i)} className="text-red-500"><Trash2 size={14}/></button>
-                  </div>
-                </div>
-              ))}
-            </>
-          ) : (
-            <div className="space-y-3">
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold" placeholder="Template Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Task Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Time (e.g. 2h)" value={form.time} onChange={e=>setForm({...form,time:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Rate/hr" value={form.rate} onChange={e=>setForm({...form,rate:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Materials $" value={form.materialsCost} onChange={e=>setForm({...form,materialsCost:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Materials list" value={form.materials} onChange={e=>setForm({...form,materials:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Tools" value={form.tools} onChange={e=>setForm({...form,tools:e.target.value})}/>
-              <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Description" value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})}/>
-              <div className="flex gap-3">
-                <button onClick={saveForm} className="flex-1 bg-orange-500 text-white py-3 rounded-xl font-black">Save Template</button>
-                <button onClick={() => setEditing(null)} className="flex-1 bg-slate-100 dark:bg-slate-800 py-3 rounded-xl font-black">Cancel</button>
-              </div>
+      <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-72 max-h-60 overflow-y-auto p-2">
+        {allTemplates.length === 0 && (
+          <p className="text-sm text-slate-400 p-2">No templates yet. Create one in Settings.</p>
+        )}
+        {allTemplates.map((t, i) => (
+          <button
+            key={i}
+            onClick={() => { onSelect(t.data); onClose(); }}
+            className="w-full text-left p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 group"
+          >
+            {t.isUser ? (
+              <Bookmark size={14} className="text-emerald-500" />
+            ) : (
+              <Sparkles size={14} className="text-orange-500" />
+            )}
+            <div className="min-w-0">
+              <div className="font-bold text-sm truncate">{t.name}</div>
+              {t.data.title && <div className="text-[10px] text-slate-400 truncate">{t.data.title}</div>}
             </div>
-          )}
-        </div>
+          </button>
+        ))}
       </div>
     );
   };
 
-  // ── Material Manager Modal ──────────────────────────────────────────────────
-  const MaterialManager = ({ materials, onSave, onClose }) => {
-    const [list, setList] = useState([...materials]);
-    const [newName, setNewName] = useState('');
-    const [newPrice, setNewPrice] = useState('');
-
-    const addMaterial = () => {
-      if (!newName.trim() || !newPrice.trim()) return;
-      const updated = [...list, { name: newName.trim(), price: newPrice.trim() }];
-      setList(updated); onSave(updated); setNewName(''); setNewPrice('');
-    };
-    const deleteMaterial = (index) => {
-      const updated = list.filter((_,i)=>i!==index);
-      setList(updated); onSave(updated);
-    };
-
+  // ── Material Picker Dropdown ────────────────────────────────────────────────
+  const MaterialPicker = ({ materials, onSelect, onClose }) => {
     return (
-      <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-black text-lg">Saved Materials</h3>
-            <button onClick={onClose} className="p-1"><X size={20}/></button>
-          </div>
-          <div className="flex gap-2 mb-4">
-            <input className="flex-1 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Material name" value={newName} onChange={e=>setNewName(e.target.value)}/>
-            <input className="w-24 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Price" value={newPrice} onChange={e=>setNewPrice(e.target.value)}/>
-            <button onClick={addMaterial} className="bg-orange-500 text-white px-3 py-2 rounded-xl font-black text-xs">Add</button>
-          </div>
-          <div className="space-y-2">
-            {list.map((m, i) => (
-              <div key={i} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
-                <span className="text-sm font-medium">{m.name}</span>
-                <div className="flex items-center gap-3">
-                  <span className="font-black text-sm">{fmtAUD(parseFloat(m.price))}</span>
-                  <button onClick={() => deleteMaterial(i)} className="text-red-400"><Trash2 size={14}/></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-64 max-h-48 overflow-y-auto p-2">
+        {materials.length === 0 && (
+          <p className="text-sm text-slate-400 p-2">No saved materials. Add in Settings or save one below.</p>
+        )}
+        {materials.map((m, i) => (
+          <button
+            key={i}
+            onClick={() => { onSelect(m); onClose(); }}
+            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left"
+          >
+            <span className="font-medium text-sm">{m.name}</span>
+            <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{fmtAUD(parseFloat(m.price))}</span>
+          </button>
+        ))}
       </div>
     );
   };
@@ -546,9 +589,9 @@
     );
   };
 
-  // ── Print Preview Modal ─────────────────────────────────────────────────────
-  const PrintPreview = ({ job, userMaterials, onClose }) => {
-    const [tasks, setTasks] = useState(job.tasks.map(t => ({...t}))); // deep copy
+  // ── Print Preview Modal (fixed with portal) ─────────────────────────────────
+  const PrintPreview = ({ job, onClose }) => {
+    const [tasks, setTasks] = useState(job.tasks.map(t => ({...t})));
     const [header, setHeader] = useState({
       address: job.address,
       clientName: job.clientName,
@@ -566,11 +609,7 @@
     const totals = getQuoteTotals(tasks, job.gstEnabled);
     const totalHours = tasks.reduce((a,t)=>a+parseTimeToMinutes(t.time),0);
 
-    useEffect(() => {
-      // Auto-save edited tasks back to the actual job? No, only on print. But we could offer.
-    }, [tasks]);
-
-    return (
+    return createPortal(
       <div className="fixed inset-0 z-[250] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
         <div className="max-w-2xl mx-auto">
           <div className="flex justify-between items-center mb-6 no-print">
@@ -588,7 +627,6 @@
                 <span>{job.type==='handover' ? 'Completed Works' : 'Field Report'}</span>
                 <span>{new Date(job.date || Date.now()).toLocaleDateString('en-AU',{dateStyle:'full'})}</span>
               </div>
-              {/* Editable fields in preview */}
               <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
               {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
               <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
@@ -666,44 +704,45 @@
             )}
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   };
 
   // ── Main App ────────────────────────────────────────────────────────────────
   const App = () => {
-    const [jobs, setJobs]               = useState([]);
+    const [jobs, setJobs] = useState([]);
     const [userTemplates, setUserTemplates] = useState([]);
     const [userMaterials, setUserMaterials] = useState([]);
     const [activeJobId, setActiveJobId] = useState(null);
-    const [viewMode, setViewMode]       = useState('dashboard');
+    const [viewMode, setViewMode] = useState('dashboard');
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
     const [editingTaskId, setEditingTaskId] = useState(null);
-    const [dbSize, setDbSize]           = useState('0 MB');
-    const [isDarkMode, setIsDarkMode]   = useState(() => localStorage.getItem('theme') === 'dark');
+    const [dbSize, setDbSize] = useState('0 MB');
+    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
     const [newJobModal, setNewJobModal] = useState(null);
-    const [searchQ, setSearchQ]         = useState('');
-    const [filterType, setFilterType]   = useState('all');
+    const [searchQ, setSearchQ] = useState('');
+    const [filterType, setFilterType] = useState('all');
     const [isEditingHeader, setIsEditingHeader] = useState(false);
     const [headerDraft, setHeaderDraft] = useState({ address:'', clientName:'', clientRef:'', projectNotes:'', projectPhotos:[] });
-    const [isLoading, setIsLoading]     = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [isListening, setIsListening] = useState(false);
-    const recognitionRef                = useRef(null);
-    const [apiKey, setApiKey]           = useState(() => localStorage.getItem('geminiApiKey') || '');
+    const recognitionRef = useRef(null);
+    const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
     const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-2.5-flash');
     const [showSettings, setShowSettings] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState(null);
     const [printPreviewJob, setPrintPreviewJob] = useState(null);
     const [selectionMode, setSelectionMode] = useState(false);
-    const [selectedJobs, setSelectedJobs]   = useState([]);
+    const [selectedJobs, setSelectedJobs] = useState([]);
     const [useMyLocation, setUseMyLocation] = useState(true);
-    const [locStatus, setLocStatus]         = useState('idle');
+    const [locStatus, setLocStatus] = useState('idle');
     const [currentCoords, setCurrentCoords] = useState(null);
 
     const EMPTY_TASK = { title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'', images:[] };
     const [taskData, setTaskData] = useState(EMPTY_TASK);
     const [rateError, setRateError] = useState(false);
-    const [matError, setMatError]   = useState(false);
+    const [matError, setMatError] = useState(false);
 
     // Canvas state (unchanged)
     const [editingImageIdx, setEditingImageIdx] = useState(null);
@@ -726,8 +765,12 @@
       { hex:'#000000', name:'Black' }
     ];
 
+    // Template & material popover controls
+    const [showTemplatePop, setShowTemplatePop] = useState(false);
+    const [showMaterialPop, setShowMaterialPop] = useState(false);
+
     // ── Data loading & saving ──────────────────────────────────────────────
-    const loadJobs  = async () => {
+    const loadJobs = async () => {
       const d = await get(DB_KEY_JOBS) || [];
       setJobs(d);
       updMetric(d);
@@ -744,7 +787,7 @@
     useEffect(() => { loadJobs(); loadTemplates(); loadMaterials(); }, []);
 
     const updMetric = (d) => setDbSize(`${(new TextEncoder().encode(JSON.stringify(d)).length/1024/1024).toFixed(2)} MB`);
-    const saveToDB  = async (nj) => {
+    const saveToDB = async (nj) => {
       setJobs(nj);
       try { await set(DB_KEY_JOBS, nj); } catch(e) { alert('Warning: Data could not be saved.'); }
       updMetric(nj);
@@ -788,7 +831,7 @@
       localStorage.setItem('geminiApiKey', trimmedKey); localStorage.setItem('geminiModel', trimmedModel);
     };
 
-    // ── AI Task Suggest (new) ─────────────────────────────────────────────
+    // ── AI Task Suggest ──────────────────────────────────────────────────
     const [isAiSuggesting, setIsAiSuggesting] = useState(false);
     const handleAiSuggest = async () => {
       if (!taskData.title.trim() && !taskData.desc.trim()) {
@@ -826,6 +869,33 @@
         }));
       } catch (err) { alert(`AI suggest failed: ${err.message}`); }
       finally { setIsAiSuggesting(false); }
+    };
+
+    // ── Template saving (direct, no prompt) ──────────────────────────────
+    const [saveTemplateName, setSaveTemplateName] = useState('');
+    const [isNamingTemplate, setIsNamingTemplate] = useState(false);
+    const handleSaveAsTemplate = () => {
+      if (!taskData.title) return alert('Task title is required.');
+      setIsNamingTemplate(true);
+      setSaveTemplateName('');
+    };
+    const confirmSaveTemplate = () => {
+      if (!saveTemplateName.trim()) return;
+      const tpl = {
+        name: saveTemplateName.trim(),
+        type: activeJob?.type || 'quote',
+        data: { title: taskData.title, time: taskData.time, rate: taskData.rate, materialsCost: taskData.materialsCost, materials: taskData.materials, tools: taskData.tools, desc: taskData.desc }
+      };
+      saveUserTemplates([...userTemplates, tpl]);
+      setIsNamingTemplate(false);
+    };
+
+    // ── Material saving (direct) ─────────────────────────────────────────
+    const handleSaveMaterial = () => {
+      if (!taskData.materials.trim() || !taskData.materialsCost.trim()) return;
+      const exists = userMaterials.find(m => m.name === taskData.materials && m.price === taskData.materialsCost);
+      if (exists) return; // already saved
+      saveUserMaterials([...userMaterials, { name: taskData.materials, price: taskData.materialsCost }]);
     };
 
     // ── Data export/import (unchanged) ───────────────────────────────────
@@ -896,21 +966,6 @@
         : [...activeJob.tasks, { ...taskData, id:Date.now() }];
       saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j));
       closeModal();
-      // Prompt to save as template
-      if (window.confirm('Save this task as a reusable template?')) {
-        const name = prompt('Template name:');
-        if (name) {
-          const tpl = { name, type: activeJob.type, data: { title: taskData.title, time: taskData.time, rate: taskData.rate, materialsCost: taskData.materialsCost, materials: taskData.materials, tools: taskData.tools, desc: taskData.desc } };
-          saveUserTemplates([...userTemplates, tpl]);
-        }
-      }
-      // Prompt to save material if new
-      if (taskData.materials && taskData.materialsCost) {
-        const exists = userMaterials.find(m => m.name === taskData.materials && m.price === taskData.materialsCost);
-        if (!exists && window.confirm('Save this material and price to your library?')) {
-          saveUserMaterials([...userMaterials, { name: taskData.materials, price: taskData.materialsCost }]);
-        }
-      }
     };
 
     const closeModal = () => {
@@ -922,6 +977,7 @@
       setTaskData(EMPTY_TASK);
       setRateError(false);
       setMatError(false);
+      setIsNamingTemplate(false);
     };
     const handleImageUpload = async (e) => {
       try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); }
@@ -1306,7 +1362,7 @@
               </div>
             )}
 
-            {/* Task list (unchanged except for print button flow) */}
+            {/* Task list */}
             <div className="space-y-6 mb-32">
               {activeJob?.tasks.map((t, i) => {
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
@@ -1415,21 +1471,26 @@
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
 
-              {/* Quick templates: show user templates first, then built‑in */}
-              <div className="mb-6">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Quick Templates</label>
-                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar flex-wrap">
-                  {userTemplates.map((tpl, i) => (
-                    <button key={i} onClick={() => setTaskData(prev => ({...prev, ...tpl.data}))} className="whitespace-nowrap bg-white dark:bg-slate-800 border-2 border-emerald-100 dark:border-emerald-900 px-4 py-2 rounded-2xl text-[12px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest hover:border-emerald-500 transition-all">
-                      <Bookmark size={14} className="inline mr-1 text-emerald-500"/> {tpl.name}
-                    </button>
-                  ))}
-                  {Object.keys(TEMPLATES[activeJob?.type]||{}).map(key => (
-                    <button key={key} onClick={() => setTaskData(p=>({...p,...TEMPLATES[activeJob.type][key]}))} className="whitespace-nowrap bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 px-4 py-2 rounded-2xl text-[12px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest hover:border-orange-500 transition-all">
-                      <Sparkles size={14} className="inline mr-1 text-orange-500"/> {key.replace(/_/g,' ')}
-                    </button>
-                  ))}
-                </div>
+              {/* Templates: compact popover button */}
+              <div className="mb-4 relative">
+                <button
+                  onClick={() => setShowTemplatePop(!showTemplatePop)}
+                  className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl font-black text-sm border border-slate-100 dark:border-slate-700 hover:border-purple-400 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <Sparkles size={16} className="text-purple-500"/>
+                    Templates
+                  </span>
+                  <ChevronDown size={16} className={showTemplatePop ? 'rotate-180' : ''}/>
+                </button>
+                {showTemplatePop && (
+                  <TemplatePopover
+                    type={activeJob?.type || 'quote'}
+                    userTemplates={userTemplates}
+                    onSelect={(data) => setTaskData(prev => ({...prev, ...data}))}
+                    onClose={() => setShowTemplatePop(false)}
+                  />
+                )}
               </div>
 
               <div className="space-y-4">
@@ -1445,6 +1506,7 @@
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/>
                   </label>
                 </div>
+
                 {activeJob?.type==='quote' && (
                   <div className="flex gap-3 mt-2">
                     <div className="flex-1 relative">
@@ -1467,24 +1529,29 @@
                         {/* Material picker button */}
                         {userMaterials.length > 0 && (
                           <div className="relative ml-1">
-                            <select
-                              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                              onChange={e => {
-                                const mat = userMaterials.find(m => m.name === e.target.value);
-                                if (mat) { setTaskData(p => ({...p, materials: mat.name, materialsCost: mat.price})); }
-                              }}
-                              value=""
+                            <button
+                              onClick={() => setShowMaterialPop(!showMaterialPop)}
+                              className="bg-slate-200 dark:bg-slate-700 p-3 rounded-xl text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600"
+                              title="Pick saved material"
                             >
-                              <option value="">Pick material</option>
-                              {userMaterials.map((m,i) => <option key={i} value={m.name}>{m.name} ({fmtAUD(parseFloat(m.price))})</option>)}
-                            </select>
-                            <button className="bg-slate-200 dark:bg-slate-700 p-3 rounded-xl text-slate-500" title="Pick saved material"><Package size={16}/></button>
+                              <Package size={16}/>
+                            </button>
+                            {showMaterialPop && (
+                              <div className="absolute right-0 top-full mt-1 z-50">
+                                <MaterialPicker
+                                  materials={userMaterials}
+                                  onSelect={(m) => { setTaskData(p => ({...p, materials: m.name, materialsCost: m.price})); }}
+                                  onClose={() => setShowMaterialPop(false)}
+                                />
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
                     </div>
                   </div>
                 )}
+
                 {activeJob?.type==='quote' && (() => {
                   const hrs=parseTimeToMinutes(taskData.time)/60;
                   const labour=hrs*(parseFloat(taskData.rate)||0);
@@ -1500,6 +1567,7 @@
                     </div>
                   ) : null;
                 })()}
+
                 {taskData.images.length>0 && (
                   <div className="mt-6 img-preview-grid">
                     {taskData.images.map((img,i) => (
@@ -1512,6 +1580,7 @@
                     <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
                   </div>
                 )}
+
                 <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
                 <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
 
@@ -1525,8 +1594,39 @@
 
                 {/* AI Suggest button */}
                 <button onClick={handleAiSuggest} disabled={isAiSuggesting || !apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 ${apiKey ? 'bg-purple-600 hover:bg-purple-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
-                  <Sparkles size={16}/> {isAiSuggesting ? 'Thinking…' : 'AI Suggest Materials & Tools'}
+                  <Sparkles size={16}/> {isAiSuggesting ? 'Thinking…' : 'AI Suggest Details'}
                 </button>
+
+                {/* Save as Template & Save Material inline */}
+                <div className="flex gap-3">
+                  <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                    <Bookmark size={16}/> Save as Template
+                  </button>
+                  {taskData.materials.trim() && taskData.materialsCost.trim() && (
+                    <button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                      <Package size={16}/> Save Material
+                    </button>
+                  )}
+                </div>
+
+                {/* Naming popup for template */}
+                {isNamingTemplate && (
+                  <div className="absolute inset-0 bg-slate-900/80 rounded-[3rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm p-6">
+                    <h3 className="text-white font-black text-xl mb-4">Template Name</h3>
+                    <input
+                      autoFocus
+                      className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl outline-none font-bold mb-3"
+                      placeholder="e.g. Bathroom Patch"
+                      value={saveTemplateName}
+                      onChange={e => setSaveTemplateName(e.target.value)}
+                      onKeyDown={e => e.key==='Enter' && confirmSaveTemplate()}
+                    />
+                    <div className="flex gap-3 w-full">
+                      <button onClick={confirmSaveTemplate} className="flex-1 bg-emerald-600 text-white py-3 rounded-2xl font-black">Save</button>
+                      <button onClick={() => setIsNamingTemplate(false)} className="flex-1 bg-slate-700 text-white py-3 rounded-2xl font-black">Cancel</button>
+                    </div>
+                  </div>
+                )}
 
                 <button onClick={handleSaveTask} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600'}`}>
                   <Save size={20}/> SAVE ENTRY
@@ -1581,16 +1681,16 @@
           </div>
         )}
 
-        {/* ══ Print Preview Modal ══ */}
+        {/* ══ Print Preview Modal (rendered via portal) ══ */}
         {printPreviewJob && (
-          <PrintPreview job={printPreviewJob} userMaterials={userMaterials} onClose={() => setPrintPreviewJob(null)}/>
+          <PrintPreview job={printPreviewJob} onClose={() => setPrintPreviewJob(null)}/>
         )}
       </div>
     );
   };
 
   ReactDOM.createRoot(document.getElementById('root')).render(
-    <ErrorBoundary><App/></ErrorBoundary>
+    <ErrorBoundary><App /></ErrorBoundary>
   );
     </script>
   </body>
