@@ -13,16 +13,12 @@
       }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Babel for React -->
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
 
     <style>
-      /* FIX: Strict lock to prevent horizontal scrolling on mobile */
       html, body { max-width: 100vw; overflow-x: hidden; }
       body { -webkit-tap-highlight-color: transparent; transition: background-color 0.3s; }
-      
-      /* Mobile Safe Area Spacing */
+
       @supports (padding-bottom: env(safe-area-inset-bottom)) {
         .safe-pb { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
         .fixed.bottom-8 { bottom: calc(2rem + env(safe-area-inset-bottom)); }
@@ -59,7 +55,7 @@
   <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
     <div id="root"></div>
 
-    <!-- Single-File Service Worker Trick for Offline Mode -->
+    <!-- FIX 1: Revoke the blob URL after SW registers to prevent memory leak -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -77,14 +73,20 @@
           const blob = new Blob([swCode], { type: 'application/javascript' });
           const swUrl = URL.createObjectURL(blob);
           navigator.serviceWorker.register(swUrl)
-            .then(() => console.log('Offline Mode Ready'))
-            .catch(err => console.error('Offline Mode Failed:', err));
+            .then(() => {
+              console.log('Offline Mode Ready');
+              URL.revokeObjectURL(swUrl); // FIX 1: Revoke immediately after register
+            })
+            .catch(err => {
+              console.error('Offline Mode Failed:', err);
+              URL.revokeObjectURL(swUrl); // FIX 1: Also revoke on failure
+            });
         });
       }
     </script>
 
     <script type="text/babel" data-type="module">
-  import React, { useState, useEffect, useRef } from 'react';
+  import React, { useState, useEffect, useRef, Component } from 'react';
   import ReactDOM from 'react-dom/client';
   import { get, set } from 'idb-keyval';
   import {
@@ -92,7 +94,7 @@
     Pencil, Save, HardDrive, CheckCircle2, Clock, Moon, Sun, Edit3, Undo,
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
-    Download, Upload, Settings, FileText, Bot, Mic
+    Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert
   } from 'lucide-react';
 
   const DB_KEY    = 'jobsite-master-v4';
@@ -111,6 +113,9 @@
   const fmtMins = (m) => { const h = Math.floor(m/60), r = Math.round(m%60); if (!h) return `${r}m`; if (!r) return `${h}h`; return `${h}h ${r}m`; };
   const fmtAUD  = (n) => `$${Number(n||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
+  // FIX 5: Consistent date formatting with explicit locale
+  const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU') : '';
+
   const getQuoteTotals = (tasks, gstEnabled) => {
     let labour = 0, mats = 0;
     (tasks||[]).forEach(t => {
@@ -123,6 +128,7 @@
     return { labour, mats, subtotal, gst, total };
   };
 
+  // FIX 7: Increased max image dimension from 600px to 1200px for better quality
   const compressImage = (file) => new Promise((res, rej) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -133,11 +139,12 @@
       img.onload = () => {
         try {
           const c = document.createElement('canvas');
-          const MAX = 600; let w = img.width, h = img.height;
+          const MAX = 1200; let w = img.width, h = img.height;
           if (w > MAX) { h *= MAX/w; w = MAX; }
+          if (h > MAX) { w *= MAX/h; h = MAX; }
           c.width = w; c.height = h;
           c.getContext('2d').drawImage(img, 0, 0, w, h);
-          res(c.toDataURL('image/webp', 0.6));
+          res(c.toDataURL('image/webp', 0.75));
         } catch(e) { rej(e); }
       };
     };
@@ -172,6 +179,67 @@
   ];
   const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
 
+  // ── FIX 2: Error Boundary ─────────────────────────────────────────────────
+  class ErrorBoundary extends Component {
+    constructor(props) {
+      super(props);
+      this.state = { hasError: false, error: null };
+    }
+    static getDerivedStateFromError(error) {
+      return { hasError: true, error };
+    }
+    componentDidCatch(error, info) {
+      console.error('JobSite Error:', error, info);
+    }
+    render() {
+      if (this.state.hasError) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-8 bg-slate-100 dark:bg-slate-950">
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 max-w-sm w-full text-center border dark:border-slate-800 shadow-xl">
+              <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-2xl mb-4 inline-flex">
+                <AlertTriangle size={32} className="text-red-500"/>
+              </div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Something went wrong</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+                {this.state.error?.message || 'An unexpected error occurred.'}
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-orange-500 hover:bg-orange-400 text-white font-black px-6 py-3 rounded-2xl w-full active:scale-95 transition-all"
+              >
+                Reload App
+              </button>
+            </div>
+          </div>
+        );
+      }
+      return this.props.children;
+    }
+  }
+
+  // ── FIX 3: Inline Confirm Dialog (replaces all browser confirm() calls) ───
+  const ConfirmDialog = ({ message, confirmLabel = 'Delete', onConfirm, onCancel, danger = true }) => (
+    <div className="fixed inset-0 z-[350] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 w-full max-w-xs shadow-2xl border dark:border-slate-800">
+        <p className="font-bold text-slate-800 dark:text-white text-center mb-6 leading-relaxed text-sm">{message}</p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 font-black text-sm text-slate-600 dark:text-slate-300 active:scale-95 transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className={`flex-1 py-3 rounded-2xl font-black text-sm text-white active:scale-95 transition-all ${danger ? 'bg-red-500 hover:bg-red-400' : 'bg-orange-500 hover:bg-orange-400'}`}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   // ── Settings Modal ─────────────────────────────────────────────────────────
   const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData }) => {
     const [draftKey, setDraftKey]     = useState(apiKey);
@@ -180,7 +248,7 @@
 
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800 max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
               <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Configuration</span>
@@ -188,13 +256,13 @@
             </div>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
-          
+
           <div className="space-y-6">
-            
+
             {/* Appearance */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
-              <button 
+              <button
                 onClick={toggleTheme}
                 className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700"
               >
@@ -224,10 +292,18 @@
 
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"></div>
 
-            {/* Gemini API Settings */}
+            {/* FIX 8: API key security warning */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
-              
+
+              {/* Warning banner */}
+              <div className="flex items-start gap-3 p-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl">
+                <ShieldAlert size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
+                <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium leading-relaxed">
+                  Your API key is stored in this browser only and never transmitted except directly to Google. Do not use this on a shared or public device.
+                </p>
+              </div>
+
               <input
                 type="password"
                 className="w-full p-4 mb-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
@@ -235,7 +311,7 @@
                 value={draftKey}
                 onChange={e => setDraftKey(e.target.value)}
               />
-              
+
               <div className="relative">
                 <Bot size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
@@ -247,7 +323,7 @@
                 />
               </div>
               <p className="text-[10px] text-slate-400 mt-2 font-medium leading-relaxed">
-                Enter the exact model name from Google AI Studio. You can update this at any time when new models are released.
+                Enter the exact model name from Google AI Studio. You can update this any time when new models are released.
               </p>
             </div>
 
@@ -263,10 +339,10 @@
     );
   };
 
-  // ── New Job Modal (with optional multi-file AI import) ──────────────────────
+  // ── New Job Modal ──────────────────────────────────────────────────────────
   const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel }) => {
-    const [addr, setAddr]         = useState('');
-    const [client, setClient]     = useState('');
+    const [addr, setAddr]               = useState('');
+    const [client, setClient]           = useState('');
     const [isImporting, setIsImporting] = useState(false);
     const [importMsg, setImportMsg]     = useState('');
     const fileInputRef = useRef(null);
@@ -277,7 +353,7 @@
     const handleImportFile = async (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
-      e.target.value = ''; 
+      e.target.value = '';
 
       if (!apiKey) {
         alert('Please save a Gemini API key in Settings (⚙️) first.');
@@ -296,17 +372,12 @@
               reader.onerror = reject;
               reader.readAsDataURL(file);
             });
-            return {
-              inlineData: {
-                mimeType: file.type || 'application/pdf',
-                data: base64Data
-              }
-            };
+            return { inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } };
           })
         );
 
         const textPart = {
-          text: 
+          text:
             'Extract the following from the provided document(s). ' +
             'If multiple documents are provided (e.g. a quote request and a separate safety report), ' +
             'cross-reference them to build a comprehensive, single list of tasks. ' +
@@ -321,15 +392,13 @@
             'Do not include markdown, backticks, or any text outside the JSON.'
         };
 
-        const combinedParts = [textPart, ...fileParts];
-
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: combinedParts }],
+              contents: [{ parts: [textPart, ...fileParts] }],
               generationConfig: { temperature: 0, response_mime_type: 'application/json' }
             })
           }
@@ -337,8 +406,7 @@
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          const msg = errData?.error?.message || `API error ${res.status}`;
-          throw new Error(msg);
+          throw new Error(errData?.error?.message || `API error ${res.status}`);
         }
 
         const data = await res.json();
@@ -349,23 +417,15 @@
         const json    = JSON.parse(cleaned);
 
         const tasks = (json.tasks || []).map(t => ({
-          title: t.title || '',
-          time:  t.time  || '',
-          rate:  String(t.rate  || ''),
-          materialsCost: String(t.materialsCost || ''),
-          materials: t.materials || '',
-          tools: t.tools || '',
-          desc:  t.desc  || '',
-          images: [],
+          title: t.title || '', time: t.time || '', rate: String(t.rate || ''),
+          materialsCost: String(t.materialsCost || ''), materials: t.materials || '',
+          tools: t.tools || '', desc: t.desc || '', images: [],
         }));
 
         onSave(json.address || '', json.clientName || '', tasks);
 
       } catch (err) {
-        alert(
-          `Import failed!\n\nGoogle API Error: ${err.message}\n\n` + 
-          `Ensure the Model Name in your Settings matches a valid, active model in Google AI Studio.`
-        );
+        alert(`Import failed!\n\nGoogle API Error: ${err.message}\n\nEnsure the Model Name in Settings matches a valid model in Google AI Studio.`);
       } finally {
         setIsImporting(false);
         setImportMsg('');
@@ -439,21 +499,12 @@
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isImporting || !apiKey}
                 className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
-                  apiKey
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
-                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                  apiKey ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                 }`}
               >
                 <FileText size={14}/> {apiKey ? 'Choose File(s)' : 'Add API Key in Settings'}
               </button>
-              <input 
-                ref={fileInputRef} 
-                type="file" 
-                multiple 
-                accept=".pdf,image/jpeg,image/png,image/webp" 
-                className="hidden" 
-                onChange={handleImportFile}
-              />
+              <input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleImportFile}/>
             </div>
 
             <button
@@ -461,9 +512,7 @@
               disabled={!addr.trim() || isImporting}
               className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all ${
                 addr.trim() && !isImporting
-                  ? isHandover
-                    ? 'bg-emerald-600 hover:bg-emerald-500 active:scale-95'
-                    : 'bg-slate-900 hover:bg-slate-800 dark:bg-orange-500 dark:hover:bg-orange-400 active:scale-95'
+                  ? isHandover ? 'bg-emerald-600 hover:bg-emerald-500 active:scale-95' : 'bg-slate-900 hover:bg-slate-800 dark:bg-orange-500 dark:hover:bg-orange-400 active:scale-95'
                   : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
               }`}
             >
@@ -490,13 +539,24 @@
     const [isEditingHeader, setIsEditingHeader] = useState(false);
     const [headerDraft, setHeaderDraft] = useState({ address:'', clientName:'', clientRef:'', projectNotes:'', projectPhotos:[] });
 
-    // Voice to Text state
+    // FIX 4: Loading state for IndexedDB hydration
+    const [isLoading, setIsLoading]     = useState(true);
+
+    // FIX 6: Voice recognition ref for proper cleanup
     const [isListening, setIsListening] = useState(false);
+    const recognitionRef                = useRef(null);
 
     // Gemini API key & Model
     const [apiKey, setApiKey]           = useState(() => localStorage.getItem('geminiApiKey') || '');
     const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-2.5-flash');
     const [showSettings, setShowSettings] = useState(false);
+
+    // FIX 3: Confirm dialog state (replaces browser confirm())
+    const [confirmDialog, setConfirmDialog] = useState(null);
+    const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => {
+      setConfirmDialog({ message, onConfirm, confirmLabel, danger });
+    };
+    const dismissConfirm = () => setConfirmDialog(null);
 
     // Route planning
     const [selectionMode, setSelectionMode] = useState(false);
@@ -544,7 +604,22 @@
     useEffect(() => { drawRef.current = isDrawing;  }, [isDrawing]);
     useEffect(() => { if (viewMode !== 'dashboard') exitSelectionMode(); }, [viewMode]);
 
-    const loadJobs  = async () => { const d = await get(DB_KEY)||[]; setJobs(d); updMetric(d); };
+    // FIX 6: Stop recognition when task form closes
+    useEffect(() => {
+      if (!isTaskFormOpen) {
+        recognitionRef.current?.stop();
+        recognitionRef.current = null;
+        setIsListening(false);
+      }
+    }, [isTaskFormOpen]);
+
+    // FIX 4: Set isLoading false after DB loads
+    const loadJobs  = async () => {
+      const d = await get(DB_KEY) || [];
+      setJobs(d);
+      updMetric(d);
+      setIsLoading(false);
+    };
     const updMetric = (d) => setDbSize(`${(new TextEncoder().encode(JSON.stringify(d)).length/1024/1024).toFixed(2)} MB`);
     const saveToDB  = async (nj) => {
       setJobs(nj);
@@ -556,34 +631,36 @@
     const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
     const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled) : null;
 
-    // ── Voice to Text ─────────────────────────────────────────────────────────
+    // FIX 6: Voice to Text with proper ref and cleanup
     const toggleVoice = () => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) return alert('Voice dictation is not supported in this browser.');
-      
+
       if (isListening) {
+        recognitionRef.current?.stop();
+        recognitionRef.current = null;
         setIsListening(false);
         return;
       }
 
       const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
       recognition.continuous = false;
       recognition.interimResults = false;
-      
-      recognition.onstart = () => setIsListening(true);
+
+      recognition.onstart  = () => setIsListening(true);
       recognition.onresult = (e) => {
         const transcript = e.results[0][0].transcript;
         setTaskData(p => ({ ...p, desc: p.desc ? p.desc + ' ' + transcript : transcript }));
       };
-      recognition.onerror = () => setIsListening(false);
-      recognition.onend = () => setIsListening(false);
-      
+      recognition.onerror = () => { setIsListening(false); recognitionRef.current = null; };
+      recognition.onend   = () => { setIsListening(false); recognitionRef.current = null; };
+
       recognition.start();
     };
 
-    // ── Save API Key & Model ──────────────────────────────────────────────────
     const saveApiSettings = (key, model) => {
-      const trimmedKey = key.trim();
+      const trimmedKey   = key.trim();
       const trimmedModel = model.trim();
       setApiKey(trimmedKey);
       setGeminiModel(trimmedModel);
@@ -600,6 +677,8 @@
       a.click();
       URL.revokeObjectURL(url);
     };
+
+    // FIX 3: importData now uses showConfirm instead of confirm()
     const importData = (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -609,10 +688,15 @@
         try {
           const imported = JSON.parse(ev.target.result);
           if (!Array.isArray(imported)) throw new Error('Invalid format');
-          if (!confirm(`Found ${imported.length} project${imported.length!==1?'s':''}. Replace ALL current data?`)) return;
-          await saveToDB(imported);
-          alert('Import successful. Reloading…');
-          window.location.reload();
+          showConfirm(
+            `Found ${imported.length} project${imported.length !== 1 ? 's' : ''}. This will replace ALL current data. Are you sure?`,
+            async () => {
+              await saveToDB(imported);
+              window.location.reload();
+            },
+            'Replace All',
+            true
+          );
         } catch {
           alert('Invalid backup file. Please use a file exported from JobSite Master.');
         }
@@ -626,11 +710,8 @@
         id: Date.now(),
         date: new Date().toISOString(),
         type: newJobModal,
-        address,
-        clientName,
-        clientRef: '',
-        projectNotes: '',
-        projectPhotos: [],
+        address, clientName,
+        clientRef: '', projectNotes: '', projectPhotos: [],
         tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })),
         status: 'draft',
         gstEnabled: false,
@@ -645,7 +726,7 @@
     };
     const toggleGST = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
 
-    // ── Header editing ──────────────────────────────────────────────────────
+    // ── Header editing ────────────────────────────────────────────────────────
     const startEditHeader = () => {
       setHeaderDraft({ address:activeJob.address, clientName:activeJob.clientName, clientRef:activeJob.clientRef||'', projectNotes:activeJob.projectNotes||'', projectPhotos:activeJob.projectPhotos||[] });
       setIsEditingHeader(true);
@@ -662,7 +743,7 @@
       } catch { alert('One or more images could not be processed.'); }
     };
 
-    // ── Task form ──────────────────────────────────────────────────────────
+    // ── Task form ─────────────────────────────────────────────────────────────
     const handleSaveTask = () => {
       if (!taskData.title) return alert('Task title is required.');
       if (!activeJob) return;
@@ -672,7 +753,16 @@
       saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j));
       closeModal();
     };
-    const closeModal = () => { setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); setRateError(false); setMatError(false); setIsListening(false); };
+    const closeModal = () => {
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+      setIsTaskFormOpen(false);
+      setEditingTaskId(null);
+      setTaskData(EMPTY_TASK);
+      setRateError(false);
+      setMatError(false);
+    };
     const handleImageUpload = async (e) => {
       try { const c=await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); }
       catch { alert('One or more images could not be processed.'); }
@@ -680,7 +770,7 @@
     const validateRate = (val) => { const n = parseFloat(val); setRateError(val !== '' && isNaN(n)); };
     const validateMat  = (val) => { const n = parseFloat(val); setMatError(val !== ''  && isNaN(n)); };
 
-    // ── Route planning ────────────────────────────────────────────────────────
+    // ── Route planning ─────────────────────────────────────────────────────────
     const exitSelectionMode   = () => { setSelectionMode(false); setSelectedJobs([]); setLocStatus('idle'); setCurrentCoords(null); };
     const toggleSelectionMode = () => { if (selectionMode) exitSelectionMode(); else { setSelectionMode(true); setSelectedJobs([]); } };
     const toggleJobSelection  = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
@@ -710,7 +800,7 @@
     };
     const atStopLimit = selectedJobs.length >= MAX_STOPS;
 
-    // ── Filtered jobs ─────────────────────────────────────────────────────────
+    // ── Filtered jobs ──────────────────────────────────────────────────────────
     const filteredJobs = jobs
       .filter(j => filterType==='all' || j.type===filterType)
       .filter(j => !searchQ.trim() || j.address.toLowerCase().includes(searchQ.toLowerCase()) || (j.clientName||'').toLowerCase().includes(searchQ.toLowerCase()))
@@ -806,9 +896,33 @@
     };
     const onMUp = () => { panStartRef.current=null; stopDraw(); };
 
+    // ── FIX 4: Loading screen ─────────────────────────────────────────────────
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
+          <div className="flex flex-col items-center gap-4">
+            <div className="bg-orange-500 p-4 rounded-[1.5rem]"><Hammer size={32} className="text-white"/></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"/>
+            <p className="text-slate-400 text-xs font-black uppercase tracking-widest">Loading projects…</p>
+          </div>
+        </div>
+      );
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     return (
       <div className="min-h-screen pb-6">
+
+        {/* FIX 3: Inline confirm dialog rendered at root level */}
+        {confirmDialog && (
+          <ConfirmDialog
+            message={confirmDialog.message}
+            confirmLabel={confirmDialog.confirmLabel}
+            danger={confirmDialog.danger}
+            onConfirm={() => { confirmDialog.onConfirm(); dismissConfirm(); }}
+            onCancel={dismissConfirm}
+          />
+        )}
 
         {/* ── Header ── */}
         <header className="bg-slate-900 dark:bg-slate-950 text-white px-4 py-3 no-print flex justify-between items-center shadow-lg sticky top-0 z-50 border-b border-slate-800">
@@ -816,7 +930,7 @@
             <div className="bg-orange-500 p-1.5 rounded-xl"><Hammer size={20}/></div>
             <h1 className="font-black text-lg tracking-tight uppercase">Jobsite</h1>
           </div>
-          
+
           <div className="flex items-center gap-2">
             {viewMode==='dashboard' && (
               <button onClick={toggleSelectionMode} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide transition-all border ${selectionMode ? 'bg-blue-500 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'}`}>
@@ -828,20 +942,16 @@
                 <Printer size={13}/> Print
               </button>
             )}
-            
-            {/* Settings — dot indicator when no API key set */}
+
             <button
               onClick={() => setShowSettings(true)}
               className="relative p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700"
               title="Settings"
             >
               <Settings size={15}/>
-              {!apiKey && (
-                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full"/>
-              )}
+              {!apiKey && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full"/>}
             </button>
-            
-            {/* DB Size Indicator */}
+
             <div className={`flex items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-slate-800 border-red-900' : 'text-slate-500 bg-slate-800 border-slate-700'}`}>
               <HardDrive size={10} className={parseFloat(dbSize)>4?"text-red-400":"text-emerald-500"}/> {dbSize}
             </div>
@@ -950,7 +1060,8 @@
                             </div>
                           )}
                           <p className={`font-black text-slate-900 dark:text-white text-lg truncate ${selectionMode?'':'mt-1'}`}>{j.address}</p>
-                          <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">{j.clientName||'—'}{!selectionMode&&` · ${j.date?new Date(j.date).toLocaleDateString():''}`}</p>
+                          {/* FIX 5: Using fmtDate() for consistent en-AU locale */}
+                          <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">{j.clientName||'—'}{!selectionMode&&` · ${fmtDate(j.date)}`}</p>
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
@@ -983,7 +1094,16 @@
               <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300">
                 <ChevronRight size={14} className="rotate-180"/> Dashboard
               </button>
-              <button onClick={() => { if (confirm('Permanently delete project?')) { saveToDB(jobs.filter(x=>x.id!==activeJobId)); setViewMode('dashboard'); } }} className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase">
+              {/* FIX 3: Replaced confirm() with showConfirm() */}
+              <button
+                onClick={() => showConfirm(
+                  'Permanently delete this project and all its data?',
+                  () => { saveToDB(jobs.filter(x=>x.id!==activeJobId)); setViewMode('dashboard'); },
+                  'Delete',
+                  true
+                )}
+                className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase"
+              >
                 <Trash2 size={14}/> Delete
               </button>
             </div>
@@ -1046,7 +1166,7 @@
               )}
             </div>
 
-            {/* Quote summary with GST */}
+            {/* Quote summary */}
             {activeJob?.type==='quote' && quoteTotals && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
@@ -1079,8 +1199,8 @@
             {/* Task list */}
             <div className="space-y-6 mb-32">
               {activeJob?.tasks.map((t, i) => {
-                const labour  = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
-                const mats    = parseFloat(t.materialsCost)||0;
+                const labour   = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
+                const mats     = parseFloat(t.materialsCost)||0;
                 const subtotal = labour+mats;
                 return (
                   <div key={t.id} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
@@ -1088,7 +1208,18 @@
                       <span className="font-black text-slate-400 dark:text-slate-500 text-[10px] tracking-widest uppercase">Entry #{i+1}</span>
                       <div className="flex gap-2">
                         <button onClick={() => { setEditingTaskId(t.id); setTaskData({rate:'',materialsCost:'',images:[],...t}); setIsTaskFormOpen(true); }} className="p-2 text-slate-400 hover:text-blue-500"><Pencil size={18}/></button>
-                        <button onClick={() => { if (confirm('Delete log?')) saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j)); }} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18}/></button>
+                        {/* FIX 3: Replaced confirm() with showConfirm() */}
+                        <button
+                          onClick={() => showConfirm(
+                            'Delete this log entry?',
+                            () => saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j)),
+                            'Delete',
+                            true
+                          )}
+                          className="p-2 text-slate-400 hover:text-red-500"
+                        >
+                          <Trash2 size={18}/>
+                        </button>
                       </div>
                     </div>
                     <div className="p-6">
@@ -1263,11 +1394,11 @@
                 )}
                 <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
                 <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
-                
-                {/* Voice Dictation Area */}
+
+                {/* Voice Dictation */}
                 <div className="relative">
                   <textarea placeholder="Full details…" className="w-full p-4 pr-12 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-28 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
-                  <button onClick={toggleVoice} type="button" className={`absolute right-3 bottom-4 p-2.5 rounded-full text-white shadow-md transition-all ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Hold to speak">
+                  <button onClick={toggleVoice} type="button" className={`absolute right-3 bottom-4 p-2.5 rounded-full text-white shadow-md transition-all ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Tap to dictate">
                     <Mic size={16}/>
                   </button>
                 </div>
@@ -1330,12 +1461,13 @@
           </div>
         )}
 
-        {/* ══ Native Print View ══ */}
+        {/* ══ Print View ══ */}
         {activeJob && (
           <div id="print-container" className="print-only hidden p-4">
             <div className="print-header border-b-2 border-slate-300 pb-3 mb-4 flex flex-col gap-1">
               <div className="flex justify-between text-xs font-black uppercase text-slate-500">
                 <span>{activeJob.type==='handover' ? 'Completed Works' : 'Field Report'}</span>
+                {/* FIX 5: Consistent en-AU date in print view */}
                 <span>{new Date(activeJob.date||Date.now()).toLocaleDateString('en-AU',{dateStyle:'full'})}</span>
               </div>
               <h1 className="text-3xl font-black text-slate-900 uppercase">{activeJob.clientName || '—'}</h1>
@@ -1354,8 +1486,8 @@
             </div>
 
             {activeJob.tasks.map((t, idx) => {
-              const labour  = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
-              const mats    = parseFloat(t.materialsCost)||0;
+              const labour   = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
+              const mats     = parseFloat(t.materialsCost)||0;
               const subtotal = labour+mats;
               return (
                 <div key={t.id} className="print-card">
@@ -1413,7 +1545,12 @@
     );
   };
 
-  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  // FIX 2: Wrap App in ErrorBoundary
+  ReactDOM.createRoot(document.getElementById('root')).render(
+    <ErrorBoundary>
+      <App/>
+    </ErrorBoundary>
+  );
     </script>
   </body>
 </html>
