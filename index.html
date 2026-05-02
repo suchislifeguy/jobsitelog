@@ -24,6 +24,7 @@
         .print-card { break-inside: avoid; border: 2px solid #cbd5e1 !important; margin-bottom: 15px; border-radius: 10px; overflow: hidden; page-break-inside: avoid; background: white !important; }
         .print-img-container { break-inside: avoid; page-break-inside: avoid; }
         img { max-width: 100% !important; height: auto !important; }
+        .print-header { page-break-after: avoid; }
       }
       .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -81,36 +82,6 @@
     const total    = subtotal + gst;
     return { labour, mats, subtotal, gst, total };
   };
-  // ──────────────────────────────────────────────────────────────────────────
-
-  const STATUSES = [
-    { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
-    { key:'sent',     label:'Sent',     cls:'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
-    { key:'approved', label:'Approved', cls:'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
-    { key:'invoiced', label:'Invoiced', cls:'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
-  ];
-  const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
-
-  const TEMPLATES = {
-    quote: {
-      painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools:"Brushes, Rollers, Extension Poles, Sandpaper", desc:"Surface prep, fill holes, prime and 2 finish coats" },
-      painting_exterior: { title:"Exterior Painting", materials:"Exterior Paint, Primer, Weatherproof Filler, Drop Sheets", tools:"Pressure Washer, Scrapers, Brushes, Rollers, Ladders", desc:"Pressure wash, scrape, repair, prime and 2 coats" },
-      drywall_repair:    { title:"Drywall/Gyprock Repair", materials:"Plasterboard, Joint Compound, Mesh Tape, Sandpaper, Paint", tools:"Utility Knife, Trowels, Sanding Block, Drywall Saw", desc:"Cut damaged section, install new board, tape, compound, sand and paint" },
-      deck_build:        { title:"Deck Construction", materials:"Treated Pine/Hardwood Decking, Joists, Posts, Concrete, Screws", tools:"Circular Saw, Drill, Level, Post Hole Digger, String Line", desc:"Site prep, post installation, frame build, decking installation" },
-      laminate_flooring: { title:"Laminate/Vinyl Flooring", materials:"Laminate/Vinyl Planks, Underlay, Skirting Boards, Adhesive", tools:"Jigsaw, Spacers, Tapping Block, Pull Bar, Measuring Tape", desc:"Remove old flooring, level subfloor, install underlay and planks" },
-      fencing:           { title:"Fence Installation", materials:"Timber Palings/Colorbond, Steel/Timber Posts, Concrete, Rails, Screws", tools:"Post Hole Digger, Level, String Line, Power Drill, Saw", desc:"Mark line, dig holes, set posts in concrete, install rails and palings" },
-      pressure_washing:  { title:"Pressure Washing", materials:"Industrial Degreaser, Surface Cleaner Solution", tools:"Petrol Pressure Washer, Turbo Nozzle, Surface Cleaner", desc:"Deep clean driveways, paths, decks, exteriors, remove mould" },
-      general_repairs:   { title:"General Repairs", materials:"Various (depends on scope)", tools:"Basic Hand Tools, Power Tools as Required", desc:"Multiple small tasks - adjustments, hole filling, minor fixes" }
-    },
-    handover: {
-      painting_interior: { title:"Interior Painting", materials:"N/A", tools:"No delays", desc:"All surfaces painted to specification. Touch-up paint provided to client." },
-      deck_build:        { title:"Deck Construction", materials:"N/A", tools:"No delays", desc:"Deck construction complete. All safety checks passed. Client briefed on maintenance." },
-      pressure_washing:  { title:"Pressure Washing", materials:"N/A", tools:"No delays", desc:"All surfaces cleaned. Water run-off managed. Area left clean and dry." },
-      general_repairs:   { title:"General Repairs", materials:"N/A", tools:"No delays", desc:"All repair items completed as per quote. Work area cleaned." },
-      cleanup:           { title:"Site Cleanup", materials:"Cleaning supplies", tools:"Minor weather delay", desc:"Site cleaned of all debris. Surfaces wiped down. Client access restored." }
-    }
-  };
-
   const compressImage = (file) => new Promise((res, rej) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -130,6 +101,36 @@
       };
     };
   });
+
+  // ── Statuses ───────────────────────────────────────────────────────────────
+  const STATUSES = [
+    { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
+    { key:'sent',     label:'Sent',     cls:'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
+    { key:'approved', label:'Approved', cls:'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
+    { key:'invoiced', label:'Invoiced', cls:'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
+  ];
+  const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
+
+  // ── Templates (still present, can be improved later) ────────────────────
+  const TEMPLATES = {
+    quote: {
+      painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools:"Brushes, Rollers, Extension Poles, Sandpaper", desc:"Surface prep, fill holes, prime and 2 finish coats" },
+      painting_exterior: { title:"Exterior Painting", materials:"Exterior Paint, Primer, Weatherproof Filler, Drop Sheets", tools:"Pressure Washer, Scrapers, Brushes, Rollers, Ladders", desc:"Pressure wash, scrape, repair, prime and 2 coats" },
+      drywall_repair:    { title:"Drywall/Gyprock Repair", materials:"Plasterboard, Joint Compound, Mesh Tape, Sandpaper, Paint", tools:"Utility Knife, Trowels, Sanding Block, Drywall Saw", desc:"Cut damaged section, install new board, tape, compound, sand and paint" },
+      deck_build:        { title:"Deck Construction", materials:"Treated Pine/Hardwood Decking, Joists, Posts, Concrete, Screws", tools:"Circular Saw, Drill, Level, Post Hole Digger, String Line", desc:"Site prep, post installation, frame build, decking installation" },
+      laminate_flooring: { title:"Laminate/Vinyl Flooring", materials:"Laminate/Vinyl Planks, Underlay, Skirting Boards, Adhesive", tools:"Jigsaw, Spacers, Tapping Block, Pull Bar, Measuring Tape", desc:"Remove old flooring, level subfloor, install underlay and planks" },
+      fencing:           { title:"Fence Installation", materials:"Timber Palings/Colorbond, Steel/Timber Posts, Concrete, Rails, Screws", tools:"Post Hole Digger, Level, String Line, Power Drill, Saw", desc:"Mark line, dig holes, set posts in concrete, install rails and palings" },
+      pressure_washing:  { title:"Pressure Washing", materials:"Industrial Degreaser, Surface Cleaner Solution", tools:"Petrol Pressure Washer, Turbo Nozzle, Surface Cleaner", desc:"Deep clean driveways, paths, decks, exteriors, remove mould" },
+      general_repairs:   { title:"General Repairs", materials:"Various (depends on scope)", tools:"Basic Hand Tools, Power Tools as Required", desc:"Multiple small tasks - adjustments, hole filling, minor fixes" }
+    },
+    handover: {
+      painting_interior: { title:"Interior Painting", materials:"N/A", tools:"No delays", desc:"All surfaces painted to specification. Touch-up paint provided to client." },
+      deck_build:        { title:"Deck Construction", materials:"N/A", tools:"No delays", desc:"Deck construction complete. All safety checks passed. Client briefed on maintenance." },
+      pressure_washing:  { title:"Pressure Washing", materials:"N/A", tools:"No delays", desc:"All surfaces cleaned. Water run-off managed. Area left clean and dry." },
+      general_repairs:   { title:"General Repairs", materials:"N/A", tools:"No delays", desc:"All repair items completed as per quote. Work area cleaned." },
+      cleanup:           { title:"Site Cleanup", materials:"Cleaning supplies", tools:"Minor weather delay", desc:"Site cleaned of all debris. Surfaces wiped down. Client access restored." }
+    }
+  };
 
   // ── New Job Modal ──────────────────────────────────────────────────────────
   const NewJobModal = ({ type, onSave, onClose }) => {
@@ -167,7 +168,7 @@
     );
   };
 
-  // ── App ────────────────────────────────────────────────────────────────────
+  // ── Main App ───────────────────────────────────────────────────────────────
   const App = () => {
     const [jobs, setJobs]               = useState([]);
     const [activeJobId, setActiveJobId] = useState(null);
@@ -180,7 +181,9 @@
     const [searchQ, setSearchQ]         = useState('');
     const [filterType, setFilterType]   = useState('all');
     const [isEditingHeader, setIsEditingHeader] = useState(false);
-    const [headerDraft, setHeaderDraft] = useState({ address:'', clientName:'' });
+    const [headerDraft, setHeaderDraft] = useState({
+      address:'', clientName:'', clientRef:'', projectNotes:'', projectPhotos:[]
+    });
 
     // Route planning
     const [selectionMode, setSelectionMode] = useState(false);
@@ -201,33 +204,28 @@
     const [canvasZoom, setCanvasZoom] = useState(1);
     const [canvasPan, setCanvasPan]   = useState({ x:0, y:0 });
     const [canvasMode, setCanvasMode] = useState('draw');
-    // All refs so event handlers never go stale
     const zoomRef     = useRef(1);
     const panRef      = useRef({ x:0, y:0 });
-    const modeRef     = useRef('draw'); // ← used by ALL mouse/touch handlers
+    const modeRef     = useRef('draw');
     const drawRef     = useRef(false);
     const pinchRef    = useRef(null);
     const panStartRef = useRef(null);
 
     const COLORS = [
-      { hex:'#ef4444', name:'Red'    },
-      { hex:'#22c55e', name:'Green'  },
-      { hex:'#eab308', name:'Yellow' },
-      { hex:'#ffffff', name:'White'  },
-      { hex:'#000000', name:'Black'  },
+      { hex:'#ef4444', name:'Red' }, { hex:'#22c55e', name:'Green' },
+      { hex:'#eab308', name:'Yellow' }, { hex:'#ffffff', name:'White' },
+      { hex:'#000000', name:'Black' }
     ];
 
     useEffect(() => { loadJobs(); }, []);
     useEffect(() => {
       const root = document.documentElement;
       if (isDarkMode) { root.classList.add('dark'); document.getElementById('theme-color-meta').setAttribute('content','#020617'); localStorage.setItem('theme','dark'); }
-      else            { root.classList.remove('dark'); document.getElementById('theme-color-meta').setAttribute('content','#0f172a'); localStorage.setItem('theme','light'); }
+      else { root.classList.remove('dark'); document.getElementById('theme-color-meta').setAttribute('content','#0f172a'); localStorage.setItem('theme','light'); }
     }, [isDarkMode]);
-
-    // Keep all refs in sync with state
     useEffect(() => { zoomRef.current = canvasZoom; }, [canvasZoom]);
     useEffect(() => { panRef.current  = canvasPan;  }, [canvasPan]);
-    useEffect(() => { modeRef.current = canvasMode; }, [canvasMode]); // ← syncs mouse handlers
+    useEffect(() => { modeRef.current = canvasMode; }, [canvasMode]);
     useEffect(() => { drawRef.current = isDrawing;  }, [isDrawing]);
     useEffect(() => { if (viewMode !== 'dashboard') exitSelectionMode(); }, [viewMode]);
 
@@ -245,7 +243,11 @@
 
     // ── CRUD ──────────────────────────────────────────────────────────────────
     const handleCreateJob = (address, clientName) => {
-      saveToDB([...jobs, { id:Date.now(), date:new Date().toISOString(), type:newJobModal, address, clientName, tasks:[], status:'draft', gstEnabled:false }]);
+      saveToDB([...jobs, {
+        id:Date.now(), date:new Date().toISOString(), type:newJobModal,
+        address, clientName, clientRef:'', projectNotes:'', projectPhotos:[],
+        tasks:[], status:'draft', gstEnabled:false
+      }]);
       setNewJobModal(null);
     };
     const cycleStatus  = (id) => {
@@ -253,19 +255,45 @@
       saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x));
     };
     const toggleGST    = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
-    const startEditHeader = () => { setHeaderDraft({ address:activeJob.address, clientName:activeJob.clientName }); setIsEditingHeader(true); };
-    const saveHeaderEdit  = () => {
+
+    // ── Header editing (includes project metadata) ─────────────────────────
+    const startEditHeader = () => {
+      setHeaderDraft({
+        address: activeJob.address,
+        clientName: activeJob.clientName,
+        clientRef: activeJob.clientRef || '',
+        projectNotes: activeJob.projectNotes || '',
+        projectPhotos: activeJob.projectPhotos || [],
+      });
+      setIsEditingHeader(true);
+    };
+    const saveHeaderEdit = () => {
       if (!headerDraft.address.trim()) return;
-      saveToDB(jobs.map(j=>j.id===activeJobId?{...j,address:headerDraft.address.trim(),clientName:headerDraft.clientName}:j));
+      saveToDB(jobs.map(j => j.id===activeJobId ? {
+        ...j,
+        address: headerDraft.address.trim(),
+        clientName: headerDraft.clientName,
+        clientRef: headerDraft.clientRef,
+        projectNotes: headerDraft.projectNotes,
+        projectPhotos: headerDraft.projectPhotos,
+      } : j));
       setIsEditingHeader(false);
     };
+    const handleProjectPhotoUpload = async (e) => {
+      try {
+        const compressed = await Promise.all(Array.from(e.target.files).map(compressImage));
+        setHeaderDraft(d => ({ ...d, projectPhotos: [...d.projectPhotos, ...compressed] }));
+      } catch { alert('One or more images could not be processed.'); }
+    };
+
+    // Task modal
     const handleSaveTask = () => {
       if (!taskData.title) return alert('Title Required');
       if (!activeJob) return;
       const updated = editingTaskId
-        ? activeJob.tasks.map(t=>t.id===editingTaskId?{...taskData,id:editingTaskId}:t)
-        : [...activeJob.tasks, {...taskData,id:Date.now()}];
-      saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:updated}:j));
+        ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id: editingTaskId } : t)
+        : [...activeJob.tasks, { ...taskData, id: Date.now() }];
+      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks: updated } : j));
       closeModal();
     };
     const closeModal = () => { setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); };
@@ -308,7 +336,7 @@
       .filter(j => !searchQ.trim() || j.address.toLowerCase().includes(searchQ.toLowerCase()) || (j.clientName||'').toLowerCase().includes(searchQ.toLowerCase()))
       .sort((a,b) => b.id-a.id);
 
-    // ── Canvas ────────────────────────────────────────────────────────────────
+    // ── Canvas (unchanged, kept for completeness) ────────────────────────────
     const resetView = () => { setCanvasZoom(1); zoomRef.current=1; setCanvasPan({x:0,y:0}); panRef.current={x:0,y:0}; setCanvasMode('draw'); modeRef.current='draw'; };
     useEffect(() => {
       if (editingImageIdx!==null && canvasRef.current) {
@@ -318,7 +346,6 @@
         img.onload=()=>{ cvs.width=img.width; cvs.height=img.height; ctx.drawImage(img,0,0,img.width,img.height); setUndoStack([cvs.toDataURL()]); };
       }
     }, [editingImageIdx, taskData.images]);
-
     const getCoords = (e) => {
       const cvs=canvasRef.current, r=cvs.getBoundingClientRect();
       let cx=e.clientX, cy=e.clientY;
@@ -357,12 +384,11 @@
       const imgs=[...taskData.images]; imgs[editingImageIdx]=canvasRef.current.toDataURL('image/webp',0.8);
       setTaskData(p=>({...p,images:imgs})); setEditingImageIdx(null);
     };
-
     const dist2 = (t1,t2) => Math.hypot(t1.clientX-t2.clientX, t1.clientY-t2.clientY);
     const onTouchStart = (e) => {
       if (e.touches.length===2) {
         if (drawRef.current) { drawRef.current=false; setIsDrawing(false); setUndoStack(p=>[...p,canvasRef.current.toDataURL()]); }
-        pinchRef.current = { dist:dist2(e.touches[0],e.touches[1]), zoom:zoomRef.current };
+        pinchRef.current={ dist:dist2(e.touches[0],e.touches[1]), zoom:zoomRef.current };
       } else if (e.touches.length===1) {
         pinchRef.current=null;
         if (modeRef.current==='pan') { panStartRef.current={ clientX:e.touches[0].clientX, clientY:e.touches[0].clientY, panX:panRef.current.x, panY:panRef.current.y }; }
@@ -386,8 +412,6 @@
       if (e.touches.length===0) { panStartRef.current=null; if (modeRef.current==='draw') stopDraw(); }
     };
     const toggleMode = () => { const n=modeRef.current==='draw'?'pan':'draw'; setCanvasMode(n); modeRef.current=n; };
-
-    // ── FIXED: mouse handlers now read modeRef.current, never stale canvasMode ──
     const onMDown = (e) => {
       if (modeRef.current==='draw') startDraw(e);
       else panStartRef.current={ clientX:e.clientX, clientY:e.clientY, panX:panRef.current.x, panY:panRef.current.y };
@@ -400,20 +424,17 @@
       }
     };
     const onMUp = () => { panStartRef.current=null; stopDraw(); };
-    // ──────────────────────────────────────────────────────────────────────────
 
+    // ─────────────────────────────────────────────────────────────────────────
     return (
       <div className="min-h-screen pb-6">
 
-        {/* ── Header — compact for mobile ── */}
+        {/* ── Header ── */}
         <header className="bg-slate-900 dark:bg-slate-950 text-white px-4 py-3 no-print flex justify-between items-center shadow-lg sticky top-0 z-50 border-b border-slate-800">
-          {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }}>
             <div className="bg-orange-500 p-1.5 rounded-xl"><Hammer size={20}/></div>
             <h1 className="font-black text-lg tracking-tight uppercase">Jobsite</h1>
           </div>
-
-          {/* Controls — tight icon row */}
           <div className="flex items-center gap-1.5">
             {viewMode==='dashboard' && (
               <button onClick={toggleSelectionMode} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide transition-all border ${selectionMode ? 'bg-blue-500 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'}`}>
@@ -428,7 +449,6 @@
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700">
               {isDarkMode ? <Sun size={15}/> : <Moon size={15}/>}
             </button>
-            {/* Storage — icon + number, minimal */}
             <div className={`flex items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-slate-800 border-red-900' : 'text-slate-500 bg-slate-800 border-slate-700'}`}>
               <HardDrive size={10} className={parseFloat(dbSize)>4?"text-red-400":"text-emerald-500"}/> {dbSize}
             </div>
@@ -438,18 +458,15 @@
         {/* ══════════════ DASHBOARD ══════════════ */}
         {viewMode==='dashboard' ? (
           <main className="p-4 max-w-2xl mx-auto">
-
-            {/* Route planning banner */}
             {selectionMode && (
               <div className="bg-blue-950 border border-blue-800 rounded-3xl p-5 mb-5">
                 <div className="flex items-start gap-3 mb-4">
                   <Navigation size={18} className="text-blue-400 flex-shrink-0 mt-0.5"/>
                   <div className="flex-1">
                     <p className="text-white font-black text-sm uppercase tracking-widest mb-1">Route Planning</p>
-                    <p className="text-blue-300 text-xs font-medium">Tap jobs in visit order — numbered badges show your stop sequence. Rearrange freely in Maps afterwards.</p>
+                    <p className="text-blue-300 text-xs font-medium">Tap jobs in visit order — numbered badges show your stop sequence.</p>
                   </div>
                 </div>
-                {/* My location toggle */}
                 <div className="flex items-center justify-between bg-blue-900/60 rounded-2xl px-4 py-3 mb-3">
                   <div className="flex items-center gap-2">
                     <LocateFixed size={15} className={locStatus==='ok'?'text-emerald-400':locStatus==='denied'?'text-red-400':'text-blue-400'}/>
@@ -473,8 +490,6 @@
                 </div>
               </div>
             )}
-
-            {/* Create buttons */}
             {!selectionMode && (
               <div className="mb-5">
                 <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-4 uppercase">Projects</h2>
@@ -488,8 +503,6 @@
                 </div>
               </div>
             )}
-
-            {/* Search + filter */}
             <div className="relative mb-3">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"/>
               <input className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 rounded-2xl border-2 border-slate-200 dark:border-slate-700 outline-none font-medium text-sm dark:text-white dark:placeholder-slate-500 focus:border-orange-400 dark:focus:border-orange-400 transition-colors" placeholder="Search address or client…" value={searchQ} onChange={e => setSearchQ(e.target.value)}/>
@@ -497,13 +510,9 @@
             </div>
             <div className="flex gap-2 mb-5">
               {[{key:'all',label:'All'},{key:'quote',label:'Field Reports'},{key:'handover',label:'Completed'}].map(f => (
-                <button key={f.key} onClick={() => setFilterType(f.key)} className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border-2 ${filterType===f.key?'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700':'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400'}`}>
-                  {f.label}
-                </button>
+                <button key={f.key} onClick={() => setFilterType(f.key)} className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border-2 ${filterType===f.key?'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700':'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400'}`}>{f.label}</button>
               ))}
             </div>
-
-            {/* Job cards */}
             <div className="grid gap-4 pb-32">
               {filteredJobs.map(j => {
                 const status    = getStatus(j.status||'draft');
@@ -511,7 +520,6 @@
                 const stopIdx   = selectedJobs.indexOf(j.id);
                 const isSelected = stopIdx !== -1;
                 const canSelect  = !atStopLimit || isSelected;
-
                 return (
                   <div key={j.id}
                     onClick={() => {
@@ -519,24 +527,16 @@
                       else { setActiveJobId(j.id); setViewMode('detail'); setIsEditingHeader(false); }
                     }}
                     className={`bg-white dark:bg-slate-800 rounded-[2rem] border-2 transition-all cursor-pointer shadow-sm
-                      ${selectionMode
-                        ? isSelected ? 'border-blue-500 ring-2 ring-blue-500/30'
-                          : canSelect ? 'border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-400'
-                          : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'
-                        : j.type==='handover' ? 'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500'
-                          : 'border-slate-100 dark:border-slate-700 hover:border-orange-500'
-                      }`}
-                  >
+                      ${selectionMode ? isSelected ? 'border-blue-500 ring-2 ring-blue-500/30' : canSelect ? 'border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-400' : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'
+                      : j.type==='handover' ? 'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500' : 'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
                     <div className="p-6 flex justify-between items-start">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        {/* Stop badge (selection mode only) */}
                         {selectionMode && (
                           <div className={`w-7 h-7 rounded-full flex-shrink-0 mt-1 flex items-center justify-center text-xs font-black transition-all ${isSelected?'bg-blue-500 text-white shadow-lg shadow-blue-500/30':'border-2 border-slate-300 dark:border-slate-600 text-transparent'}`}>
                             {isSelected ? stopIdx+1 : ''}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          {/* Type + status badges (non-selection) */}
                           {!selectionMode && (
                             <div className="flex items-center gap-2 flex-wrap mb-1">
                               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
@@ -550,8 +550,6 @@
                           <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">{j.clientName||'—'}{!selectionMode&&` · ${j.date?new Date(j.date).toLocaleDateString():''}`}</p>
                         </div>
                       </div>
-
-                      {/* Right side — FIXED: always show "Total Hours" label */}
                       <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Hours</span>
                         <span className="font-black text-slate-900 dark:text-slate-200 text-sm">{getTotals(j.tasks).str}</span>
@@ -583,14 +581,31 @@
               </button>
             </div>
 
-            {/* Job header card */}
+            {/* Job header card (editable) */}
             <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
                   <div className="flex items-center gap-2 mb-3"><Edit3 size={14} className="text-orange-500"/><span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Editing Job Details</span></div>
-                  <input className="w-full text-2xl font-black bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e=>setHeaderDraft(d=>({...d,address:e.target.value}))}/>
-                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-4 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
-                  <div className="flex gap-3">
+                  <input className="w-full text-2xl font-black bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e => setHeaderDraft(d=>({...d,address:e.target.value}))}/>
+                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Name" value={headerDraft.clientName} onChange={e => setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
+                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e => setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
+                  <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e => setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
+                  {/* Project photos */}
+                  <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase">
+                    <ImageIcon size={14}/> Add Project Photos
+                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleProjectPhotoUpload}/>
+                  </label>
+                  {headerDraft.projectPhotos.length>0 && (
+                    <div className="flex gap-2 overflow-x-auto pb-2 mt-2">
+                      {headerDraft.projectPhotos.map((p,i) => (
+                        <div key={i} className="relative h-20 w-20 flex-shrink-0">
+                          <img src={p} className="w-full h-full object-cover rounded-lg"/>
+                          <button onClick={() => setHeaderDraft(d=>({...d,projectPhotos:d.projectPhotos.filter((_,idx)=>idx!==i)}))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-3 mt-4">
                     <button onClick={saveHeaderEdit} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-2"><Check size={16}/> Save Changes</button>
                     <button onClick={() => setIsEditingHeader(false)} className="px-6 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 py-3 rounded-2xl font-black text-sm">Cancel</button>
                   </div>
@@ -598,8 +613,15 @@
               ) : (
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0 mr-4">
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">{activeJob?.address}</h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm mt-1">{activeJob?.clientName}</p>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">{activeJob?.clientName || '—'}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">{activeJob?.address}</p>
+                    {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
+                    {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
+                    {activeJob?.projectPhotos?.length>0 && (
+                      <div className="flex gap-2 mt-2 overflow-x-auto">
+                        {activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-12 rounded-lg"/>)}
+                      </div>
+                    )}
                     <button onClick={startEditHeader} className="mt-3 flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors group">
                       <Pencil size={11} className="group-hover:text-orange-500"/> Edit Details
                     </button>
@@ -618,55 +640,31 @@
               )}
             </div>
 
-            {/* ── Quote summary with GST toggle ── */}
+            {/* Quote summary with GST */}
             {activeJob?.type==='quote' && quoteTotals && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
-                {/* Header row */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <DollarSign size={16} className="text-orange-500"/>
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quote Summary</span>
                   </div>
-                  {/* GST toggle */}
                   <button onClick={() => toggleGST(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.gstEnabled?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'}`}>
                     <Receipt size={12}/> GST {activeJob.gstEnabled?'On':'Off'}
                   </button>
                 </div>
-
-                {/* Row 1: Labour | Materials | Subtotal (or Total if no GST) */}
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p>
-                    <p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.labour)}</p>
-                  </div>
-                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p>
-                    <p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.mats)}</p>
-                  </div>
+                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.labour)}</p></div>
+                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.mats)}</p></div>
                   {activeJob.gstEnabled ? (
-                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4">
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p>
-                      <p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.subtotal)}</p>
-                    </div>
+                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.subtotal)}</p></div>
                   ) : (
-                    <div className="bg-orange-500 rounded-2xl p-4">
-                      <p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p>
-                      <p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.total)}</p>
-                    </div>
+                    <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.total)}</p></div>
                   )}
                 </div>
-
-                {/* Row 2 (GST only): GST | Total inc. GST */}
                 {activeJob.gstEnabled && (
                   <div className="grid grid-cols-2 gap-3 mt-3">
-                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4">
-                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p>
-                      <p className="font-black text-amber-400 text-base leading-tight">{fmtAUD(quoteTotals.gst)}</p>
-                    </div>
-                    <div className="bg-orange-500 rounded-2xl p-4">
-                      <p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p>
-                      <p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.total)}</p>
-                    </div>
+                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base leading-tight">{fmtAUD(quoteTotals.gst)}</p></div>
+                    <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.total)}</p></div>
                   </div>
                 )}
               </div>
@@ -677,7 +675,7 @@
               {activeJob?.tasks.map((t, i) => {
                 const labour=(parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
                 const mats=parseFloat(t.materialsCost)||0;
-                const total=labour+mats;
+                const subtotal=labour+mats;
                 return (
                   <div key={t.id} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-b dark:border-slate-700 flex justify-between items-center px-6">
@@ -693,11 +691,11 @@
                         <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-black ml-2 flex-shrink-0">{t.time}</span>
                       </div>
                       <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3">{t.desc}</p>
-                      {activeJob.type==='quote' && total>0 && (
+                      {activeJob.type==='quote' && subtotal>0 && (
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {labour>0 && <span className="text-[11px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-full">Labour {fmtAUD(labour)}</span>}
                           {mats>0   && <span className="text-[11px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-3 py-1 rounded-full">Materials {fmtAUD(mats)}</span>}
-                          <span className="text-[11px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-3 py-1 rounded-full">Subtotal {fmtAUD(total)}</span>
+                          <span className="text-[11px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-3 py-1 rounded-full">Subtotal {fmtAUD(subtotal)}</span>
                         </div>
                       )}
                       {t.images?.length>0 && (
@@ -718,15 +716,14 @@
           </main>
         )}
 
-        {/* ══ Route planning sticky bar ══ */}
+        {/* ── Route planning sticky bar ── */}
         {selectionMode && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 p-4 no-print">
             {selectedJobs.length>0 && (
               <div className="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-1">
                 {useMyLocation && locStatus==='ok' && (
                   <div className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-900/60 border border-emerald-700 px-3 py-1.5 rounded-full">
-                    <LocateFixed size={11} className="text-emerald-400"/>
-                    <span className="text-emerald-300 text-[11px] font-black uppercase">You</span>
+                    <LocateFixed size={11} className="text-emerald-400"/><span className="text-emerald-300 text-[11px] font-black uppercase">You</span>
                   </div>
                 )}
                 {selectedJobs.map((id, idx) => {
@@ -889,24 +886,27 @@
           </div>
         )}
 
-        {/* ══ Print View ══ */}
+        {/* ══ Print View (client-first, compact header) ══ */}
         {activeJob && (
           <div className="print-only hidden p-4">
-            <div className={`border-b-[8px] pb-4 mb-4 flex justify-between items-end ${activeJob.type==='handover'?'border-emerald-500':'border-orange-500'}`}>
-              <div>
-                <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">{activeJob.type==='handover'?'Completed Works':'Field Report'}</h1>
-                <p className="text-slate-400 font-black text-xs uppercase tracking-widest mt-2">{new Date(activeJob.date||Date.now()).toLocaleDateString('en-AU',{dateStyle:'full'})}</p>
+            <div className="print-header border-b-2 border-slate-300 pb-3 mb-4 flex flex-col gap-1">
+              <div className="flex justify-between text-xs font-black uppercase text-slate-500">
+                <span>{activeJob.type==='handover' ? 'Completed Works' : 'Field Report'}</span>
+                <span>{new Date(activeJob.date||Date.now()).toLocaleDateString('en-AU',{dateStyle:'full'})}</span>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-black text-slate-900 uppercase">{activeJob.address}</p>
-                <p className="text-slate-500 font-bold text-sm">CLIENT: {activeJob.clientName}</p>
-                <p className="text-slate-500 font-bold text-sm">TOTAL TIME: {getTotals(activeJob.tasks).str}</p>
-                {activeJob.type==='quote' && quoteTotals && quoteTotals.total>0 && (
-                  <p className="font-black text-slate-900 text-lg mt-1">
-                    {activeJob.gstEnabled ? `TOTAL INC. GST: ${fmtAUD(quoteTotals.total)}` : `QUOTE TOTAL: ${fmtAUD(quoteTotals.total)}`}
-                  </p>
-                )}
+              <h1 className="text-3xl font-black text-slate-900 uppercase">{activeJob.clientName || '—'}</h1>
+              {activeJob.clientRef && <p className="text-lg font-bold text-slate-700">REF: {activeJob.clientRef}</p>}
+              <p className="text-slate-500 font-medium">{activeJob.address}</p>
+              <div className="flex gap-4 mt-2 text-sm font-medium">
+                <span>TOTAL TIME: {getTotals(activeJob.tasks).str}</span>
+                {quoteTotals && quoteTotals.total>0 && <span>TOTAL: {fmtAUD(quoteTotals.total)}{activeJob.gstEnabled?' (inc. GST)':''}</span>}
               </div>
+              {activeJob.projectNotes && <p className="text-slate-600 italic text-sm mt-2 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
+              {activeJob.projectPhotos?.length>0 && (
+                <div className="flex gap-2 mt-2">
+                  {activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-20 rounded" />)}
+                </div>
+              )}
             </div>
 
             {/* Task cards */}
@@ -945,7 +945,7 @@
               );
             })}
 
-            {/* ── Quote total footer — now includes GST breakdown ── */}
+            {/* Quote total footer */}
             {activeJob.type==='quote' && quoteTotals && quoteTotals.total>0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
