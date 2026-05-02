@@ -515,6 +515,7 @@
           Return ONLY a valid JSON object with keys:
           "address" (job site address),
           "clientName" (client or customer name),
+          "dueDate" (ISO date string YYYY-MM-DD if a due date or completion date is mentioned, otherwise empty string),
           "tasks" (array of objects with: "title", "time" (e.g. "2h 30m"), "rate" (string, e.g. "85"), "materialsCost" (string, e.g. "320"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (string)).
           Use the fields from the documents as defaults, but respect any overrides in the additional text.
           Additional text provided by the user: ${additionalText || 'None'}`;
@@ -538,7 +539,7 @@
           title: t.title || '', time: t.time || '', rate: String(t.rate || ''),
           materialsCost: String(t.materialsCost || ''), materials: String(t.materials || ''), tools: String(t.tools || ''), desc: t.desc || '', images: [],
         }));
-        onSave(json.address || addr, json.clientName || client, tasks, dueDate);
+          onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
       } catch (err) { alert(`AI import failed: ${err.message}`); }
       finally { setIsImporting(false); }
     };
