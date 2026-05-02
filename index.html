@@ -20,13 +20,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
+      /* FIX: Strict lock to prevent horizontal scrolling on mobile */
+      html, body { max-width: 100vw; overflow-x: hidden; }
       body { -webkit-tap-highlight-color: transparent; transition: background-color 0.3s; }
       
-      /* Mobile Safe Areas (Prevents buttons sitting under iPhone swipe bar) */
+      /* Mobile Safe Area Spacing */
       @supports (padding-bottom: env(safe-area-inset-bottom)) {
-        body { padding-bottom: env(safe-area-inset-bottom); }
+        .safe-pb { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
         .fixed.bottom-8 { bottom: calc(2rem + env(safe-area-inset-bottom)); }
-        .fixed.bottom-0 { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
       }
 
       @media print {
@@ -64,9 +65,8 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // We define the Service Worker code as a string, turn it into a Blob, and register it.
           const swCode = `
-            const CACHE_NAME = 'jobsite-master-v4-offline';
+            const CACHE_NAME = 'jobsite-master-v5-offline';
             self.addEventListener('install', (e) => {
               e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll([location.href])));
             });
@@ -79,7 +79,7 @@
           const blob = new Blob([swCode], { type: 'application/javascript' });
           const swUrl = URL.createObjectURL(blob);
           navigator.serviceWorker.register(swUrl)
-            .then(() => console.log('Offline Mode Ready (Single File)'))
+            .then(() => console.log('Offline Mode Ready'))
             .catch(err => console.error('Offline Mode Failed:', err));
         });
       }
@@ -148,21 +148,15 @@
   // ── Templates ────────────────────────────────────────────────────────────
   const TEMPLATES = {
     quote: {
-      painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools:"Brushes, Rollers, Extension Poles, Sandpaper", desc:"Surface prep, fill holes, prime and 2 finish coats" },
-      painting_exterior: { title:"Exterior Painting", materials:"Exterior Paint, Primer, Weatherproof Filler, Drop Sheets", tools:"Pressure Washer, Scrapers, Brushes, Rollers, Ladders", desc:"Pressure wash, scrape, repair, prime and 2 coats" },
-      drywall_repair:    { title:"Drywall/Gyprock Repair", materials:"Plasterboard, Joint Compound, Mesh Tape, Sandpaper, Paint", tools:"Utility Knife, Trowels, Sanding Block, Drywall Saw", desc:"Cut damaged section, install new board, tape, compound, sand and paint" },
-      deck_build:        { title:"Deck Construction", materials:"Treated Pine/Hardwood Decking, Joists, Posts, Concrete, Screws", tools:"Circular Saw, Drill, Level, Post Hole Digger, String Line", desc:"Site prep, post installation, frame build, decking installation" },
-      laminate_flooring: { title:"Laminate/Vinyl Flooring", materials:"Laminate/Vinyl Planks, Underlay, Skirting Boards, Adhesive", tools:"Jigsaw, Spacers, Tapping Block, Pull Bar, Measuring Tape", desc:"Remove old flooring, level subfloor, install underlay and planks" },
-      fencing:           { title:"Fence Installation", materials:"Timber Palings/Colorbond, Steel/Timber Posts, Concrete, Rails, Screws", tools:"Post Hole Digger, Level, String Line, Power Drill, Saw", desc:"Mark line, dig holes, set posts in concrete, install rails and palings" },
-      pressure_washing:  { title:"Pressure Washing", materials:"Industrial Degreaser, Surface Cleaner Solution", tools:"Petrol Pressure Washer, Turbo Nozzle, Surface Cleaner", desc:"Deep clean driveways, paths, decks, exteriors, remove mould" },
-      general_repairs:   { title:"General Repairs", materials:"Various (depends on scope)", tools:"Basic Hand Tools, Power Tools as Required", desc:"Multiple small tasks - adjustments, hole filling, minor fixes" }
+      painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets", tools:"Brushes, Rollers", desc:"Surface prep, fill holes, prime and 2 finish coats" },
+      painting_exterior: { title:"Exterior Painting", materials:"Exterior Paint, Primer", tools:"Pressure Washer, Scrapers, Brushes", desc:"Pressure wash, scrape, repair, prime and 2 coats" },
+      drywall_repair:    { title:"Drywall Repair", materials:"Plasterboard, Joint Compound", tools:"Utility Knife, Trowels", desc:"Cut damaged section, install new board, tape, compound" },
+      general_repairs:   { title:"General Repairs", materials:"Various", tools:"Basic Hand Tools", desc:"Multiple small tasks - adjustments, fixes" }
     },
     handover: {
-      painting_interior: { title:"Interior Painting", materials:"N/A", tools:"No delays", desc:"All surfaces painted to specification. Touch-up paint provided to client." },
-      deck_build:        { title:"Deck Construction", materials:"N/A", tools:"No delays", desc:"Deck construction complete. All safety checks passed. Client briefed on maintenance." },
-      pressure_washing:  { title:"Pressure Washing", materials:"N/A", tools:"No delays", desc:"All surfaces cleaned. Water run-off managed. Area left clean and dry." },
-      general_repairs:   { title:"General Repairs", materials:"N/A", tools:"No delays", desc:"All repair items completed as per quote. Work area cleaned." },
-      cleanup:           { title:"Site Cleanup", materials:"Cleaning supplies", tools:"Minor weather delay", desc:"Site cleaned of all debris. Surfaces wiped down. Client access restored." }
+      painting_interior: { title:"Interior Painting", materials:"N/A", tools:"No delays", desc:"All surfaces painted to specification." },
+      general_repairs:   { title:"General Repairs", materials:"N/A", tools:"No delays", desc:"All repair items completed as per quote." },
+      cleanup:           { title:"Site Cleanup", materials:"Cleaning supplies", tools:"None", desc:"Site cleaned of all debris." }
     }
   };
 
@@ -182,8 +176,7 @@
 
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
-        {/* Adjusted padding and border radius for mobile */}
-        <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl border dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800">
           <div className="flex justify-between items-center mb-6">
             <div>
               <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Configuration</span>
@@ -193,6 +186,8 @@
           </div>
           
           <div className="space-y-6">
+            
+            {/* Appearance */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
               <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700">
@@ -206,13 +201,14 @@
               </button>
             </div>
 
+            {/* Data Management */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Backup & Restore</label>
               <div className="grid grid-cols-2 gap-3">
-                <button onClick={exportData} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                <button onClick={exportData} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 transition-colors">
                   <Download size={16}/> Export
                 </button>
-                <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer">
+                <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 transition-colors cursor-pointer">
                   <Upload size={16}/> Import
                   <input type="file" accept=".json" className="hidden" onChange={importData}/>
                 </label>
@@ -221,6 +217,7 @@
 
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"></div>
 
+            {/* Gemini API Settings */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
               <input type="password" className="w-full p-4 mb-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
@@ -228,7 +225,6 @@
                 <Bot size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
-              <p className="text-[10px] text-slate-400 mt-2 font-medium leading-relaxed">Enter the exact model name from Google AI Studio. You can update this at any time when new models are released.</p>
             </div>
 
             <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
@@ -240,7 +236,7 @@
     );
   };
 
-  // ── New Job Modal (with optional multi-file AI import) ──────────────────────
+  // ── New Job Modal ──────────────────────────────────────────────────────────
   const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel }) => {
     const [addr, setAddr]         = useState('');
     const [client, setClient]     = useState('');
@@ -258,7 +254,7 @@
 
       if (!apiKey) { alert('Please save a Gemini API key in Settings (⚙️) first.'); return; }
       setIsImporting(true);
-      setImportMsg(`Processing ${files.length} file${files.length > 1 ? 's' : ''} with ${geminiModel}…`);
+      setImportMsg(`Processing ${files.length} file${files.length > 1 ? 's' : ''}…`);
 
       try {
         const fileParts = await Promise.all(
@@ -273,9 +269,7 @@
           })
         );
 
-        const textPart = {
-          text: 'Extract the following from the provided document(s). If multiple documents are provided (e.g. a quote request and a separate safety report), cross-reference them to build a comprehensive, single list of tasks. Return ONLY a valid JSON object with these exact keys:\n"address" (job site address as a string),\n"clientName" (client or customer name as a string),\n"tasks" (array of objects, each with: "title" string, "time" string like "2h 30m", "rate" string (dollars per hour, digits only e.g. "85"), "materialsCost" string (dollars, digits only e.g. "320"), "materials" string, "tools" string, "desc" string).\nIf a field is not found, use an empty string or empty array. Do not include markdown, backticks, or any text outside the JSON.'
-        };
+        const textPart = { text: 'Extract: "address", "clientName", "tasks" (array of objects, each with: "title" string, "time" string like "2h 30m", "rate" string, "materialsCost" string, "materials" string, "tools" string, "desc" string). Return ONLY a valid JSON object. Do not include markdown.' };
 
         const combinedParts = [textPart, ...fileParts];
 
@@ -288,8 +282,6 @@
 
         const data = await res.json();
         const raw  = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        if (!raw) throw new Error('Gemini returned an empty response.');
-
         const cleaned = raw.replace(/```json\n?|```/g, '').trim();
         const json    = JSON.parse(cleaned);
 
@@ -297,16 +289,15 @@
         onSave(json.address || '', json.clientName || '', tasks);
 
       } catch (err) {
-        alert(`Import failed!\n\nGoogle API Error: ${err.message}\n\nEnsure the Model Name in your Settings matches a valid, active model in Google AI Studio.`);
+        alert(`Import failed!\n\nGoogle API Error: ${err.message}`);
       } finally { setIsImporting(false); setImportMsg(''); }
     };
 
     return (
       <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
-        {/* Adjusted padding and border radius for mobile */}
-        <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl border dark:border-slate-800 relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800 relative overflow-hidden">
           {isImporting && (
-            <div className="absolute inset-0 bg-slate-900/80 rounded-[1.5rem] sm:rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-slate-900/80 rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
               <p className="text-white font-black text-sm uppercase tracking-widest text-center px-4 leading-relaxed">{importMsg}</p>
             </div>
@@ -323,7 +314,7 @@
           <div className="space-y-4">
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Job Address *</label>
-              <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)} onKeyDown={e => e.key==='Enter' && go()}/>
+              <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney" value={addr} onChange={e => setAddr(e.target.value)} onKeyDown={e => e.key==='Enter' && go()}/>
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Client Name</label>
@@ -342,13 +333,12 @@
                   <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto-Fill</p>
                   <p className="text-[10px] text-slate-400 mt-0.5 leading-tight">Combine multiple files (e.g. Quote Request + Safety Report).</p>
                 </div>
-                {!apiKey && <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/40 px-2 py-1 rounded-lg whitespace-nowrap">Key needed</span>}
               </div>
               <button onClick={() => fileInputRef.current?.click()} disabled={isImporting || !apiKey} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${apiKey ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}><FileText size={14}/> {apiKey ? 'Choose File(s)' : 'Add API Key in Settings'}</button>
               <input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleImportFile}/>
             </div>
 
-            <button onClick={go} disabled={!addr.trim() || isImporting} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all ${addr.trim() && !isImporting ? isHandover ? 'bg-emerald-600 hover:bg-emerald-500 active:scale-95' : 'bg-slate-900 hover:bg-slate-800 dark:bg-orange-500 dark:hover:bg-orange-400 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}><Plus size={20}/> Create Project</button>
+            <button onClick={go} disabled={!addr.trim() || isImporting} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all ${addr.trim() && !isImporting ? isHandover ? 'bg-emerald-600 hover:bg-emerald-500 active:scale-95' : 'bg-slate-900 hover:bg-slate-800 dark:bg-orange-500 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}><Plus size={20}/> Create Project</button>
           </div>
         </div>
       </div>
@@ -406,11 +396,7 @@
     const pinchRef    = useRef(null);
     const panStartRef = useRef(null);
 
-    const COLORS = [
-      { hex:'#ef4444', name:'Red' }, { hex:'#22c55e', name:'Green' },
-      { hex:'#eab308', name:'Yellow' }, { hex:'#ffffff', name:'White' },
-      { hex:'#000000', name:'Black' }
-    ];
+    const COLORS = [{ hex:'#ef4444', name:'Red' }, { hex:'#22c55e', name:'Green' }, { hex:'#eab308', name:'Yellow' }, { hex:'#ffffff', name:'White' }, { hex:'#000000', name:'Black' }];
 
     useEffect(() => { loadJobs(); }, []);
     useEffect(() => {
@@ -426,40 +412,26 @@
 
     const loadJobs  = async () => { const d = await get(DB_KEY)||[]; setJobs(d); updMetric(d); };
     const updMetric = (d) => setDbSize(`${(new TextEncoder().encode(JSON.stringify(d)).length/1024/1024).toFixed(2)} MB`);
-    const saveToDB  = async (nj) => {
-      setJobs(nj);
-      try { await set(DB_KEY, nj); } catch(e) { console.error(e); alert('Warning: Data could not be saved.'); }
-      updMetric(nj);
-    };
+    const saveToDB  = async (nj) => { setJobs(nj); try { await set(DB_KEY, nj); } catch(e) { console.error(e); } updMetric(nj); };
 
     const activeJob   = jobs.find(j => j.id === activeJobId);
     const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
     const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled) : null;
 
-    // ── Generate Native PDF (html2pdf) ───────────────────────────────────────
+    // ── Generate DEDICATED Formal Invoice/Quote PDF ──────────────────────────
     const handleDownloadPDF = () => {
-      // Find the print-only container and briefly un-hide it for the PDF generator
-      const element = document.getElementById('print-container');
-      element.classList.remove('hidden', 'print-only');
-      element.style.display = 'block';
-      element.style.position = 'absolute';
-      element.style.left = '-9999px'; // keep it offscreen so UI doesn't jump
-
+      const element = document.getElementById('pdf-formal-invoice');
+      
       const opt = {
-        margin:       10,
-        filename:     `${activeJob?.clientName || 'Job'}-Report.pdf`,
+        margin:       [10, 10, 15, 10], // Top, Left, Bottom, Right margins
+        filename:     `${activeJob?.clientName || 'Job'}-${activeJob?.type==='quote' ? 'Quote' : 'Report'}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
+        html2canvas:  { scale: 2, useCORS: true, windowWidth: 800 }, // Forces 800px width so mobile phones don't squish the layout
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      window.html2pdf().set(opt).from(element).save().then(() => {
-        // Put the print-container back to hidden
-        element.style.position = '';
-        element.style.left = '';
-        element.style.display = '';
-        element.classList.add('hidden', 'print-only');
-      });
+      // html2pdf reads the completely custom formatted div that is hidden off-screen
+      window.html2pdf().set(opt).from(element).save();
     };
 
     // ── Voice to Text ─────────────────────────────────────────────────────────
@@ -487,91 +459,37 @@
       recognition.start();
     };
 
-    // ── Save API Key & Model ──────────────────────────────────────────────────
-    const saveApiSettings = (key, model) => {
-      const trimmedKey = key.trim();
-      const trimmedModel = model.trim();
-      setApiKey(trimmedKey);
-      setGeminiModel(trimmedModel);
-      localStorage.setItem('geminiApiKey', trimmedKey);
-      localStorage.setItem('geminiModel', trimmedModel);
-    };
+    const saveApiSettings = (key, model) => { setApiKey(key.trim()); setGeminiModel(model.trim()); localStorage.setItem('geminiApiKey', key.trim()); localStorage.setItem('geminiModel', model.trim()); };
+    const exportData = () => { const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `jobsite-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); };
+    const importData = (e) => { const file = e.target.files[0]; if (!file) return; e.target.value = ''; const reader = new FileReader(); reader.onload = async (ev) => { try { const imported = JSON.parse(ev.target.result); if (!Array.isArray(imported)) throw new Error('Invalid format'); if (!confirm(`Found ${imported.length} project${imported.length!==1?'s':''}. Replace ALL current data?`)) return; await saveToDB(imported); window.location.reload(); } catch { alert('Invalid backup file. Please use a file exported from JobSite Master.'); } }; reader.readAsText(file); };
 
-    const exportData = () => {
-      const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = `jobsite-backup-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-    const importData = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      e.target.value = '';
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        try {
-          const imported = JSON.parse(ev.target.result);
-          if (!Array.isArray(imported)) throw new Error('Invalid format');
-          if (!confirm(`Found ${imported.length} project${imported.length!==1?'s':''}. Replace ALL current data?`)) return;
-          await saveToDB(imported);
-          alert('Import successful. Reloading…');
-          window.location.reload();
-        } catch { alert('Invalid backup file. Please use a file exported from JobSite Master.'); }
-      };
-      reader.readAsText(file);
-    };
-
-    // ── Job CRUD ──────────────────────────────────────────────────────────────
-    const handleCreateJob = (address, clientName, tasks = []) => {
-      const newJob = { id: Date.now(), date: new Date().toISOString(), type: newJobModal, address, clientName, clientRef: '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false };
-      saveToDB([...jobs, newJob]);
-      setNewJobModal(null);
-    };
-
+    const handleCreateJob = (address, clientName, tasks = []) => { const newJob = { id: Date.now(), date: new Date().toISOString(), type: newJobModal, address, clientName, clientRef: '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false }; saveToDB([...jobs, newJob]); setNewJobModal(null); };
     const cycleStatus = (id) => { const j=jobs.find(x=>x.id===id), idx=STATUSES.findIndex(s=>s.key===(j.status||'draft')); saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x)); };
     const toggleGST = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
-
-    // ── Header editing ──────────────────────────────────────────────────────
     const startEditHeader = () => { setHeaderDraft({ address:activeJob.address, clientName:activeJob.clientName, clientRef:activeJob.clientRef||'', projectNotes:activeJob.projectNotes||'', projectPhotos:activeJob.projectPhotos||[] }); setIsEditingHeader(true); };
     const saveHeaderEdit = () => { if (!headerDraft.address.trim()) return; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j)); setIsEditingHeader(false); };
     const handleProjectPhotoUpload = async (e) => { try { const compressed = await Promise.all(Array.from(e.target.files).map(compressImage)); setHeaderDraft(d => ({ ...d, projectPhotos:[...d.projectPhotos,...compressed] })); } catch { alert('One or more images could not be processed.'); } };
 
-    // ── Task form ──────────────────────────────────────────────────────────
     const handleSaveTask = () => { if (!taskData.title) return alert('Task title is required.'); if (!activeJob) return; const updated = editingTaskId ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t) : [...activeJob.tasks, { ...taskData, id:Date.now() }]; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j)); closeModal(); };
     const closeModal = () => { setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); setRateError(false); setMatError(false); setIsListening(false); };
     const handleImageUpload = async (e) => { try { const c=await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); } catch { alert('One or more images could not be processed.'); } };
     const validateRate = (val) => { const n = parseFloat(val); setRateError(val !== '' && isNaN(n)); };
     const validateMat  = (val) => { const n = parseFloat(val); setMatError(val !== ''  && isNaN(n)); };
 
-    // ── Route planning ────────────────────────────────────────────────────────
     const exitSelectionMode   = () => { setSelectionMode(false); setSelectedJobs([]); setLocStatus('idle'); setCurrentCoords(null); };
     const toggleSelectionMode = () => { if (selectionMode) exitSelectionMode(); else { setSelectionMode(true); setSelectedJobs([]); } };
     const toggleJobSelection  = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
     const clearSelection      = () => setSelectedJobs([]);
     const selectAllVisible    = () => setSelectedJobs(prev => { const e=new Set(prev); return [...prev,...filteredJobs.map(j=>j.id).filter(id=>!e.has(id))].slice(0,MAX_STOPS); });
-
     const getMyLocation = () => { if (!navigator.geolocation) { setLocStatus('denied'); return; } setLocStatus('loading'); navigator.geolocation.getCurrentPosition((pos) => { setCurrentCoords({lat:pos.coords.latitude,lng:pos.coords.longitude}); setLocStatus('ok'); }, () => { setLocStatus('denied'); setUseMyLocation(false); }); };
     const handleLocToggle = () => { const next=!useMyLocation; setUseMyLocation(next); if (next && locStatus==='idle') getMyLocation(); };
     const openGoogleMaps  = () => { const ordered = selectedJobs.map(id=>jobs.find(j=>j.id===id)).filter(Boolean); if (!ordered.length) return; let origin, stops; if (useMyLocation && currentCoords) { origin=`${currentCoords.lat},${currentCoords.lng}`; stops=ordered; } else { origin=encodeURIComponent(ordered[0].address); stops=ordered.slice(1); } const dest = stops.length>0 ? encodeURIComponent(stops[stops.length-1].address) : origin; const wps  = stops.slice(0,-1).map(j=>encodeURIComponent(j.address)).join('|'); let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`; if (wps) url += `&waypoints=${wps}`; window.open(url, '_blank', 'noopener'); };
     const atStopLimit = selectedJobs.length >= MAX_STOPS;
 
-    // ── Filtered jobs ─────────────────────────────────────────────────────────
     const filteredJobs = jobs.filter(j => filterType==='all' || j.type===filterType).filter(j => !searchQ.trim() || j.address.toLowerCase().includes(searchQ.toLowerCase()) || (j.clientName||'').toLowerCase().includes(searchQ.toLowerCase())).sort((a,b) => b.id-a.id);
 
-    // ── Canvas ─────────────────────────────────────────────────────────────────
     const resetView = () => { setCanvasZoom(1); zoomRef.current=1; setCanvasPan({x:0,y:0}); panRef.current={x:0,y:0}; setCanvasMode('draw'); modeRef.current='draw'; };
-    useEffect(() => {
-      if (editingImageIdx!==null && canvasRef.current) {
-        resetView();
-        const cvs=canvasRef.current, ctx=cvs.getContext('2d'), img=new Image();
-        img.src=taskData.images[editingImageIdx];
-        img.onload=()=>{ cvs.width=img.width; cvs.height=img.height; ctx.drawImage(img,0,0,img.width,img.height); setUndoStack([cvs.toDataURL()]); };
-      }
-    }, [editingImageIdx, taskData.images]);
-
+    useEffect(() => { if (editingImageIdx!==null && canvasRef.current) { resetView(); const cvs=canvasRef.current, ctx=cvs.getContext('2d'), img=new Image(); img.src=taskData.images[editingImageIdx]; img.onload=()=>{ cvs.width=img.width; cvs.height=img.height; ctx.drawImage(img,0,0,img.width,img.height); setUndoStack([cvs.toDataURL()]); }; } }, [editingImageIdx, taskData.images]);
     const getCoords = (e) => { const cvs=canvasRef.current, r=cvs.getBoundingClientRect(); let cx=e.clientX, cy=e.clientY; if (e.touches?.length>0) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; } return { x:(cx-r.left)*(cvs.width/r.width), y:(cy-r.top)*(cvs.height/r.height) }; };
     const startDraw = (e) => { setIsDrawing(true); drawRef.current=true; const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.strokeStyle=penColor; ctx.lineWidth=Math.max(3,canvasRef.current.width/100); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x,y); };
     const doDraw = (e) => { if (!drawRef.current) return; e.preventDefault(); const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.lineTo(x,y); ctx.stroke(); };
@@ -590,7 +508,7 @@
 
     // ─────────────────────────────────────────────────────────────────────────
     return (
-      <div className="min-h-screen pb-6">
+      <div className="min-h-screen pb-6 relative z-0">
 
         {/* ── Header ── */}
         <header className="bg-slate-900 dark:bg-slate-950 text-white px-4 py-3 no-print flex justify-between items-center shadow-lg sticky top-0 z-50 border-b border-slate-800">
@@ -602,7 +520,7 @@
           <div className="flex items-center gap-2">
             {viewMode==='dashboard' && (
               <button onClick={toggleSelectionMode} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide transition-all border ${selectionMode ? 'bg-blue-500 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'}`}>
-                <MapPinned size={13}/> <span className="hidden sm:inline">{selectionMode ? 'Done' : 'Route'}</span>
+                <MapPinned size={13}/> {selectionMode ? 'Done' : 'Route'}
               </button>
             )}
             {viewMode==='detail' && (
@@ -621,10 +539,8 @@
               {!apiKey && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full"/>}
             </button>
             
-            {/* Added sm:px-2 and hidden sm:inline to hide text on mobile */}
-            <div className={`flex items-center gap-1 px-2 py-1.5 sm:px-2 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-slate-800 border-red-900' : 'text-slate-500 bg-slate-800 border-slate-700'}`}>
-              <HardDrive size={12} className={parseFloat(dbSize)>4?"text-red-400":"text-emerald-500"}/> 
-              <span className="hidden sm:inline">{dbSize}</span>
+            <div className={`flex items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-slate-800 border-red-900' : 'text-slate-500 bg-slate-800 border-slate-700'}`}>
+              <HardDrive size={10} className={parseFloat(dbSize)>4?"text-red-400":"text-emerald-500"}/> {dbSize}
             </div>
           </div>
         </header>
@@ -711,7 +627,7 @@
                       ${selectionMode
                         ? isSelected ? 'border-blue-500 ring-2 ring-blue-500/30' : canSelect ? 'border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-400' : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'
                         : j.type==='handover' ? 'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500' : 'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
-                    <div className="p-5 sm:p-6 flex justify-between items-start">
+                    <div className="p-6 flex justify-between items-start">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
                         {selectionMode && (
                           <div className={`w-7 h-7 rounded-full flex-shrink-0 mt-1 flex items-center justify-center text-xs font-black transition-all ${isSelected?'bg-blue-500 text-white shadow-lg shadow-blue-500/30':'border-2 border-slate-300 dark:border-slate-600 text-transparent'}`}>
@@ -730,8 +646,7 @@
                               {j.gstEnabled && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
                             </div>
                           )}
-                          {/* Adjusted text size for mobile */}
-                          <p className={`font-black text-slate-900 dark:text-white text-base sm:text-lg truncate ${selectionMode?'':'mt-1'}`}>{j.address}</p>
+                          <p className={`font-black text-slate-900 dark:text-white text-lg truncate ${selectionMode?'':'mt-1'}`}>{j.address}</p>
                           <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">{j.clientName||'—'}{!selectionMode&&` · ${j.date?new Date(j.date).toLocaleDateString():''}`}</p>
                         </div>
                       </div>
@@ -770,12 +685,12 @@
               </button>
             </div>
 
-            {/* Job header card - adjusted border radius/padding for mobile */}
-            <div className={`p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
+            {/* Job header card */}
+            <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
                   <div className="flex items-center gap-2 mb-3"><Edit3 size={14} className="text-orange-500"/><span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Editing Job Details</span></div>
-                  <input className="w-full text-xl sm:text-2xl font-black bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e => setHeaderDraft(d=>({...d,address:e.target.value}))}/>
+                  <input className="w-full text-2xl font-black bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e => setHeaderDraft(d=>({...d,address:e.target.value}))}/>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Name" value={headerDraft.clientName} onChange={e => setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e => setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
                   <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e => setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
@@ -801,8 +716,7 @@
               ) : (
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0 mr-4">
-                    {/* Adjusted text size for mobile */}
-                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">{activeJob?.address}</h2>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">{activeJob?.address}</h2>
                     <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm mt-1">{activeJob?.clientName}</p>
                     {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
@@ -829,9 +743,9 @@
               )}
             </div>
 
-            {/* Quote summary with GST - Changed grid from 3 columns to responsive 2/3 columns */}
+            {/* Quote summary with GST */}
             {activeJob?.type==='quote' && quoteTotals && (
-              <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-5 sm:p-6 mb-6 border border-slate-800 shadow-lg">
+              <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <DollarSign size={16} className="text-orange-500"/>
@@ -841,18 +755,18 @@
                     <Receipt size={12}/> GST {activeJob.gstEnabled?'On':'Off'}
                   </button>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-sm sm:text-base leading-tight">{fmtAUD(quoteTotals.labour)}</p></div>
-                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-sm sm:text-base leading-tight">{fmtAUD(quoteTotals.mats)}</p></div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.labour)}</p></div>
+                  <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.mats)}</p></div>
                   {activeJob.gstEnabled ? (
-                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4 col-span-2 sm:col-span-1"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-sm sm:text-base leading-tight">{fmtAUD(quoteTotals.subtotal)}</p></div>
+                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.subtotal)}</p></div>
                   ) : (
-                    <div className="bg-orange-500 rounded-2xl p-4 col-span-2 sm:col-span-1"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.total)}</p></div>
+                    <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.total)}</p></div>
                   )}
                 </div>
                 {activeJob.gstEnabled && (
                   <div className="grid grid-cols-2 gap-3 mt-3">
-                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-sm sm:text-base leading-tight">{fmtAUD(quoteTotals.gst)}</p></div>
+                    <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base leading-tight">{fmtAUD(quoteTotals.gst)}</p></div>
                     <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-base leading-tight">{fmtAUD(quoteTotals.total)}</p></div>
                   </div>
                 )}
@@ -899,15 +813,15 @@
               {activeJob?.tasks.length===0 && <div className="text-center py-20 text-slate-300 dark:text-slate-700 font-black uppercase tracking-widest">No Log Entries Yet</div>}
             </div>
 
-            <button onClick={() => setIsTaskFormOpen(true)} className={`fixed bottom-8 right-8 text-white w-16 h-16 sm:w-20 sm:h-20 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-4 border-white dark:border-slate-800 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`}>
-              <Plus size={32}/>
+            <button onClick={() => setIsTaskFormOpen(true)} className={`fixed bottom-8 right-8 text-white w-20 h-20 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-4 border-white dark:border-slate-800 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`}>
+              <Plus size={40}/>
             </button>
           </main>
         )}
 
         {/* ── Route planning sticky bar ── */}
         {selectionMode && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 p-4 no-print">
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 p-4 no-print safe-pb">
             {selectedJobs.length>0 && (
               <div className="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-1">
                 {useMyLocation && locStatus==='ok' && (
@@ -934,7 +848,7 @@
                   : selectedJobs.length>0 ? <p className="text-slate-500 text-[10px] font-black uppercase">Starting from stop 1</p> : null}
               </div>
               <button onClick={openGoogleMaps} disabled={selectedJobs.length===0} className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 ${selectedJobs.length>0?'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/50':'bg-slate-800 text-slate-600 cursor-not-allowed'}`}>
-                <MapPinned size={18}/> Open Maps
+                <MapPinned size={18}/> Open in Maps
               </button>
             </div>
           </div>
@@ -967,11 +881,10 @@
 
         {/* ══ Task Form Modal ══ */}
         {isTaskFormOpen && (
-          <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
-            {/* Adjusted padding and border radius for mobile */}
-            <div className="bg-white dark:bg-slate-900 rounded-[1.5rem] sm:rounded-[3rem] max-w-md mx-auto p-5 sm:p-8 shadow-2xl mt-4 border dark:border-slate-800">
+          <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-slate-900 rounded-[3rem] max-w-md mx-auto p-8 shadow-2xl mt-4 border dark:border-slate-800">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">{editingTaskId?'Edit':'New'} {activeJob?.type==='handover'?'Works Record':'Report Entry'}</h2>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white">{editingTaskId?'Edit':'New'} {activeJob?.type==='handover'?'Works Record':'Report Entry'}</h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
               <div className="mb-6">
@@ -991,10 +904,9 @@
                     <input placeholder="Time (e.g. 2h 30m)" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.time} onChange={e=>setTaskData(p=>({...p,time:e.target.value}))}/>
                     {taskData.time && <div className="absolute -bottom-5 left-4 text-[9px] text-orange-500 font-black">= {fmtMins(parseTimeToMinutes(taskData.time))}</div>}
                   </div>
-                  {/* Reverted to exact original upload behavior */}
                   <label className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 px-5 rounded-2xl cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 gap-2">
                     <ImageIcon className="text-slate-600 dark:text-slate-400" size={18}/>
-                    <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase hidden sm:inline">Photos</span>
+                    <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase">Photos</span>
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/>
                   </label>
                 </div>
@@ -1049,7 +961,7 @@
                 <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
                 <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
                 
-                {/* Voice Dictation Enabled Text Area */}
+                {/* Voice Dictation Area */}
                 <div className="relative">
                   <textarea placeholder="Full details…" className="w-full p-4 pr-12 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-28 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
                   <button onClick={toggleVoice} type="button" className={`absolute right-3 bottom-4 p-2.5 rounded-full text-white shadow-md transition-all ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Hold to speak">
@@ -1115,7 +1027,7 @@
           </div>
         )}
 
-        {/* ══ Native PDF / Print View (Hidden Container) ══ */}
+        {/* ══ Native Print View (Used for standard browser printing) ══ */}
         {activeJob && (
           <div id="print-container" className="print-only hidden p-4">
             <div className="print-header border-b-2 border-slate-300 pb-3 mb-4 flex flex-col gap-1">
@@ -1194,6 +1106,127 @@
             )}
           </div>
         )}
+
+        {/* ══ Native DEDICATED Formal PDF Generation Template ══ */}
+        {/* Hidden deeply off-screen, completely unlinked from web UI layout */}
+        {activeJob && (
+          <div id="pdf-formal-invoice" style={{ position: 'absolute', top: '-10000px', left: '-10000px', width: '800px', backgroundColor: 'white', color: 'black', padding: '40px', boxSizing: 'border-box', fontFamily: 'Inter, sans-serif' }}>
+             
+             {/* Header */}
+             <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #0f172a', paddingBottom: '20px', marginBottom: '20px' }}>
+                <div>
+                   <h1 style={{ fontSize: '32px', fontWeight: '900', textTransform: 'uppercase', color: '#0f172a', margin: 0 }}>JOBSITE MASTER</h1>
+                   <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>Professional Service Report</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                   <h2 style={{ fontSize: '24px', fontWeight: '900', color: activeJob.type === 'quote' ? '#ea580c' : '#10b981', textTransform: 'uppercase', margin: 0 }}>
+                     {activeJob.type === 'quote' ? 'Quotation' : 'Handover Report'}
+                   </h2>
+                   <p style={{ color: '#0f172a', fontWeight: 'bold', margin: '4px 0 0 0' }}>Date: {new Date(activeJob.date||Date.now()).toLocaleDateString('en-AU')}</p>
+                   {activeJob.clientRef && <p style={{ color: '#64748b', margin: 0 }}>Ref: {activeJob.clientRef}</p>}
+                </div>
+             </div>
+
+             {/* Client Info */}
+             <div style={{ marginBottom: '30px' }}>
+                <h3 style={{ fontSize: '12px', fontWeight: '900', color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>Prepared For</h3>
+                <p style={{ fontSize: '18px', fontWeight: 'bold', margin: 0 }}>{activeJob.clientName || '—'}</p>
+                <p style={{ color: '#475569', margin: 0 }}>{activeJob.address}</p>
+             </div>
+
+             {/* Main Table */}
+             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '30px' }}>
+                <thead>
+                   <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'left', borderBottom: '2px solid #cbd5e1' }}>
+                     <th style={{ padding: '12px', fontSize: '12px', textTransform: 'uppercase', color: '#475569' }}>Task Description</th>
+                     <th style={{ padding: '12px', fontSize: '12px', textTransform: 'uppercase', color: '#475569', width: '100px' }}>Time</th>
+                     {activeJob.type === 'quote' && <th style={{ padding: '12px', fontSize: '12px', textTransform: 'uppercase', color: '#475569', textAlign: 'right', width: '120px' }}>Amount</th>}
+                   </tr>
+                </thead>
+                <tbody>
+                  {activeJob.tasks.map((t, idx) => {
+                     const labour  = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
+                     const mats    = parseFloat(t.materialsCost)||0;
+                     const subtotal = labour+mats;
+                     return (
+                       <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                         <td style={{ padding: '16px 12px' }}>
+                            <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px', color: '#0f172a' }}>{t.title}</div>
+                            <div style={{ fontSize: '12px', color: '#64748b', whiteSpace: 'pre-wrap' }}>{t.desc}</div>
+                         </td>
+                         <td style={{ padding: '16px 12px', fontWeight: 'bold', color: '#0f172a' }}>{t.time || '—'}</td>
+                         {activeJob.type === 'quote' && <td style={{ padding: '16px 12px', textAlign: 'right', fontWeight: 'bold', color: '#0f172a' }}>{subtotal > 0 ? fmtAUD(subtotal) : '—'}</td>}
+                       </tr>
+                     )
+                  })}
+                </tbody>
+             </table>
+
+             {/* Totals Section */}
+             {activeJob.type === 'quote' && quoteTotals && quoteTotals.total > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '40px' }}>
+                  <div style={{ width: '300px' }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>
+                        <span style={{ color: '#64748b', fontWeight: 'bold' }}>Labour</span><span style={{ color: '#0f172a' }}>{fmtAUD(quoteTotals.labour)}</span>
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>
+                        <span style={{ color: '#64748b', fontWeight: 'bold' }}>Materials</span><span style={{ color: '#0f172a' }}>{fmtAUD(quoteTotals.mats)}</span>
+                     </div>
+                     {activeJob.gstEnabled && (
+                       <>
+                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #e2e8f0' }}>
+                            <span style={{ color: '#64748b', fontWeight: 'bold' }}>Subtotal</span><span style={{ color: '#0f172a' }}>{fmtAUD(quoteTotals.subtotal)}</span>
+                         </div>
+                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '2px solid #0f172a' }}>
+                            <span style={{ color: '#64748b', fontWeight: 'bold' }}>GST (10%)</span><span style={{ color: '#0f172a' }}>{fmtAUD(quoteTotals.gst)}</span>
+                         </div>
+                       </>
+                     )}
+                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', fontSize: '24px', fontWeight: '900', color: '#0f172a' }}>
+                        <span style={{ textTransform: 'uppercase' }}>Total</span><span>{fmtAUD(quoteTotals.total)}</span>
+                     </div>
+                  </div>
+                </div>
+             )}
+
+             {/* Signature Block */}
+             <div style={{ marginTop: '50px', borderTop: '2px dashed #cbd5e1', paddingTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
+                <div style={{ width: '45%' }}>
+                   <p style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase' }}>Contractor Signature</p>
+                   <div style={{ height: '60px', borderBottom: '1px solid #0f172a', marginBottom: '8px' }}></div>
+                   <p style={{ fontSize: '12px', color: '#0f172a', margin: 0 }}>Date: _________________</p>
+                </div>
+                <div style={{ width: '45%' }}>
+                   <p style={{ fontSize: '12px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase' }}>Client Acceptance</p>
+                   <div style={{ height: '60px', borderBottom: '1px solid #0f172a', marginBottom: '8px' }}></div>
+                   <p style={{ fontSize: '12px', color: '#0f172a', margin: 0 }}>Date: _________________</p>
+                </div>
+             </div>
+
+             {/* Appendix: Photos (If any exist) */}
+             {activeJob.tasks.some(t => t.images?.length > 0) && (
+               <div style={{ marginTop: '60px', pageBreakBefore: 'always' }}>
+                 <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#0f172a', textTransform: 'uppercase', borderBottom: '2px solid #cbd5e1', paddingBottom: '8px', marginBottom: '20px' }}>
+                   Appendix: Site Photos
+                 </h3>
+                 {activeJob.tasks.map((t, idx) => {
+                   if (!t.images || t.images.length === 0) return null;
+                   return (
+                     <div key={idx} style={{ marginBottom: '30px', pageBreakInside: 'avoid' }}>
+                       <p style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '10px', color: '#0f172a' }}>Task: {t.title}</p>
+                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                         {t.images.map((img, i) => (
+                           <img key={i} src={img} style={{ width: '230px', height: '160px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #cbd5e1' }} />
+                         ))}
+                       </div>
+                     </div>
+                   );
+                 })}
+               </div>
+             )}
+          </div>
+        )}
+
       </div>
     );
   };
