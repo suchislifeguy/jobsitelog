@@ -17,14 +17,39 @@
     <style>
       body { -webkit-tap-highlight-color: transparent; transition: background-color 0.3s; }
       @media print {
-        @page { margin: 8mm; size: A4; }
+        @page { margin: 10mm; size: A4; }
         html, body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .no-print, button, .action-btns, .fixed { display: none !important; }
         .print-only { display: block !important; }
-        .print-card { break-inside: avoid; border: 2px solid #cbd5e1 !important; margin-bottom: 15px; border-radius: 10px; overflow: hidden; page-break-inside: avoid; background: white !important; }
+        .print-card {
+          break-inside: avoid;
+          border: 2px solid #cbd5e1 !important;
+          margin-bottom: 12px;
+          border-radius: 8px;
+          overflow: hidden;
+          page-break-inside: avoid;
+          background: white !important;
+        }
         .print-img-container { break-inside: avoid; page-break-inside: avoid; }
         img { max-width: 100% !important; height: auto !important; }
-        .print-header { page-break-after: avoid; }
+        .print-header {
+          break-after: avoid;
+          page-break-after: avoid;
+        }
+        /* Center project photos and crop nicely */
+        .print-project-photo-row {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+        .print-project-photo-row img {
+          height: 80px;
+          width: 80px;
+          object-fit: cover;
+          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+        }
       }
       .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -52,7 +77,8 @@
     Trash2, ImageIcon, Printer, Plus, X, Hammer, ChevronRight, Sparkles,
     Pencil, Save, HardDrive, CheckCircle2, Clock, Moon, Sun, Edit3, Undo,
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
-    MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt
+    MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
+    Download, Upload
   } from 'lucide-react';
 
   const DB_KEY = 'jobsite-master-v4';
@@ -102,16 +128,7 @@
     };
   });
 
-  // ── Statuses ───────────────────────────────────────────────────────────────
-  const STATUSES = [
-    { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
-    { key:'sent',     label:'Sent',     cls:'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
-    { key:'approved', label:'Approved', cls:'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
-    { key:'invoiced', label:'Invoiced', cls:'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
-  ];
-  const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
-
-  // ── Templates (still present, can be improved later) ────────────────────
+  // ── Templates ────────────────────────────────────────────────────────────
   const TEMPLATES = {
     quote: {
       painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools:"Brushes, Rollers, Extension Poles, Sandpaper", desc:"Surface prep, fill holes, prime and 2 finish coats" },
@@ -168,6 +185,15 @@
     );
   };
 
+  // ── Statuses ───────────────────────────────────────────────────────────────
+  const STATUSES = [
+    { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
+    { key:'sent',     label:'Sent',     cls:'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
+    { key:'approved', label:'Approved', cls:'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
+    { key:'invoiced', label:'Invoiced', cls:'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
+  ];
+  const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
+
   // ── Main App ───────────────────────────────────────────────────────────────
   const App = () => {
     const [jobs, setJobs]               = useState([]);
@@ -194,6 +220,10 @@
 
     const EMPTY_TASK = { title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'', images:[] };
     const [taskData, setTaskData] = useState(EMPTY_TASK);
+
+    // Dollar input validation flags
+    const [rateError, setRateError] = useState(false);
+    const [matError, setMatError]   = useState(false);
 
     // Canvas
     const [editingImageIdx, setEditingImageIdx] = useState(null);
@@ -241,7 +271,36 @@
     const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
     const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled) : null;
 
-    // ── CRUD ──────────────────────────────────────────────────────────────────
+    // ─── Data export / import ─────────────────────────────────────────────────
+    const exportData = () => {
+      const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'jobsite-backup.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    const importData = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          if (!Array.isArray(imported)) throw new Error('Invalid format');
+          if (!confirm(`Found ${imported.length} projects. Replace current data?`)) return;
+          await saveToDB(imported);
+          alert('Import successful. Reloading…');
+          window.location.reload();
+        } catch (err) {
+          alert('Invalid backup file.');
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    // ── Job CRUD ──────────────────────────────────────────────────────────────
     const handleCreateJob = (address, clientName) => {
       saveToDB([...jobs, {
         id:Date.now(), date:new Date().toISOString(), type:newJobModal,
@@ -256,7 +315,7 @@
     };
     const toggleGST    = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
 
-    // ── Header editing (includes project metadata) ─────────────────────────
+    // ── Header editing (project metadata) ──────────────────────────────────
     const startEditHeader = () => {
       setHeaderDraft({
         address: activeJob.address,
@@ -286,7 +345,7 @@
       } catch { alert('One or more images could not be processed.'); }
     };
 
-    // Task modal
+    // ── Task form ──────────────────────────────────────────────────────────
     const handleSaveTask = () => {
       if (!taskData.title) return alert('Title Required');
       if (!activeJob) return;
@@ -296,16 +355,21 @@
       saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks: updated } : j));
       closeModal();
     };
-    const closeModal = () => { setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); };
+    const closeModal = () => { setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); setRateError(false); setMatError(false); };
     const handleImageUpload = async (e) => {
       try { const c=await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); }
       catch { alert('One or more images could not be processed.'); }
     };
 
+    // Validation for dollar fields
+    const validateRate = (val) => { const n = parseFloat(val); setRateError(val !== '' && isNaN(n)); return n; };
+    const validateMat = (val)  => { const n = parseFloat(val); setMatError(val !== '' && isNaN(n));  return n; };
+
     // ── Route planning ────────────────────────────────────────────────────────
     const exitSelectionMode = () => { setSelectionMode(false); setSelectedJobs([]); setLocStatus('idle'); setCurrentCoords(null); };
     const toggleSelectionMode = () => { if (selectionMode) exitSelectionMode(); else { setSelectionMode(true); setSelectedJobs([]); } };
     const toggleJobSelection  = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
+    const clearSelection      = () => setSelectedJobs([]);
     const selectAllVisible    = () => setSelectedJobs(prev => { const e=new Set(prev); return [...prev,...filteredJobs.map(j=>j.id).filter(id=>!e.has(id))].slice(0,MAX_STOPS); });
     const getMyLocation = () => {
       if (!navigator.geolocation) { setLocStatus('denied'); return; }
@@ -336,7 +400,7 @@
       .filter(j => !searchQ.trim() || j.address.toLowerCase().includes(searchQ.toLowerCase()) || (j.clientName||'').toLowerCase().includes(searchQ.toLowerCase()))
       .sort((a,b) => b.id-a.id);
 
-    // ── Canvas (unchanged, kept for completeness) ────────────────────────────
+    // ── Canvas ─────────────────────────────────────────────────────────────────
     const resetView = () => { setCanvasZoom(1); zoomRef.current=1; setCanvasPan({x:0,y:0}); panRef.current={x:0,y:0}; setCanvasMode('draw'); modeRef.current='draw'; };
     useEffect(() => {
       if (editingImageIdx!==null && canvasRef.current) {
@@ -449,6 +513,14 @@
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700">
               {isDarkMode ? <Sun size={15}/> : <Moon size={15}/>}
             </button>
+            {/* Export / Import */}
+            <button onClick={exportData} className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700" title="Export backup">
+              <Download size={15}/>
+            </button>
+            <label className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700 cursor-pointer" title="Import backup">
+              <Upload size={15}/>
+              <input type="file" accept=".json" className="hidden" onChange={importData}/>
+            </label>
             <div className={`flex items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-slate-800 border-red-900' : 'text-slate-500 bg-slate-800 border-slate-700'}`}>
               <HardDrive size={10} className={parseFloat(dbSize)>4?"text-red-400":"text-emerald-500"}/> {dbSize}
             </div>
@@ -480,9 +552,16 @@
                 </div>
                 {locStatus==='denied' && <p className="text-red-400 text-[11px] font-bold mb-3 flex items-center gap-1.5"><AlertTriangle size={12}/> Permission denied — stop 1 used as origin.</p>}
                 <div className="flex items-center justify-between">
-                  <button onClick={selectAllVisible} disabled={atStopLimit} className={`text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border transition-all ${atStopLimit?'border-slate-700 text-slate-600 cursor-not-allowed':'border-blue-600 text-blue-400 hover:bg-blue-900/40'}`}>
-                    Select All Visible
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={selectAllVisible} disabled={atStopLimit} className={`text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border transition-all ${atStopLimit?'border-slate-700 text-slate-600 cursor-not-allowed':'border-blue-600 text-blue-400 hover:bg-blue-900/40'}`}>
+                      Select All Visible
+                    </button>
+                    {selectedJobs.length > 0 && (
+                      <button onClick={clearSelection} className="text-[11px] font-black uppercase tracking-widest px-3 py-2 rounded-xl border border-red-700 text-red-400 hover:bg-red-900/40">
+                        Clear
+                      </button>
+                    )}
+                  </div>
                   <div className="text-right">
                     <span className={`text-sm font-black ${atStopLimit?'text-amber-400':'text-white'}`}>{selectedJobs.length}/{MAX_STOPS} stops</span>
                     {atStopLimit && <p className="text-amber-400 text-[10px] font-black uppercase">Maps limit reached</p>}
@@ -542,7 +621,10 @@
                               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
                                 {j.type==='handover'?'Completed':'Field Report'}
                               </span>
-                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${status.cls}`}>{status.label}</span>
+                              {/* Tappable status pill */}
+                              <button onClick={e => { e.stopPropagation(); cycleStatus(j.id); }} className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>
+                                {status.label}
+                              </button>
                               {j.gstEnabled && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
                             </div>
                           )}
@@ -581,7 +663,7 @@
               </button>
             </div>
 
-            {/* Job header card (editable) */}
+            {/* Job header card (on-screen: address is main, client is subtitle) */}
             <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
@@ -590,7 +672,6 @@
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Name" value={headerDraft.clientName} onChange={e => setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e => setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
                   <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e => setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
-                  {/* Project photos */}
                   <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase">
                     <ImageIcon size={14}/> Add Project Photos
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleProjectPhotoUpload}/>
@@ -613,8 +694,8 @@
               ) : (
                 <div className="flex justify-between items-start">
                   <div className="flex-1 min-w-0 mr-4">
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">{activeJob?.clientName || '—'}</h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">{activeJob?.address}</p>
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">{activeJob?.address}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm mt-1">{activeJob?.clientName}</p>
                     {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
                     {activeJob?.projectPhotos?.length>0 && (
@@ -789,12 +870,12 @@
                   <div className="flex gap-3 mt-2">
                     <div className="flex-1 relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                      <input placeholder="Rate/hr" className="w-full pl-7 pr-10 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.rate} onChange={e=>setTaskData(p=>({...p,rate:e.target.value}))}/>
+                      <input placeholder="Rate/hr" className={`w-full pl-7 pr-10 p-4 rounded-2xl outline-none font-black text-sm ${rateError ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500' : 'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.rate} onChange={e => { const v = e.target.value; setTaskData(p=>({...p,rate:v})); validateRate(v); }} onBlur={e => validateRate(e.target.value)}/>
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-black uppercase">/hr</span>
                     </div>
                     <div className="flex-1 relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                      <input placeholder="Materials $" className="w-full pl-7 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.materialsCost} onChange={e=>setTaskData(p=>({...p,materialsCost:e.target.value}))}/>
+                      <input placeholder="Materials $" className={`w-full pl-7 p-4 rounded-2xl outline-none font-black text-sm ${matError ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500' : 'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.materialsCost} onChange={e => { const v = e.target.value; setTaskData(p=>({...p,materialsCost:v})); validateMat(v); }} onBlur={e => validateMat(e.target.value)}/>
                     </div>
                   </div>
                 )}
@@ -886,9 +967,10 @@
           </div>
         )}
 
-        {/* ══ Print View (client-first, compact header) ══ */}
+        {/* ══ Print View (client-first, centered project photos, no awkward breaks) ══ */}
         {activeJob && (
           <div className="print-only hidden p-4">
+            {/* Compact header — won't break away from first task */}
             <div className="print-header border-b-2 border-slate-300 pb-3 mb-4 flex flex-col gap-1">
               <div className="flex justify-between text-xs font-black uppercase text-slate-500">
                 <span>{activeJob.type==='handover' ? 'Completed Works' : 'Field Report'}</span>
@@ -897,16 +979,19 @@
               <h1 className="text-3xl font-black text-slate-900 uppercase">{activeJob.clientName || '—'}</h1>
               {activeJob.clientRef && <p className="text-lg font-bold text-slate-700">REF: {activeJob.clientRef}</p>}
               <p className="text-slate-500 font-medium">{activeJob.address}</p>
+              {activeJob.projectNotes && <p className="text-slate-600 italic text-sm mt-1 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
+              {/* Centered project photos — cropped and balanced */}
+              {activeJob.projectPhotos?.length>0 && (
+                <div className="print-project-photo-row mt-2">
+                  {activeJob.projectPhotos.map((p,i) => (
+                    <img key={i} src={p} alt="Project photo" />
+                  ))}
+                </div>
+              )}
               <div className="flex gap-4 mt-2 text-sm font-medium">
                 <span>TOTAL TIME: {getTotals(activeJob.tasks).str}</span>
                 {quoteTotals && quoteTotals.total>0 && <span>TOTAL: {fmtAUD(quoteTotals.total)}{activeJob.gstEnabled?' (inc. GST)':''}</span>}
               </div>
-              {activeJob.projectNotes && <p className="text-slate-600 italic text-sm mt-2 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
-              {activeJob.projectPhotos?.length>0 && (
-                <div className="flex gap-2 mt-2">
-                  {activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-20 rounded" />)}
-                </div>
-              )}
             </div>
 
             {/* Task cards */}
