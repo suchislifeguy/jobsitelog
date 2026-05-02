@@ -13,6 +13,8 @@
       }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- pdf.js loaded before babel/react so pdfjsLib is available globally -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
     <style>
       body { -webkit-tap-highlight-color: transparent; transition: background-color 0.3s; }
@@ -21,35 +23,12 @@
         html, body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .no-print, button, .action-btns, .fixed { display: none !important; }
         .print-only { display: block !important; }
-        .print-card {
-          break-inside: avoid;
-          border: 2px solid #cbd5e1 !important;
-          margin-bottom: 12px;
-          border-radius: 8px;
-          overflow: hidden;
-          page-break-inside: avoid;
-          background: white !important;
-        }
+        .print-card { break-inside: avoid; border: 2px solid #cbd5e1 !important; margin-bottom: 12px; border-radius: 8px; overflow: hidden; page-break-inside: avoid; background: white !important; }
         .print-img-container { break-inside: avoid; page-break-inside: avoid; }
         img { max-width: 100% !important; height: auto !important; }
-        .print-header {
-          break-after: avoid;
-          page-break-after: avoid;
-        }
-        /* Center project photos and crop nicely */
-        .print-project-photo-row {
-          display: flex;
-          justify-content: center;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-        .print-project-photo-row img {
-          height: 80px;
-          width: 80px;
-          object-fit: cover;
-          border-radius: 6px;
-          border: 1px solid #e2e8f0;
-        }
+        .print-header { break-after: avoid; page-break-after: avoid; }
+        .print-project-photo-row { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+        .print-project-photo-row img { height: 80px; width: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; }
       }
       .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -78,10 +57,16 @@
     Pencil, Save, HardDrive, CheckCircle2, Clock, Moon, Sun, Edit3, Undo,
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
-    Download, Upload
+    Download, Upload, Settings, FileText
   } from 'lucide-react';
 
-  const DB_KEY = 'jobsite-master-v4';
+  // ── Set pdf.js worker after scripts have loaded ───────────────────────────
+  if (typeof pdfjsLib !== 'undefined') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  }
+
+  const DB_KEY    = 'jobsite-master-v4';
   const MAX_STOPS = 12;
   const GST_RATE  = 0.1;
 
@@ -108,6 +93,7 @@
     const total    = subtotal + gst;
     return { labour, mats, subtotal, gst, total };
   };
+
   const compressImage = (file) => new Promise((res, rej) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -149,15 +135,194 @@
     }
   };
 
-  // ── New Job Modal ──────────────────────────────────────────────────────────
-  const NewJobModal = ({ type, onSave, onClose }) => {
-    const [addr, setAddr]     = useState('');
-    const [client, setClient] = useState('');
-    const isHandover = type === 'handover';
-    const go = () => addr.trim() && onSave(addr.trim(), client);
+  // ── Statuses ───────────────────────────────────────────────────────────────
+  const STATUSES = [
+    { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
+    { key:'sent',     label:'Sent',     cls:'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
+    { key:'approved', label:'Approved', cls:'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
+    { key:'invoiced', label:'Invoiced', cls:'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
+  ];
+  const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
+
+  // ── Settings Modal ─────────────────────────────────────────────────────────
+  const SettingsModal = ({ apiKey, onSave, onClose }) => {
+    const [draft, setDraft] = useState(apiKey);
+    const save = () => { onSave(draft); onClose(); };
+    return (
+      <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Configuration</span>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-2">Settings</h2>
+            </div>
+            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
+          </div>
+          <div className="space-y-5">
+            {/* Gemini API Key */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Gemini API Key</label>
+              <p className="text-[11px] text-slate-400 mb-2">
+                Required for <strong className="text-orange-500">PDF Import</strong>. Free tier available at{' '}
+                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="underline text-blue-400 hover:text-blue-300">Google AI Studio</a>.
+                Key is stored only in your browser's localStorage.
+              </p>
+              <input
+                type="password"
+                className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
+                placeholder="Paste your Gemini API key…"
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && save()}
+              />
+              {draft && (
+                <button
+                  onClick={() => setDraft('')}
+                  className="mt-1.5 text-[10px] font-black text-red-400 hover:text-red-300 uppercase tracking-widest"
+                >
+                  Clear key
+                </button>
+              )}
+            </div>
+
+            {/* PDF import note */}
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-4">
+              <p className="text-[11px] font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                <AlertTriangle size={12}/> PDF Import Note
+              </p>
+              <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 leading-relaxed">
+                Only works with <strong>text-based PDFs</strong> (digitally created). Scanned image PDFs will not extract correctly. Gemini will parse what text is found — always review imported data.
+              </p>
+            </div>
+
+            <button
+              onClick={save}
+              className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"
+            >
+              <Check size={16}/> Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ── New Job Modal (with optional PDF import via Gemini) ───────────────────
+  const NewJobModal = ({ type, onSave, onClose, apiKey }) => {
+    const [addr, setAddr]         = useState('');
+    const [client, setClient]     = useState('');
+    const [isImporting, setIsImporting] = useState(false);
+    const [importMsg, setImportMsg]     = useState('');
+    const fileInputRef = useRef(null);
+    const isHandover   = type === 'handover';
+
+    const go = () => addr.trim() && onSave(addr.trim(), client, []);
+
+    const handleImportPDF = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      // Reset input so the same file can be re-imported if needed
+      e.target.value = '';
+
+      if (!apiKey) {
+        alert('Please save a Gemini API key in Settings (⚙️) first.');
+        return;
+      }
+      if (typeof pdfjsLib === 'undefined') {
+        alert('PDF library failed to load. Please refresh the page.');
+        return;
+      }
+
+      setIsImporting(true);
+      setImportMsg('Reading PDF…');
+
+      try {
+        // Extract text via pdf.js
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          fullText += content.items.map(item => item.str).join(' ') + '\n';
+        }
+        if (!fullText.trim()) {
+          throw new Error('No text found in this PDF. It may be a scanned image — try a digitally created PDF.');
+        }
+
+        setImportMsg('Sending to Gemini…');
+
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text:
+                'Extract the following from this trade quote or work order. ' +
+                'Return ONLY a valid JSON object with these exact keys:\n' +
+                '"address" (job site address as a string),\n' +
+                '"clientName" (client or customer name as a string),\n' +
+                '"tasks" (array of objects, each with: "title" string, "time" string like "2h 30m", ' +
+                '"rate" string (dollars per hour, digits only e.g. "85"), ' +
+                '"materialsCost" string (dollars, digits only e.g. "320"), ' +
+                '"materials" string, "tools" string, "desc" string).\n' +
+                'If a field is not found, use an empty string or empty array. ' +
+                'Do not include markdown, backticks, or any text outside the JSON.\n\n' +
+                'Document text:\n' + fullText.slice(0, 12000) // cap to avoid token overrun
+              }] }],
+              generationConfig: { temperature: 0, response_mime_type: 'application/json' }
+            })
+          }
+        );
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData?.error?.message || `Gemini API error ${res.status}`);
+        }
+
+        const data = await res.json();
+        const raw  = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (!raw) throw new Error('Gemini returned an empty response. Check your API key and quota.');
+
+        // Strip any accidental markdown fences
+        const cleaned = raw.replace(/```json\n?|```/g, '').trim();
+        const json    = JSON.parse(cleaned);
+
+        const tasks = (json.tasks || []).map(t => ({
+          title: t.title || '',
+          time:  t.time  || '',
+          rate:  String(t.rate  || ''),
+          materialsCost: String(t.materialsCost || ''),
+          materials: t.materials || '',
+          tools: t.tools || '',
+          desc:  t.desc  || '',
+          images: [],
+        }));
+
+        // Fire-and-forget: pass extracted data back up
+        onSave(json.address || '', json.clientName || '', tasks);
+
+      } catch (err) {
+        alert('PDF import failed:\n' + err.message);
+      } finally {
+        setIsImporting(false);
+        setImportMsg('');
+      }
+    };
+
     return (
       <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800 relative overflow-hidden">
+
+          {/* Loading overlay */}
+          {isImporting && (
+            <div className="absolute inset-0 bg-slate-900/70 rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
+              <p className="text-white font-black text-sm uppercase tracking-widest">{importMsg}</p>
+            </div>
+          )}
+
           <div className="flex justify-between items-center mb-6">
             <div>
               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
@@ -167,16 +332,77 @@
             </div>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
+
           <div className="space-y-4">
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Job Address *</label>
-              <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)} onKeyDown={e => e.key==='Enter' && go()}/>
+              <input
+                autoFocus
+                className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
+                placeholder="e.g. 42 Acacia Ave, Sydney NSW"
+                value={addr}
+                onChange={e => setAddr(e.target.value)}
+                onKeyDown={e => e.key==='Enter' && go()}
+              />
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Client Name</label>
-              <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)} onKeyDown={e => e.key==='Enter' && go()}/>
+              <input
+                className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
+                placeholder="e.g. John Smith"
+                value={client}
+                onChange={e => setClient(e.target.value)}
+                onKeyDown={e => e.key==='Enter' && go()}
+              />
             </div>
-            <button onClick={go} disabled={!addr.trim()} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 mt-2 ${addr.trim() ? (isHandover ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-slate-900 hover:bg-slate-800 dark:bg-orange-500 dark:hover:bg-orange-400') : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or</span>
+              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
+            </div>
+
+            {/* PDF Import */}
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div>
+                  <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <FileText size={12} className="text-blue-500"/> Import from PDF
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Auto-fills address, client & line items via Gemini AI. Text-based PDFs only.</p>
+                </div>
+                {!apiKey && (
+                  <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/40 px-2 py-1 rounded-lg whitespace-nowrap">
+                    Key needed
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting || !apiKey}
+                className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
+                  apiKey
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                <FileText size={14}/> {apiKey ? 'Choose PDF File' : 'Add API Key in Settings First'}
+              </button>
+              <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={handleImportPDF}/>
+            </div>
+
+            <button
+              onClick={go}
+              disabled={!addr.trim() || isImporting}
+              className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all ${
+                addr.trim() && !isImporting
+                  ? isHandover
+                    ? 'bg-emerald-600 hover:bg-emerald-500 active:scale-95'
+                    : 'bg-slate-900 hover:bg-slate-800 dark:bg-orange-500 dark:hover:bg-orange-400 active:scale-95'
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'
+              }`}
+            >
               <Plus size={20}/> Create Project
             </button>
           </div>
@@ -184,15 +410,6 @@
       </div>
     );
   };
-
-  // ── Statuses ───────────────────────────────────────────────────────────────
-  const STATUSES = [
-    { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
-    { key:'sent',     label:'Sent',     cls:'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
-    { key:'approved', label:'Approved', cls:'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
-    { key:'invoiced', label:'Invoiced', cls:'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
-  ];
-  const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
 
   // ── Main App ───────────────────────────────────────────────────────────────
   const App = () => {
@@ -207,9 +424,11 @@
     const [searchQ, setSearchQ]         = useState('');
     const [filterType, setFilterType]   = useState('all');
     const [isEditingHeader, setIsEditingHeader] = useState(false);
-    const [headerDraft, setHeaderDraft] = useState({
-      address:'', clientName:'', clientRef:'', projectNotes:'', projectPhotos:[]
-    });
+    const [headerDraft, setHeaderDraft] = useState({ address:'', clientName:'', clientRef:'', projectNotes:'', projectPhotos:[] });
+
+    // Gemini API key + Settings
+    const [apiKey, setApiKey]           = useState(() => localStorage.getItem('geminiApiKey') || '');
+    const [showSettings, setShowSettings] = useState(false);
 
     // Route planning
     const [selectionMode, setSelectionMode] = useState(false);
@@ -220,8 +439,6 @@
 
     const EMPTY_TASK = { title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'', images:[] };
     const [taskData, setTaskData] = useState(EMPTY_TASK);
-
-    // Dollar input validation flags
     const [rateError, setRateError] = useState(false);
     const [matError, setMatError]   = useState(false);
 
@@ -271,88 +488,94 @@
     const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
     const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled) : null;
 
-    // ─── Data export / import ─────────────────────────────────────────────────
+    // ── Save API Key ──────────────────────────────────────────────────────────
+    const saveApiKey = (key) => {
+      const trimmed = key.trim();
+      setApiKey(trimmed);
+      localStorage.setItem('geminiApiKey', trimmed);
+    };
+
+    // ── Data export / import ──────────────────────────────────────────────────
     const exportData = () => {
       const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'jobsite-backup.json';
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `jobsite-backup-${new Date().toISOString().slice(0,10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
     };
     const importData = (e) => {
       const file = e.target.files[0];
       if (!file) return;
+      e.target.value = '';
       const reader = new FileReader();
       reader.onload = async (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
           if (!Array.isArray(imported)) throw new Error('Invalid format');
-          if (!confirm(`Found ${imported.length} projects. Replace current data?`)) return;
+          if (!confirm(`Found ${imported.length} project${imported.length!==1?'s':''}. Replace ALL current data?`)) return;
           await saveToDB(imported);
           alert('Import successful. Reloading…');
           window.location.reload();
-        } catch (err) {
-          alert('Invalid backup file.');
+        } catch {
+          alert('Invalid backup file. Please use a file exported from JobSite Master.');
         }
       };
       reader.readAsText(file);
     };
 
     // ── Job CRUD ──────────────────────────────────────────────────────────────
-    const handleCreateJob = (address, clientName) => {
-      saveToDB([...jobs, {
-        id:Date.now(), date:new Date().toISOString(), type:newJobModal,
-        address, clientName, clientRef:'', projectNotes:'', projectPhotos:[],
-        tasks:[], status:'draft', gstEnabled:false
-      }]);
+    // tasks array can be pre-populated from PDF import (defaults to [])
+    const handleCreateJob = (address, clientName, tasks = []) => {
+      const newJob = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        type: newJobModal,
+        address,
+        clientName,
+        clientRef: '',
+        projectNotes: '',
+        projectPhotos: [],
+        tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })),
+        status: 'draft',
+        gstEnabled: false,
+      };
+      saveToDB([...jobs, newJob]);
       setNewJobModal(null);
     };
-    const cycleStatus  = (id) => {
+
+    const cycleStatus = (id) => {
       const j=jobs.find(x=>x.id===id), idx=STATUSES.findIndex(s=>s.key===(j.status||'draft'));
       saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x));
     };
-    const toggleGST    = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
+    const toggleGST = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
 
-    // ── Header editing (project metadata) ──────────────────────────────────
+    // ── Header editing ──────────────────────────────────────────────────────
     const startEditHeader = () => {
-      setHeaderDraft({
-        address: activeJob.address,
-        clientName: activeJob.clientName,
-        clientRef: activeJob.clientRef || '',
-        projectNotes: activeJob.projectNotes || '',
-        projectPhotos: activeJob.projectPhotos || [],
-      });
+      setHeaderDraft({ address:activeJob.address, clientName:activeJob.clientName, clientRef:activeJob.clientRef||'', projectNotes:activeJob.projectNotes||'', projectPhotos:activeJob.projectPhotos||[] });
       setIsEditingHeader(true);
     };
     const saveHeaderEdit = () => {
       if (!headerDraft.address.trim()) return;
-      saveToDB(jobs.map(j => j.id===activeJobId ? {
-        ...j,
-        address: headerDraft.address.trim(),
-        clientName: headerDraft.clientName,
-        clientRef: headerDraft.clientRef,
-        projectNotes: headerDraft.projectNotes,
-        projectPhotos: headerDraft.projectPhotos,
-      } : j));
+      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j));
       setIsEditingHeader(false);
     };
     const handleProjectPhotoUpload = async (e) => {
       try {
         const compressed = await Promise.all(Array.from(e.target.files).map(compressImage));
-        setHeaderDraft(d => ({ ...d, projectPhotos: [...d.projectPhotos, ...compressed] }));
+        setHeaderDraft(d => ({ ...d, projectPhotos:[...d.projectPhotos,...compressed] }));
       } catch { alert('One or more images could not be processed.'); }
     };
 
     // ── Task form ──────────────────────────────────────────────────────────
     const handleSaveTask = () => {
-      if (!taskData.title) return alert('Title Required');
+      if (!taskData.title) return alert('Task title is required.');
       if (!activeJob) return;
       const updated = editingTaskId
-        ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id: editingTaskId } : t)
-        : [...activeJob.tasks, { ...taskData, id: Date.now() }];
-      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks: updated } : j));
+        ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t)
+        : [...activeJob.tasks, { ...taskData, id:Date.now() }];
+      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j));
       closeModal();
     };
     const closeModal = () => { setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); setRateError(false); setMatError(false); };
@@ -360,17 +583,16 @@
       try { const c=await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); }
       catch { alert('One or more images could not be processed.'); }
     };
-
-    // Validation for dollar fields
-    const validateRate = (val) => { const n = parseFloat(val); setRateError(val !== '' && isNaN(n)); return n; };
-    const validateMat = (val)  => { const n = parseFloat(val); setMatError(val !== '' && isNaN(n));  return n; };
+    const validateRate = (val) => { const n = parseFloat(val); setRateError(val !== '' && isNaN(n)); };
+    const validateMat  = (val) => { const n = parseFloat(val); setMatError(val !== ''  && isNaN(n)); };
 
     // ── Route planning ────────────────────────────────────────────────────────
-    const exitSelectionMode = () => { setSelectionMode(false); setSelectedJobs([]); setLocStatus('idle'); setCurrentCoords(null); };
+    const exitSelectionMode   = () => { setSelectionMode(false); setSelectedJobs([]); setLocStatus('idle'); setCurrentCoords(null); };
     const toggleSelectionMode = () => { if (selectionMode) exitSelectionMode(); else { setSelectionMode(true); setSelectedJobs([]); } };
     const toggleJobSelection  = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
     const clearSelection      = () => setSelectedJobs([]);
     const selectAllVisible    = () => setSelectedJobs(prev => { const e=new Set(prev); return [...prev,...filteredJobs.map(j=>j.id).filter(id=>!e.has(id))].slice(0,MAX_STOPS); });
+
     const getMyLocation = () => {
       if (!navigator.geolocation) { setLocStatus('denied'); return; }
       setLocStatus('loading');
@@ -386,8 +608,8 @@
       let origin, stops;
       if (useMyLocation && currentCoords) { origin=`${currentCoords.lat},${currentCoords.lng}`; stops=ordered; }
       else { origin=encodeURIComponent(ordered[0].address); stops=ordered.slice(1); }
-      const dest   = stops.length>0 ? encodeURIComponent(stops[stops.length-1].address) : origin;
-      const wps    = stops.slice(0,-1).map(j=>encodeURIComponent(j.address)).join('|');
+      const dest = stops.length>0 ? encodeURIComponent(stops[stops.length-1].address) : origin;
+      const wps  = stops.slice(0,-1).map(j=>encodeURIComponent(j.address)).join('|');
       let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`;
       if (wps) url += `&waypoints=${wps}`;
       window.open(url, '_blank', 'noopener');
@@ -410,24 +632,25 @@
         img.onload=()=>{ cvs.width=img.width; cvs.height=img.height; ctx.drawImage(img,0,0,img.width,img.height); setUndoStack([cvs.toDataURL()]); };
       }
     }, [editingImageIdx, taskData.images]);
+
     const getCoords = (e) => {
       const cvs=canvasRef.current, r=cvs.getBoundingClientRect();
       let cx=e.clientX, cy=e.clientY;
       if (e.touches?.length>0) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; }
       return { x:(cx-r.left)*(cvs.width/r.width), y:(cy-r.top)*(cvs.height/r.height) };
     };
-    const startDraw  = (e) => {
+    const startDraw = (e) => {
       setIsDrawing(true); drawRef.current=true;
       const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d');
       ctx.strokeStyle=penColor; ctx.lineWidth=Math.max(3,canvasRef.current.width/100);
       ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x,y);
     };
-    const doDraw     = (e) => {
+    const doDraw = (e) => {
       if (!drawRef.current) return; e.preventDefault();
       const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d');
       ctx.lineTo(x,y); ctx.stroke();
     };
-    const stopDraw   = () => {
+    const stopDraw = () => {
       if (!drawRef.current) return;
       setIsDrawing(false); drawRef.current=false;
       setUndoStack(p=>[...p,canvasRef.current.toDataURL()]);
@@ -513,7 +736,6 @@
             <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700">
               {isDarkMode ? <Sun size={15}/> : <Moon size={15}/>}
             </button>
-            {/* Export / Import */}
             <button onClick={exportData} className="p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700" title="Export backup">
               <Download size={15}/>
             </button>
@@ -521,6 +743,17 @@
               <Upload size={15}/>
               <input type="file" accept=".json" className="hidden" onChange={importData}/>
             </label>
+            {/* Settings — dot indicator when no API key set */}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="relative p-1.5 text-slate-400 hover:text-white transition-colors rounded-lg bg-slate-800 border border-slate-700"
+              title="Settings"
+            >
+              <Settings size={15}/>
+              {!apiKey && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber-400 rounded-full"/>
+              )}
+            </button>
             <div className={`flex items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-slate-800 border-red-900' : 'text-slate-500 bg-slate-800 border-slate-700'}`}>
               <HardDrive size={10} className={parseFloat(dbSize)>4?"text-red-400":"text-emerald-500"}/> {dbSize}
             </div>
@@ -594,9 +827,9 @@
             </div>
             <div className="grid gap-4 pb-32">
               {filteredJobs.map(j => {
-                const status    = getStatus(j.status||'draft');
-                const qt        = j.type==='quote' ? getQuoteTotals(j.tasks, j.gstEnabled) : null;
-                const stopIdx   = selectedJobs.indexOf(j.id);
+                const status     = getStatus(j.status||'draft');
+                const qt         = j.type==='quote' ? getQuoteTotals(j.tasks, j.gstEnabled) : null;
+                const stopIdx    = selectedJobs.indexOf(j.id);
                 const isSelected = stopIdx !== -1;
                 const canSelect  = !atStopLimit || isSelected;
                 return (
@@ -606,8 +839,9 @@
                       else { setActiveJobId(j.id); setViewMode('detail'); setIsEditingHeader(false); }
                     }}
                     className={`bg-white dark:bg-slate-800 rounded-[2rem] border-2 transition-all cursor-pointer shadow-sm
-                      ${selectionMode ? isSelected ? 'border-blue-500 ring-2 ring-blue-500/30' : canSelect ? 'border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-400' : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'
-                      : j.type==='handover' ? 'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500' : 'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
+                      ${selectionMode
+                        ? isSelected ? 'border-blue-500 ring-2 ring-blue-500/30' : canSelect ? 'border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-400' : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'
+                        : j.type==='handover' ? 'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500' : 'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
                     <div className="p-6 flex justify-between items-start">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
                         {selectionMode && (
@@ -621,7 +855,6 @@
                               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
                                 {j.type==='handover'?'Completed':'Field Report'}
                               </span>
-                              {/* Tappable status pill */}
                               <button onClick={e => { e.stopPropagation(); cycleStatus(j.id); }} className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>
                                 {status.label}
                               </button>
@@ -647,7 +880,11 @@
                   </div>
                 );
               })}
-              {filteredJobs.length===0 && <div className="text-center py-10 text-slate-400 text-sm font-bold uppercase tracking-widest">{searchQ?'No results found':'No Projects Found'}</div>}
+              {filteredJobs.length===0 && (
+                <div className="text-center py-10 text-slate-400 text-sm font-bold uppercase tracking-widest">
+                  {searchQ ? 'No results found' : 'No Projects Found'}
+                </div>
+              )}
             </div>
           </main>
 
@@ -663,7 +900,7 @@
               </button>
             </div>
 
-            {/* Job header card (on-screen: address is main, client is subtitle) */}
+            {/* Job header card */}
             <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
@@ -754,9 +991,9 @@
             {/* Task list */}
             <div className="space-y-6 mb-32">
               {activeJob?.tasks.map((t, i) => {
-                const labour=(parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
-                const mats=parseFloat(t.materialsCost)||0;
-                const subtotal=labour+mats;
+                const labour  = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
+                const mats    = parseFloat(t.materialsCost)||0;
+                const subtotal = labour+mats;
                 return (
                   <div key={t.id} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-b dark:border-slate-700 flex justify-between items-center px-6">
@@ -832,8 +1069,24 @@
           </div>
         )}
 
+        {/* ══ Settings Modal ══ */}
+        {showSettings && (
+          <SettingsModal
+            apiKey={apiKey}
+            onSave={saveApiKey}
+            onClose={() => setShowSettings(false)}
+          />
+        )}
+
         {/* ══ New Job Modal ══ */}
-        {newJobModal && <NewJobModal type={newJobModal} onSave={handleCreateJob} onClose={() => setNewJobModal(null)}/>}
+        {newJobModal && (
+          <NewJobModal
+            type={newJobModal}
+            apiKey={apiKey}
+            onSave={handleCreateJob}
+            onClose={() => setNewJobModal(null)}
+          />
+        )}
 
         {/* ══ Task Form Modal ══ */}
         {isTaskFormOpen && (
@@ -870,12 +1123,20 @@
                   <div className="flex gap-3 mt-2">
                     <div className="flex-1 relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                      <input placeholder="Rate/hr" className={`w-full pl-7 pr-10 p-4 rounded-2xl outline-none font-black text-sm ${rateError ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500' : 'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.rate} onChange={e => { const v = e.target.value; setTaskData(p=>({...p,rate:v})); validateRate(v); }} onBlur={e => validateRate(e.target.value)}/>
+                      <input placeholder="Rate/hr" className={`w-full pl-7 pr-10 p-4 rounded-2xl outline-none font-black text-sm ${rateError ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500' : 'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
+                        value={taskData.rate}
+                        onChange={e => { const v=e.target.value; setTaskData(p=>({...p,rate:v})); validateRate(v); }}
+                        onBlur={e => validateRate(e.target.value)}
+                      />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-black uppercase">/hr</span>
                     </div>
                     <div className="flex-1 relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                      <input placeholder="Materials $" className={`w-full pl-7 p-4 rounded-2xl outline-none font-black text-sm ${matError ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500' : 'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.materialsCost} onChange={e => { const v = e.target.value; setTaskData(p=>({...p,materialsCost:v})); validateMat(v); }} onBlur={e => validateMat(e.target.value)}/>
+                      <input placeholder="Materials $" className={`w-full pl-7 p-4 rounded-2xl outline-none font-black text-sm ${matError ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500' : 'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
+                        value={taskData.materialsCost}
+                        onChange={e => { const v=e.target.value; setTaskData(p=>({...p,materialsCost:v})); validateMat(v); }}
+                        onBlur={e => validateMat(e.target.value)}
+                      />
                     </div>
                   </div>
                 )}
@@ -967,10 +1228,9 @@
           </div>
         )}
 
-        {/* ══ Print View (client-first, centered project photos, no awkward breaks) ══ */}
+        {/* ══ Print View ══ */}
         {activeJob && (
           <div className="print-only hidden p-4">
-            {/* Compact header — won't break away from first task */}
             <div className="print-header border-b-2 border-slate-300 pb-3 mb-4 flex flex-col gap-1">
               <div className="flex justify-between text-xs font-black uppercase text-slate-500">
                 <span>{activeJob.type==='handover' ? 'Completed Works' : 'Field Report'}</span>
@@ -980,12 +1240,9 @@
               {activeJob.clientRef && <p className="text-lg font-bold text-slate-700">REF: {activeJob.clientRef}</p>}
               <p className="text-slate-500 font-medium">{activeJob.address}</p>
               {activeJob.projectNotes && <p className="text-slate-600 italic text-sm mt-1 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
-              {/* Centered project photos — cropped and balanced */}
               {activeJob.projectPhotos?.length>0 && (
                 <div className="print-project-photo-row mt-2">
-                  {activeJob.projectPhotos.map((p,i) => (
-                    <img key={i} src={p} alt="Project photo" />
-                  ))}
+                  {activeJob.projectPhotos.map((p,i) => <img key={i} src={p} alt="Project photo"/>)}
                 </div>
               )}
               <div className="flex gap-4 mt-2 text-sm font-medium">
@@ -994,11 +1251,10 @@
               </div>
             </div>
 
-            {/* Task cards */}
             {activeJob.tasks.map((t, idx) => {
-              const labour=(parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
-              const mats=parseFloat(t.materialsCost)||0;
-              const subtotal=labour+mats;
+              const labour  = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
+              const mats    = parseFloat(t.materialsCost)||0;
+              const subtotal = labour+mats;
               return (
                 <div key={t.id} className="print-card">
                   <div className={`px-5 py-3 font-black border-b flex justify-between items-center text-lg uppercase ${activeJob.type==='handover'?'bg-emerald-50 text-emerald-800 border-emerald-200':'bg-slate-50 text-slate-800 border-slate-200'}`}>
@@ -1030,7 +1286,6 @@
               );
             })}
 
-            {/* Quote total footer */}
             {activeJob.type==='quote' && quoteTotals && quoteTotals.total>0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
