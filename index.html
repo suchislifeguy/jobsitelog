@@ -339,7 +339,6 @@
                 </div>
               </button>
             </div>
-
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Backup & Restore</label>
               <div className="grid grid-cols-2 gap-3">
@@ -352,7 +351,6 @@
                 </label>
               </div>
             </div>
-
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Your Library</label>
               <div className="grid grid-cols-2 gap-3">
@@ -364,9 +362,7 @@
                 </button>
               </div>
             </div>
-
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"></div>
-
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
               <div className="flex items-start gap-3 p-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl">
@@ -392,12 +388,10 @@
               </div>
               <p className="text-[10px] text-slate-400 mt-2 font-medium">Enter the exact model name from Google AI Studio.</p>
             </div>
-
             <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
               <Check size={16}/> Save & Close
             </button>
           </div>
-
           {showTemplates && (
             <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)} />
           )}
@@ -609,7 +603,6 @@
               <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl font-black">Close</button>
             </div>
           </div>
-
           <div className="print-only-block">
             <div className="print-header border-b-2 border-slate-300 pb-3 mb-4">
               <div className="flex justify-between text-xs font-black uppercase text-slate-500 mb-2">
@@ -630,7 +623,6 @@
                 {totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
               </div>
             </div>
-
             {tasks.map((t, idx) => {
               const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
               const mats = parseFloat(t.materialsCost)||0;
@@ -675,7 +667,6 @@
                 </div>
               );
             })}
-
             {job.type==='quote' && totals.total>0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
@@ -822,7 +813,7 @@
       }
       if (!apiKey) { alert('Please add your Gemini API key in Settings first.'); return; }
       setIsAiSuggesting(true);
-      const prompt = `You are a construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title" (refined title), "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (list), "tools" (list), "desc" (professional description). Use reasonable Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
+      const prompt = `You are a construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title" (refined title), "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string of materials), "tools" (comma-separated string of tools), "desc" (professional description). Use reasonable Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
       try {
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
@@ -872,10 +863,14 @@
     };
 
     const handleSaveMaterial = () => {
-      if (!taskData.materials.trim() || !taskData.materialsCost.trim()) return;
-      const exists = userMaterials.find(m => m.name === taskData.materials && m.price === taskData.materialsCost);
+      const matName = String(taskData.materials || '').trim();
+      const matCost = String(taskData.materialsCost || '').trim();
+      if (!matName || !matCost) return;
+      const exists = userMaterials.find(
+        m => String(m.name) === matName && String(m.price) === matCost
+      );
       if (exists) return;
-      saveUserMaterials([...userMaterials, { name: taskData.materials, price: taskData.materialsCost }]);
+      saveUserMaterials([...userMaterials, { name: matName, price: matCost }]);
     };
 
     const exportData = () => {
@@ -1253,7 +1248,6 @@
               <button onClick={() => showConfirm('Permanently delete this project and all its data?', () => { saveToDB(jobs.filter(x=>x.id!==activeJobId)); setViewMode('dashboard'); }, 'Delete')}
                 className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase"><Trash2 size={14}/> Delete</button>
             </div>
-
             <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
@@ -1306,7 +1300,6 @@
                 </div>
               )}
             </div>
-
             {activeJob?.type==='quote' && quoteTotals && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
@@ -1332,7 +1325,6 @@
                 )}
               </div>
             )}
-
             <div className="space-y-6 mb-32">
               {activeJob?.tasks.map((t, i) => {
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
@@ -1371,7 +1363,6 @@
               })}
               {activeJob?.tasks.length===0 && <div className="text-center py-20 text-slate-300 dark:text-slate-700 font-black uppercase tracking-widest">No Log Entries Yet</div>}
             </div>
-
             <button onClick={() => setIsTaskFormOpen(true)} className={`fixed bottom-8 right-8 text-white w-20 h-20 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-4 border-white dark:border-slate-800 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`}>
               <Plus size={40}/>
             </button>
@@ -1436,7 +1427,6 @@
                 <h2 className="text-2xl font-black text-slate-900 dark:text-white">{editingTaskId?'Edit':'New'} {activeJob?.type==='handover'?'Works Record':'Report Entry'}</h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
-
               <div className="mb-4 relative">
                 <button
                   onClick={() => setShowTemplatePop(!showTemplatePop)}
@@ -1457,7 +1447,6 @@
                   />
                 )}
               </div>
-
               <div className="space-y-4">
                 <input placeholder="Task / Item Title" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500" value={taskData.title} onChange={e=>setTaskData(p=>({...p,title:e.target.value}))}/>
                 <div className="flex gap-3">
@@ -1471,7 +1460,6 @@
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/>
                   </label>
                 </div>
-
                 {activeJob?.type==='quote' && (
                   <div className="flex gap-3 mt-2">
                     <div className="flex-1 relative">
@@ -1515,7 +1503,6 @@
                     </div>
                   </div>
                 )}
-
                 {activeJob?.type==='quote' && (() => {
                   const hrs=parseTimeToMinutes(taskData.time)/60;
                   const labour=hrs*(parseFloat(taskData.rate)||0);
@@ -1531,7 +1518,6 @@
                     </div>
                   ) : null;
                 })()}
-
                 {taskData.images.length>0 && (
                   <div className="mt-6 img-preview-grid">
                     {taskData.images.map((img,i) => (
@@ -1544,32 +1530,27 @@
                     <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
                   </div>
                 )}
-
                 <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
                 <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
-
                 <div className="relative">
                   <textarea placeholder="Full details…" className="w-full p-4 pr-12 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-28 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
                   <button onClick={toggleVoice} type="button" className={`absolute right-3 bottom-4 p-2.5 rounded-full text-white shadow-md transition-all ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Tap to dictate">
                     <Mic size={16}/>
                   </button>
                 </div>
-
                 <button onClick={handleAiSuggest} disabled={isAiSuggesting || !apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 ${apiKey ? 'bg-purple-600 hover:bg-purple-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
                   <Sparkles size={16}/> {isAiSuggesting ? 'Thinking…' : 'AI Suggest Details'}
                 </button>
-
                 <div className="flex gap-3">
                   <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                     <Bookmark size={16}/> Save as Template
                   </button>
-                  {taskData.materials.trim() && taskData.materialsCost.trim() && (
+                  {String(taskData.materials || '').trim() && String(taskData.materialsCost || '').trim() && (
                     <button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
                       <Package size={16}/> Save Material
                     </button>
                   )}
                 </div>
-
                 {isNamingTemplate && (
                   <div className="absolute inset-0 bg-slate-900/80 rounded-[3rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm p-6">
                     <h3 className="text-white font-black text-xl mb-4">Template Name</h3>
@@ -1587,7 +1568,6 @@
                     </div>
                   </div>
                 )}
-
                 <button onClick={handleSaveTask} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600'}`}>
                   <Save size={20}/> SAVE ENTRY
                 </button>
