@@ -1440,7 +1440,7 @@
         const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
         const docType = job.type === 'handover' ? 'Completion Invoice' : 'Quotation';
 
-        const prompt = `You are a professional Australian trade document writer. Generate a formal, detailed ${docType} for the client using the data below.
+        const prompt = `You are a shrewd pragmatic Australian trade document writer. Generate a concise, yet detailed ${docType} for the client using the data below.
 Return ONLY a valid JSON object with exactly these keys:
 - "summary": a detailed opening section (can include multiple paragraphs using \\n\\n) addressing the client by name, summarising the scope of work, and stating the total cost clearly.
 - "tasks": an array of objects, each with "title" (keep original), "desc" (a polished, client-friendly description of the work — include key materials, estimated time, and what the outcome will be).
@@ -1495,7 +1495,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
       if (!taskData.title.trim() && !taskData.desc.trim()) { showToast('Enter at least a title or description first.', 'error'); return; }
       if (!apiKey) { showToast('Please add your Gemini API key in Settings first.', 'error'); return; }
       setIsAiSuggesting(true);
-      const prompt = `You are a construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (short factual description, avoid fluff). Use typical Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
+      const prompt = `You are a shrewd construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (short factual description, avoid fluff). Use typical Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.3,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error('AI request failed');
@@ -1832,7 +1832,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                     <Plus size={24} className="text-orange-500"/> New Quotation
                   </button>
                   <button onClick={() => handleNewJobClick('handover')} className="bg-slate-900 dark:bg-emerald-950 text-white p-4 rounded-3xl text-xs font-black shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all uppercase border-2 border-slate-900 dark:border-emerald-900 hover:border-emerald-400">
-                    <CheckCircle2 size={24} className="text-emerald-400"/> invoice
+                    <CheckCircle2 size={24} className="text-emerald-400"/> New Invoice
                   </button>
                 </div>
               </div>
@@ -1846,7 +1846,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
 
             <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
               <div className="flex gap-2">
-                {[{key:'all',label:'All'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'}].map(f => (
+                {[{key:'all',label:'All'},{key:'quote',label:'Quotations'},{key:'handover',label:'Invoices'}].map(f => (
                   <button key={f.key} onClick={() => setFilterType(f.key)} className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border-2 ${filterType===f.key?'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700':'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400'}`}>{f.label}</button>
                 ))}
               </div>
