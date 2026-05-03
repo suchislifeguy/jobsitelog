@@ -128,11 +128,11 @@
   const DB_KEY_MATS      = 'joblog-materials';
   const DB_KEY_APPOINTMENTS = 'joblog-appointments';
 
-  /* ─── Embedded Licence Keys (edit this list to add more) ─── */
+  /* ─── Embedded Licence Keys ─── */
   const LICENCE_KEYS = [
-    { key: "JOBLOG-DEMO-1234", expiry: null },          // permanent demo
-    { key: "JOBLOG-PRO-001",   expiry: "2027-01-01" },  // yearly example
-    { key: "JOBLOG-PRO-002",   expiry: null },          // permanent example
+    { key: "JOBLOG-DEMO-1234", expiry: null },
+    { key: "JOBLOG-PRO-001",   expiry: "2027-01-01" },
+    { key: "JOBLOG-PRO-002",   expiry: null },
   ];
 
   const BIZA_KEY         = 'joblog-business';
@@ -282,15 +282,8 @@
     const handleUnlock = () => {
       const input = key.trim().toUpperCase();
       const found = LICENCE_KEYS.find(k => k.key === input);
-
-      if (!found) {
-        showToast('Invalid licence key', 'error');
-        return;
-      }
-      if (found.expiry && new Date(found.expiry) < new Date()) {
-        showToast('This key has expired', 'error');
-        return;
-      }
+      if (!found) { showToast('Invalid licence key', 'error'); return; }
+      if (found.expiry && new Date(found.expiry) < new Date()) { showToast('This key has expired', 'error'); return; }
       onUnlock(found);
       showToast('Full version unlocked!', 'success');
       onClose();
@@ -306,10 +299,10 @@
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
             You've reached the 3‑job free limit. Enter a licence key for full‑version features.
           </p>
-          <input 
-            className="w-full p-4 mb-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-mono text-center font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 uppercase" 
-            placeholder="ENTER LICENCE KEY" 
-            value={key} 
+          <input
+            className="w-full p-4 mb-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-mono text-center font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 uppercase"
+            placeholder="ENTER LICENCE KEY"
+            value={key}
             onChange={e => setKey(e.target.value.toUpperCase())}
           />
           <div className="flex gap-3">
@@ -336,12 +329,8 @@
     const handleLogoUpload = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      try {
-        const logoData = await compressLogo(file);
-        setForm(f => ({ ...f, logo: logoData }));
-      } catch {
-        showToast('Logo could not be processed.', 'error');
-      }
+      try { const logoData = await compressLogo(file); setForm(f => ({ ...f, logo: logoData })); }
+      catch { showToast('Logo could not be processed.', 'error'); }
     };
 
     return (
@@ -471,10 +460,7 @@
       const updated = [...list, { name: newName.trim(), price: newPrice.trim() }];
       setList(updated); onSave(updated); setNewName(''); setNewPrice('');
     };
-    const deleteMaterial = (index) => {
-      const updated = list.filter((_,i)=>i!==index);
-      setList(updated); onSave(updated);
-    };
+    const deleteMaterial = (index) => { const updated = list.filter((_,i)=>i!==index); setList(updated); onSave(updated); };
 
     return (
       <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
@@ -514,7 +500,7 @@
     const [showMaterials, setShowMaterials] = useState(false);
     const [showBusiness, setShowBusiness] = useState(false);
     const [licenceInput, setLicenceInput] = useState('');
-    
+
     const save = () => {
       onSave(draftKey, draftModel, draftExtraTax);
       setGoogleClientId(draftGoogleClientId);
@@ -544,8 +530,6 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
           <div className="space-y-6">
-            
-            {/* Pro Licence */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Pro Licence</label>
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-4 space-y-3">
@@ -555,20 +539,9 @@
                   </div>
                 ) : (
                   <>
-                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
-                      Enter a licence key for full‑version features.
-                    </p>
-                    <input 
-                      type="text" 
-                      className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl font-mono text-sm dark:text-white uppercase" 
-                      placeholder="Licence key" 
-                      value={licenceInput} 
-                      onChange={e => setLicenceInput(e.target.value)}
-                    />
-                    <button 
-                      onClick={handleLicenceUnlock} 
-                      className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"
-                    >
+                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Enter a licence key for full‑version features.</p>
+                    <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl font-mono text-sm dark:text-white uppercase" placeholder="Licence key" value={licenceInput} onChange={e => setLicenceInput(e.target.value)}/>
+                    <button onClick={handleLicenceUnlock} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2">
                       <Lock size={16}/> Unlock Full Version
                     </button>
                   </>
@@ -576,7 +549,6 @@
               </div>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Business</label>
               <button onClick={() => setShowBusiness(true)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl active:scale-95 transition-all hover:border-orange-400 dark:hover:border-orange-500">
@@ -595,18 +567,15 @@
               </button>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-            
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Universal Tax / Markup</label>
               <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border dark:border-slate-700">
                 <input type="range" min="0" max="50" step="0.5" value={draftExtraTax} onChange={e => setDraftExtraTax(e.target.value)} className="flex-1 accent-orange-500"/>
                 <span className="font-black text-slate-700 dark:text-slate-200 w-12 text-right">{draftExtraTax}%</span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium mt-2">Applies an extra percentage cost on top of the subtotal on all reports (works alongside standard GST toggle).</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-2">Applies an extra percentage on top of the subtotal on all reports (works alongside standard GST toggle).</p>
             </div>
-            
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
               <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700">
@@ -660,16 +629,10 @@
                 <input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
-                        <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar - Optional/Advanced</label>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar – Optional/Advanced</label>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border dark:border-slate-700 space-y-3">
-                <input
-                  type="text"
-                  className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
-                  placeholder="Google Client ID"
-                  value={draftGoogleClientId}
-                  onChange={e => setDraftGoogleClientId(e.target.value)}
-                />
+                <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Google Client ID" value={draftGoogleClientId} onChange={e => setDraftGoogleClientId(e.target.value)}/>
                 {isGoogleConnected ? (
                   <button onClick={() => {disconnectGoogleCalendar(); showToast('Calendar Disconnected','info');}} className="w-full bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2">
                     <X size={16}/> Disconnect Calendar
@@ -792,7 +755,7 @@
           <div className="flex justify-between items-center mb-6">
             <div>
               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
-                {isHandover ? 'Completed Works' : 'Field Report'}
+                {isHandover ? 'Completion Report' : 'Job Sheet'}
               </span>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-2">New Project</h2>
             </div>
@@ -870,16 +833,18 @@
     };
 
     const totals = getQuoteTotals(tasks, job.gstEnabled, extraTaxRate);
-    const showCosts = job.type === 'handover' ? job.showCosts : true;
+    // For invoices (handover), always show costs; for quotes, always show costs
+    const showCosts = job.type === 'handover' ? true : true;
     const totalHours = tasks.reduce((a,t) => a + parseTimeToMinutes(t.time), 0);
     const biz = businessProfile;
-    const docLabel = job.type === 'handover' ? 'Completed Works' : 'Field Report';
+    // ─── Consistent doc label ───
+    const docLabel = job.type === 'handover' ? 'Completion Report' : 'Quotation';
 
     return createPortal(
       <div id="print-container" className="print-preview-overlay fixed inset-0 z-[500] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
         <div className="max-w-2xl mx-auto">
           <div className="flex justify-between items-center mb-6 no-print">
-            <h2 className="text-xl font-black">Edit & Print Report</h2>
+            <h2 className="text-xl font-black">Edit & Print {docLabel}</h2>
             <div className="flex gap-3">
               <button onClick={() => window.print()} className="bg-slate-900 dark:bg-slate-700 text-white px-6 py-2 rounded-xl font-black flex items-center gap-2"><Printer size={16}/> Print</button>
               <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl font-black">Close</button>
@@ -920,7 +885,7 @@
               )}
               <div className="flex gap-4 mt-2 text-sm font-medium">
                 <span>TOTAL TIME: {fmtMins(totalHours)}</span>
-                {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
+                {totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
               </div>
             </div>
             {tasks.map((t, idx) => {
@@ -967,12 +932,11 @@
                 </div>
               );
             })}
-            {showCosts && job.type === 'quote' && totals.total > 0 && (
+            {totals.total > 0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
                   <p className="font-black uppercase text-slate-500 text-sm">Labour: {fmtAUD(totals.labour)}</p>
                   <p className="font-black uppercase text-slate-500 text-sm">Materials: {fmtAUD(totals.mats)}</p>
-                  
                   {(!job.gstEnabled && extraTaxRate > 0) && (
                     <p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p>
                   )}
@@ -988,7 +952,7 @@
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                    {job.gstEnabled ? 'Total inc. Tax/GST' : 'Quote Total'}
+                    {job.type === 'handover' ? 'Total Due' : job.gstEnabled ? 'Total inc. Tax/GST' : 'Quotation Total'}
                   </p>
                   <p className="text-4xl font-black text-slate-900">{fmtAUD(totals.total)}</p>
                   {job.gstEnabled && <p className="text-xs text-slate-400 font-bold mt-1">GST included: {fmtAUD(totals.gst)}</p>}
@@ -1055,7 +1019,7 @@
     );
   };
 
-  /* ─── Schedule View (week calendar with Google sync) ───────── */
+  /* ─── Schedule View ────────────────────────────────────────── */
   const ScheduleView = ({ appointments, jobs, googleToken, onSaveAppointment, onDeleteAppointment, isGoogleConnected, showConfirm, onScheduleFromJob, showToast }) => {
     const [weekOffset, setWeekOffset] = useState(0);
     const [apptModal, setApptModal] = useState(null);
@@ -1067,11 +1031,7 @@
     startOfWeek.setDate(startOfWeek.getDate() + (weekOffset * 7));
     startOfWeek.setHours(0,0,0,0);
     const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-    const days = Array.from({length:7}, (_,i) => {
-      const d = new Date(startOfWeek);
-      d.setDate(d.getDate()+i);
-      return d;
-    });
+    const days = Array.from({length:7}, (_,i) => { const d = new Date(startOfWeek); d.setDate(d.getDate()+i); return d; });
     const hours = Array.from({length:15}, (_,i) => i+6);
 
     useEffect(() => {
@@ -1085,10 +1045,7 @@
             `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
             { headers: { Authorization: `Bearer ${googleToken.access_token}` } }
           );
-          if (res.status === 401) {
-             showToast('Google session expired. Please reconnect.', 'error');
-             return;
-          }
+          if (res.status === 401) { showToast('Google session expired. Please reconnect.', 'error'); return; }
           const data = await res.json();
           setGoogleEvents(data.items || []);
         } catch (e) { console.error('Failed to fetch Google events', e); }
@@ -1097,67 +1054,37 @@
       fetchEvents();
     }, [googleToken, weekOffset, isGoogleConnected]);
 
-    const localEvents = appointments.map(a => ({
-      ...a,
-      isLocal: true,
-      start: new Date(a.start),
-      end: new Date(a.end)
-    }));
+    const localEvents = appointments.map(a => ({ ...a, isLocal: true, start: new Date(a.start), end: new Date(a.end) }));
     const localGoogleIds = new Set(appointments.filter(a => a.googleEventId).map(a => a.googleEventId));
     const externalGoogleEvents = googleEvents
       .filter(ev => !localGoogleIds.has(ev.id))
-      .map(ev => ({
-        id: ev.id,
-        title: ev.summary || '(No title)',
-        start: new Date(ev.start.dateTime || ev.start.date),
-        end: new Date(ev.end.dateTime || ev.end.date),
-        isGoogle: true,
-        notes: ev.description || ''
-      }));
+      .map(ev => ({ id: ev.id, title: ev.summary || '(No title)', start: new Date(ev.start.dateTime || ev.start.date), end: new Date(ev.end.dateTime || ev.end.date), isGoogle: true, notes: ev.description || '' }));
     const allEvents = [...localEvents, ...externalGoogleEvents];
 
     const getEventsForSlot = (day, hour) => {
-      const slotStart = new Date(day);
-      slotStart.setHours(hour,0,0,0);
-      const slotEnd = new Date(slotStart);
-      slotEnd.setHours(hour+1,0,0,0);
+      const slotStart = new Date(day); slotStart.setHours(hour,0,0,0);
+      const slotEnd = new Date(slotStart); slotEnd.setHours(hour+1,0,0,0);
       return allEvents.filter(ev => ev.start < slotEnd && ev.end > slotStart);
     };
 
     const handleSlotClick = (day, hour) => {
-      const defStart = new Date(day);
-      defStart.setHours(hour,0,0,0);
-      const defEnd = new Date(defStart);
-      defEnd.setHours(hour+1,0,0,0);
-      setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString().slice(0,16), end: defEnd.toISOString().slice(0,16), notes: '' }, defaultStart: defStart.toISOString().slice(0,16) });
+      const defStart = new Date(day); defStart.setHours(hour,0,0,0);
+      const defEnd = new Date(defStart); defEnd.setHours(hour+1,0,0,0);
+      setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString().slice(0,16), end: defEnd.toISOString().slice(0,16), notes: '' } });
     };
 
-    const handleEventClick = (event) => {
-      if (event.isGoogle) return;
-      setApptModal({ appointment: event });
-    };
+    const handleEventClick = (event) => { if (event.isGoogle) return; setApptModal({ appointment: event }); };
 
     const handleSave = async (data) => {
       if (googleToken && isGoogleConnected && !data.googleEventId) {
         try {
-          const gEvent = {
-            summary: data.title,
-            description: data.notes || '',
-            start: { dateTime: new Date(data.start).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-            end: { dateTime: new Date(data.end).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
-          };
-          const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${googleToken.access_token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(gEvent)
-          });
+          const gEvent = { summary: data.title, description: data.notes || '', start: { dateTime: new Date(data.start).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }, end: { dateTime: new Date(data.end).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone } };
+          const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', { method: 'POST', headers: { Authorization: `Bearer ${googleToken.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(gEvent) });
           const created = await res.json();
           data.googleEventId = created.id;
           showToast('Saved to Google Calendar', 'success');
         } catch (e) { showToast('Google sync failed', 'error'); }
-      } else {
-        showToast('Appointment Saved', 'success');
-      }
+      } else { showToast('Appointment Saved', 'success'); }
       onSaveAppointment(data);
       setApptModal(null);
     };
@@ -1166,10 +1093,7 @@
       showConfirm('Delete this appointment?', () => {
         const appt = appointments.find(a => a.id === id);
         if (appt?.googleEventId && googleToken) {
-          fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${googleToken.access_token}` }
-          }).catch(e => console.error('Failed to delete Google event', e));
+          fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${googleToken.access_token}` } }).catch(e => console.error('Failed to delete Google event', e));
         }
         onDeleteAppointment(id);
         showToast('Appointment Deleted', 'info');
@@ -1185,7 +1109,6 @@
           </h2>
           <button onClick={() => setWeekOffset(o => o+1)} className="p-3 bg-slate-200 dark:bg-slate-800 rounded-xl"><ChevronRight size={18}/></button>
         </div>
-
         <div className="calendar-grid shadow-sm">
           <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center">Time</div>
           {days.map((d,i) => (
@@ -1201,12 +1124,9 @@
                 return (
                   <div key={di} className="calendar-cell" onClick={() => handleSlotClick(day, hour)}>
                     {slotEvents.map(ev => (
-                      <div
-                        key={ev.id}
-                        onClick={(e) => { e.stopPropagation(); handleEventClick(ev); }}
+                      <div key={ev.id} onClick={(e) => { e.stopPropagation(); handleEventClick(ev); }}
                         className={`calendar-event ${ev.isGoogle ? 'bg-blue-200 dark:bg-blue-800 text-slate-800 dark:text-blue-200' : ev.isLocal ? 'bg-orange-100 dark:bg-orange-900/60 text-orange-800 dark:text-orange-200' : 'bg-slate-200 dark:bg-slate-600'}`}
-                        style={{ top: `${(ev.start.getMinutes()/60)*100}%`, height: `${Math.min(((ev.end - ev.start)/3600000)*100, 100)}%` }}
-                      >
+                        style={{ top: `${(ev.start.getMinutes()/60)*100}%`, height: `${Math.min(((ev.end - ev.start)/3600000)*100, 100)}%` }}>
                         <div className="truncate text-[9px] font-black">{ev.title}</div>
                       </div>
                     ))}
@@ -1216,7 +1136,6 @@
             </React.Fragment>
           ))}
         </div>
-
         <div className="mt-6 bg-white dark:bg-slate-800 rounded-3xl p-5 border dark:border-slate-700 shadow-sm">
           <h3 className="font-black text-sm uppercase tracking-widest mb-3 flex items-center gap-2"><Clock size={14} className="text-orange-500"/> Upcoming Appointments</h3>
           {allEvents.filter(ev => ev.start >= new Date()).sort((a,b)=>a.start-b.start).slice(0,5).map(ev => (
@@ -1225,23 +1144,13 @@
                 <p className="font-bold text-sm">{ev.title}</p>
                 <p className="text-[10px] text-slate-400">{fmtDateTime(ev.start.toISOString())} – {fmtDateTime(ev.end.toISOString())}</p>
               </div>
-              {!ev.isGoogle && (
-                <button onClick={() => handleDeleteAppointment(ev.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>
-              )}
+              {!ev.isGoogle && <button onClick={() => handleDeleteAppointment(ev.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>}
             </div>
           ))}
           {allEvents.length===0 && <p className="text-sm text-slate-400">No upcoming appointments.</p>}
         </div>
-
         {apptModal && (
-          <AppointmentFormModal
-            appointment={apptModal.appointment}
-            jobs={jobs}
-            googleToken={googleToken}
-            onSave={handleSave}
-            onClose={() => setApptModal(null)}
-            showToast={showToast}
-          />
+          <AppointmentFormModal appointment={apptModal.appointment} jobs={jobs} googleToken={googleToken} onSave={handleSave} onClose={() => setApptModal(null)} showToast={showToast}/>
         )}
       </div>
     );
@@ -1307,8 +1216,10 @@
     const [useMyLocation, setUseMyLocation] = useState(true);
     const [locStatus, setLocStatus] = useState('idle');
     const [currentCoords, setCurrentCoords] = useState(null);
-
     const [appointmentFromJob, setAppointmentFromJob] = useState(null);
+
+    // ─── AI generation state ───────────────────────────────────
+    const [isGenerating, setIsGenerating] = useState(false);
 
     const EMPTY_TASK = { title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'', images:[] };
     const [taskData, setTaskData] = useState(EMPTY_TASK);
@@ -1338,7 +1249,6 @@
     const [showTemplatePop, setShowTemplatePop] = useState(false);
     const [showMaterialPop, setShowMaterialPop] = useState(false);
 
-    // Toast helper
     const showToast = (message, type = 'info') => { setToast({ message, type }); };
 
     /* ── DB helpers ── */
@@ -1378,7 +1288,6 @@
 
     const activeJob   = jobs.find(j => j.id === activeJobId);
     const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
-    const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate) : null;
 
     const connectGoogleCalendar = (clientId) => {
       if (!clientId) return;
@@ -1395,34 +1304,23 @@
       });
       tokenClient.requestAccessToken({ prompt: '' });
     };
-    const disconnectGoogleCalendar = () => {
-      setGoogleToken(null);
-      localStorage.removeItem('googleToken');
-    };
+    const disconnectGoogleCalendar = () => { setGoogleToken(null); localStorage.removeItem('googleToken'); };
 
     useEffect(() => {
       const savedToken = localStorage.getItem('googleToken');
       if (savedToken) {
-        try {
-          const parsed = JSON.parse(savedToken);
-          if (parsed && parsed.access_token) setGoogleToken(parsed);
-        } catch {}
+        try { const parsed = JSON.parse(savedToken); if (parsed && parsed.access_token) setGoogleToken(parsed); } catch {}
       }
     }, []);
 
     const handleSaveAppointment = (appt) => {
       let updated;
-      if (appointments.find(a => a.id === appt.id)) {
-        updated = appointments.map(a => a.id === appt.id ? appt : a);
-      } else {
-        updated = [...appointments, appt];
-      }
+      if (appointments.find(a => a.id === appt.id)) { updated = appointments.map(a => a.id === appt.id ? appt : a); }
+      else { updated = [...appointments, appt]; }
       saveAppointments(updated);
       setAppointmentFromJob(null);
     };
-    const handleDeleteAppointment = (id) => {
-      saveAppointments(appointments.filter(a => a.id !== id));
-    };
+    const handleDeleteAppointment = (id) => { saveAppointments(appointments.filter(a => a.id !== id)); };
 
     const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => setConfirmDialog({ message, onConfirm, confirmLabel, danger });
     const dismissConfirm = () => setConfirmDialog(null);
@@ -1430,29 +1328,121 @@
     const openAppointmentForJob = (jobId) => {
       const job = jobs.find(j => j.id === jobId);
       if (!job) return;
-      setAppointmentFromJob({
-        id: null,
-        title: `Work: ${job.address}`,
-        jobId: jobId,
-        start: new Date().toISOString().slice(0,16),
-        end: new Date(Date.now()+2*3600*1000).toISOString().slice(0,16),
-        notes: '',
-        googleEventId: null
-      });
+      setAppointmentFromJob({ id: null, title: `Work: ${job.address}`, jobId: jobId, start: new Date().toISOString().slice(0,16), end: new Date(Date.now()+2*3600*1000).toISOString().slice(0,16), notes: '', googleEventId: null });
     };
 
     const handleNewJobClick = (type) => {
-      if (!isUnlocked && jobs.length >= 3) {
-        setShowUpgrade(true);
-      } else {
-        setNewJobModal(type);
-      }
+      if (!isUnlocked && jobs.length >= 3) { setShowUpgrade(true); }
+      else { setNewJobModal(type); }
     };
 
     const handleUnlockSuccess = (keyData) => {
       setIsUnlocked(true);
       localStorage.setItem('joblog-unlocked', 'true');
       if (keyData) localStorage.setItem('joblog-licence', JSON.stringify(keyData));
+    };
+
+    // ─── Gemini helper ─────────────────────────────────────────
+    const callGemini = async (prompt) => {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.3, response_mime_type: 'application/json' }
+          })
+        }
+      );
+      if (!res.ok) throw new Error(`API error ${res.status}`);
+      const data = await res.json();
+      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
+    };
+
+    // ─── Generate Quotation (type = 'quote') ───────────────────
+    const handleGenerateQuote = async () => {
+      if (!apiKey) { showToast('Please add your Gemini API key in Settings.', 'error'); return; }
+      setIsGenerating(true);
+      try {
+        const job = activeJob;
+        const tasksData = job.tasks.map((t, i) => ({
+          index: i + 1, title: t.title, time: t.time, rate: t.rate,
+          materialsCost: t.materialsCost, materials: t.materials, desc: t.desc
+        }));
+        const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
+        const prompt = `You are a professional Australian trade quotation writer. Generate a formal, detailed quotation for the client using the data below.
+Return ONLY a valid JSON object with exactly these keys:
+- "summary": a one-paragraph introduction addressing the client by name, summarising the scope of work, and stating the total cost clearly.
+- "tasks": an array of objects, each with "title" (keep original), "desc" (a polished, client-friendly description of the work — include key materials, estimated time, and what the outcome will be).
+- "footer": a professional closing paragraph — thank the client, include a payment terms placeholder (e.g. "Payment due within 14 days of invoice"), and a contact details placeholder.
+Job data:
+Address: ${job.address}
+Client: ${job.clientName || 'the client'}
+Tasks: ${JSON.stringify(tasksData, null, 2)}
+Costs: Labour $${qt.labour.toFixed(2)}, Materials $${qt.mats.toFixed(2)}, Subtotal $${qt.subtotal.toFixed(2)}, ${job.gstEnabled ? 'GST (10%) $' + qt.gst.toFixed(2) + ', ' : ''}${extraTaxRate > 0 ? 'Markup (' + extraTaxRate + '%) $' + qt.extra.toFixed(2) + ', ' : ''}Total $${qt.total.toFixed(2)}.
+GST Enabled: ${job.gstEnabled}`;
+        const result = await callGemini(prompt);
+        const updatedTasks = job.tasks.map((t, idx) => ({
+          ...t,
+          desc: result.tasks?.[idx]?.desc || t.desc,
+          title: result.tasks?.[idx]?.title || t.title,
+        }));
+        setPrintPreviewJob({
+          ...job,
+          projectNotes: result.summary + (result.footer ? '\n\n' + result.footer : ''),
+          tasks: updatedTasks,
+        });
+        showToast('AI Quotation generated — review & print!', 'success');
+      } catch (err) {
+        showToast('Failed to generate quotation: ' + err.message, 'error');
+      } finally {
+        setIsGenerating(false);
+      }
+    };
+
+    // ─── Generate Invoice (type = 'handover') ─────────────────
+    const handleGenerateInvoice = async () => {
+      if (!apiKey) { showToast('Please add your Gemini API key in Settings.', 'error'); return; }
+      setIsGenerating(true);
+      try {
+        const job = activeJob;
+        const tasksData = job.tasks.map((t, i) => ({
+          index: i + 1, title: t.title, time: t.time, rate: t.rate,
+          materialsCost: t.materialsCost, materials: t.materials, desc: t.desc
+        }));
+        // Always use costs for an invoice
+        const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
+        const prompt = `You are a professional Australian tradesperson creating a tax invoice. Generate a formal completion invoice for the client using the data below.
+Return ONLY a valid JSON object with exactly these keys:
+- "summary": a one-paragraph opening confirming all works have been completed, addressing the client by name, and stating the total amount due.
+- "tasks": an array of objects, each with "title" (keep original), "desc" (a clear, client-friendly description of the completed work — include materials used, time taken, and what was delivered or installed).
+- "footer": professional payment instructions — include a bank details placeholder (e.g. "BSB: XXX-XXX  Account: XXXXXXXXX"), payment due date placeholder (e.g. "Payment due within 14 days"), and a thank-you note.
+Job data:
+Address: ${job.address}
+Client: ${job.clientName || 'the client'}
+Completed Tasks: ${JSON.stringify(tasksData, null, 2)}
+Costs: Labour $${qt.labour.toFixed(2)}, Materials $${qt.mats.toFixed(2)}, Subtotal $${qt.subtotal.toFixed(2)}, ${job.gstEnabled ? 'GST (10%) $' + qt.gst.toFixed(2) + ', ' : ''}${extraTaxRate > 0 ? 'Markup (' + extraTaxRate + '%) $' + qt.extra.toFixed(2) + ', ' : ''}Total Due $${qt.total.toFixed(2)}.
+GST Enabled: ${job.gstEnabled}`;
+        const result = await callGemini(prompt);
+        const updatedTasks = job.tasks.map((t, idx) => ({
+          ...t,
+          desc: result.tasks?.[idx]?.desc || t.desc,
+          title: result.tasks?.[idx]?.title || t.title,
+        }));
+        setPrintPreviewJob({
+          ...job,
+          showCosts: true,
+          projectNotes: result.summary + (result.footer ? '\n\n' + result.footer : ''),
+          tasks: updatedTasks,
+        });
+        showToast('AI Invoice generated — review & print!', 'success');
+      } catch (err) {
+        showToast('Failed to generate invoice: ' + err.message, 'error');
+      } finally {
+        setIsGenerating(false);
+      }
     };
 
     // Voice
@@ -1628,34 +1618,20 @@
       .sort((a,b) => {
         if (sortBy === 'created_desc') return (b.createdAt || 0) - (a.createdAt || 0);
         if (sortBy === 'created_asc') return (a.createdAt || 0) - (b.createdAt || 0);
-        if (sortBy === 'due_asc') {
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-        }
-        if (sortBy === 'due_desc') {
-          if (!a.dueDate) return 1;
-          if (!b.dueDate) return -1;
-          return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
-        }
+        if (sortBy === 'due_asc') { if (!a.dueDate) return 1; if (!b.dueDate) return -1; return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(); }
+        if (sortBy === 'due_desc') { if (!a.dueDate) return 1; if (!b.dueDate) return -1; return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime(); }
         if (sortBy === 'az') return String(a.address || '').localeCompare(String(b.address || ''));
         return 0;
       });
 
-    // Share Detail View
     const handleShare = async () => {
       if (!activeJob) return;
       const qt = activeJob.type === 'quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate) : null;
       let text = `Project: ${activeJob.address}\nClient: ${activeJob.clientName || 'N/A'}\n`;
       if (qt && qt.total > 0) text += `Total Est: ${fmtAUD(qt.total)}\n`;
       text += `\nSummary of Works:\n` + activeJob.tasks.map(t => `- ${t.title} (${t.time})`).join('\n');
-
-      if (navigator.share) {
-         try { await navigator.share({ title: 'Job Summary', text }); } catch(e) {}
-      } else {
-         navigator.clipboard.writeText(text);
-         showToast('Summary copied to clipboard!', 'success');
-      }
+      if (navigator.share) { try { await navigator.share({ title: 'Job Summary', text }); } catch(e) {} }
+      else { navigator.clipboard.writeText(text); showToast('Summary copied to clipboard!', 'success'); }
     };
 
     // Canvas helpers
@@ -1681,16 +1657,8 @@
       ctx.strokeStyle=penColor; ctx.lineWidth=Math.max(3,canvasRef.current.width/100);
       ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x,y);
     };
-    const doDraw = (e) => {
-      if (!drawRef.current) return; e.preventDefault();
-      const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d');
-      ctx.lineTo(x,y); ctx.stroke();
-    };
-    const stopDraw = () => {
-      if (!drawRef.current) return;
-      setIsDrawing(false); drawRef.current=false;
-      setUndoStack(p=>[...p,canvasRef.current.toDataURL()]);
-    };
+    const doDraw = (e) => { if (!drawRef.current) return; e.preventDefault(); const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.lineTo(x,y); ctx.stroke(); };
+    const stopDraw = () => { if (!drawRef.current) return; setIsDrawing(false); drawRef.current=false; setUndoStack(p=>[...p,canvasRef.current.toDataURL()]); };
     const handleUndo = () => {
       if (undoStack.length<=1) return;
       const ns=[...undoStack]; ns.pop();
@@ -1765,7 +1733,7 @@
             onConfirm={() => { confirmDialog.onConfirm(); dismissConfirm(); }} onCancel={dismissConfirm}/>
         )}
 
-        {/* Clean Top Header */}
+        {/* ── Top Header ── */}
         <header className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md text-slate-900 dark:text-white px-4 py-3 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
             {businessProfile?.logo
@@ -1774,11 +1742,43 @@
             }
             <h1 className="font-black text-lg tracking-tight uppercase">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'JobLog')}</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {viewMode === 'detail' && activeJob && (
               <>
-                <button onClick={handleShare} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 active:scale-95"><Share2 size={16}/></button>
-                <button onClick={() => setPrintPreviewJob(activeJob)} className="p-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full active:scale-95"><Printer size={16}/></button>
+                <button onClick={handleShare} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 active:scale-95" title="Share summary">
+                  <Share2 size={16}/>
+                </button>
+                <button onClick={() => setPrintPreviewJob(activeJob)} className="p-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full active:scale-95" title="Print preview">
+                  <Printer size={16}/>
+                </button>
+                {/* ── AI Quotation button (quote jobs) ── */}
+                {activeJob.type === 'quote' && (
+                  <button
+                    onClick={handleGenerateQuote}
+                    disabled={isGenerating || !apiKey}
+                    className={`p-2 rounded-full active:scale-95 transition-all text-white ${isGenerating ? 'bg-orange-400 cursor-not-allowed' : apiKey ? 'bg-orange-500 hover:bg-orange-400' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'}`}
+                    title={apiKey ? 'Generate AI Quotation' : 'Add Gemini API key in Settings to enable'}
+                  >
+                    {isGenerating
+                      ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                      : <FileText size={16}/>
+                    }
+                  </button>
+                )}
+                {/* ── AI Invoice button (handover/completion jobs) ── */}
+                {activeJob.type === 'handover' && (
+                  <button
+                    onClick={handleGenerateInvoice}
+                    disabled={isGenerating || !apiKey}
+                    className={`p-2 rounded-full active:scale-95 transition-all text-white ${isGenerating ? 'bg-emerald-400 cursor-not-allowed' : apiKey ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'}`}
+                    title={apiKey ? 'Generate AI Invoice' : 'Add Gemini API key in Settings to enable'}
+                  >
+                    {isGenerating
+                      ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                      : <FileText size={16}/>
+                    }
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -1787,15 +1787,10 @@
         {/* SCHEDULE VIEW */}
         {viewMode==='schedule' && (
           <ScheduleView
-            appointments={appointments}
-            jobs={jobs}
-            googleToken={googleToken}
-            isGoogleConnected={!!googleToken}
-            onSaveAppointment={handleSaveAppointment}
-            onDeleteAppointment={handleDeleteAppointment}
-            showConfirm={showConfirm}
-            onScheduleFromJob={openAppointmentForJob}
-            showToast={showToast}
+            appointments={appointments} jobs={jobs} googleToken={googleToken}
+            isGoogleConnected={!!googleToken} onSaveAppointment={handleSaveAppointment}
+            onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm}
+            onScheduleFromJob={openAppointmentForJob} showToast={showToast}
           />
         )}
 
@@ -1832,10 +1827,10 @@
               <div className="mb-5">
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => handleNewJobClick('quote')} className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white p-4 rounded-3xl text-xs font-black shadow-sm flex flex-col items-center gap-2 active:scale-95 transition-all uppercase hover:border-orange-500 dark:hover:border-orange-500">
-                    <Plus size={24} className="text-orange-500"/> New Quote
+                    <Plus size={24} className="text-orange-500"/> New Quotation
                   </button>
                   <button onClick={() => handleNewJobClick('handover')} className="bg-slate-900 dark:bg-emerald-950 text-white p-4 rounded-3xl text-xs font-black shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all uppercase border-2 border-slate-900 dark:border-emerald-900 hover:border-emerald-400">
-                    <CheckCircle2 size={24} className="text-emerald-400"/> Completed Job
+                    <CheckCircle2 size={24} className="text-emerald-400"/> Completion Report
                   </button>
                 </div>
               </div>
@@ -1849,7 +1844,7 @@
 
             <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
               <div className="flex gap-2">
-                {[{key:'all',label:'All'},{key:'quote',label:'Field Reports'},{key:'handover',label:'Completed'}].map(f => (
+                {[{key:'all',label:'All'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'}].map(f => (
                   <button key={f.key} onClick={() => setFilterType(f.key)} className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border-2 ${filterType===f.key?'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700':'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400'}`}>{f.label}</button>
                 ))}
               </div>
@@ -1869,7 +1864,7 @@
               {filteredJobs.map(j => {
                 const status = getStatus(j.status||'draft');
                 const qt = j.type==='quote' ? getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate) : null;
-                const handoverQt = (j.type==='handover' && j.showCosts) ? getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate) : null;
+                const handoverQt = j.type==='handover' ? getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate) : null;
                 const stopIdx = selectedJobs.indexOf(j.id);
                 const isSelected = stopIdx !== -1;
                 const canSelect = !atStopLimit || isSelected;
@@ -1893,7 +1888,7 @@
                           {!selectionMode && (
                             <div className="flex items-center gap-2 flex-wrap mb-1">
                               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
-                                {j.type==='handover'?'Completed':'Field Report'}
+                                {j.type==='handover' ? 'Completion Report' : 'Job Sheet'}
                               </span>
                               <button onClick={e=>{e.stopPropagation();cycleStatus(j.id);}} className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
                               {j.gstEnabled && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
@@ -2025,14 +2020,12 @@
                           : <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
                         }
                       </div>
-                      
                       {activeJob.gstEnabled && extraTaxRate === 0 && (
                         <div className="grid grid-cols-2 gap-3 mt-3">
                           <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base">{fmtAUD(qt.gst)}</p></div>
                           <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
                         </div>
                       )}
-                      
                       {extraTaxRate > 0 && (
                         <div className={`grid mt-3 gap-3 ${activeJob.gstEnabled ? 'grid-cols-3' : 'grid-cols-2'}`}>
                           {activeJob.gstEnabled && <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base">{fmtAUD(qt.gst)}</p></div>}
@@ -2122,7 +2115,7 @@
           </button>
         </div>
 
-        {/* Settings, Modals, Forms */}
+        {/* Modals */}
         {showSettings && (
           <SettingsModal
             apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate}
@@ -2134,34 +2127,28 @@
             googleClientId={googleClientId} setGoogleClientId={setGoogleClientId}
             isGoogleConnected={!!googleToken} googleToken={googleToken}
             connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar}
-            onSave={(k,m,t) => { 
-              setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); 
-              localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); 
+            onSave={(k,m,t) => {
+              setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t));
+              localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t);
             }}
             onClose={() => setShowSettings(false)}
             showToast={showToast} dbSize={dbSize}
             isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}
           />
         )}
-        
-        {showUpgrade && (
-          <UpgradeModal 
-            onClose={() => setShowUpgrade(false)} 
-            onUnlock={handleUnlockSuccess}
-            showToast={showToast} 
-          />
-        )}
-        
-        {newJobModal && (
-          <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast}/>
-        )}
+
+        {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUnlock={handleUnlockSuccess} showToast={showToast}/>}
+
+        {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast}/>}
 
         {/* Task Form */}
         {isTaskFormOpen && (
           <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
             <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-6 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[95vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
               <div className="flex justify-between items-center mb-6 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
-                <h2 className="text-2xl font-black text-slate-900 dark:text-white">{editingTaskId?'Edit':'New'} {activeJob?.type==='handover'?'Works Record':'Report Entry'}</h2>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+                  {editingTaskId ? 'Edit' : 'New'} {activeJob?.type==='handover' ? 'Completion Entry' : 'Job Sheet Entry'}
+                </h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
               <div className="mb-4 relative">
@@ -2285,7 +2272,7 @@
           </div>
         )}
 
-        {/* Canvas annotation editor - full screen */}
+        {/* Canvas annotation editor */}
         {editingImageIdx !== null && (
           <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col pb-safe">
             <div className="flex justify-between items-center p-4 bg-slate-900 border-b border-slate-800 shadow-md z-10 flex-shrink-0">
@@ -2326,21 +2313,10 @@
           </div>
         )}
 
-        {/* Print preview */}
-        {printPreviewJob && (
-          <PrintPreview job={printPreviewJob} extraTaxRate={extraTaxRate} businessProfile={businessProfile} onClose={() => setPrintPreviewJob(null)}/>
-        )}
+        {printPreviewJob && <PrintPreview job={printPreviewJob} extraTaxRate={extraTaxRate} businessProfile={businessProfile} onClose={() => setPrintPreviewJob(null)}/>}
 
-        {/* Appointment from job form */}
         {appointmentFromJob && (
-          <AppointmentFormModal
-            appointment={appointmentFromJob}
-            jobs={jobs}
-            googleToken={googleToken}
-            onSave={handleSaveAppointment}
-            onClose={() => setAppointmentFromJob(null)}
-            showToast={showToast}
-          />
+          <AppointmentFormModal appointment={appointmentFromJob} jobs={jobs} googleToken={googleToken} onSave={handleSaveAppointment} onClose={() => setAppointmentFromJob(null)} showToast={showToast}/>
         )}
       </div>
     );
