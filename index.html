@@ -810,7 +810,7 @@
           <div className="flex justify-between items-center mb-6">
             <div>
               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
-                {isHandover ? 'Completion Report' : 'Job Sheet'}
+                {isHandover ? 'invoice' : 'Quote'}
               </span>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-2">New Project</h2>
             </div>
@@ -891,7 +891,7 @@
     const showCosts = job.showCosts; // Now we respect the job setting for both quotes and handovers
     const totalHours = tasks.reduce((a,t) => a + parseTimeToMinutes(t.time), 0);
     const biz = businessProfile;
-    const docLabel = job.type === 'handover' ? 'Completion Report' : 'Quotation';
+    const docLabel = job.type === 'handover' ? 'invoice' : 'Quotation';
 
     return createPortal(
       <div id="print-container" className="print-preview-overlay fixed inset-0 z-[500] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
@@ -1832,7 +1832,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                     <Plus size={24} className="text-orange-500"/> New Quotation
                   </button>
                   <button onClick={() => handleNewJobClick('handover')} className="bg-slate-900 dark:bg-emerald-950 text-white p-4 rounded-3xl text-xs font-black shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all uppercase border-2 border-slate-900 dark:border-emerald-900 hover:border-emerald-400">
-                    <CheckCircle2 size={24} className="text-emerald-400"/> Completion Report
+                    <CheckCircle2 size={24} className="text-emerald-400"/> invoice
                   </button>
                 </div>
               </div>
@@ -1890,7 +1890,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                           {!selectionMode && (
                             <div className="flex items-center gap-2 flex-wrap mb-1">
                               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
-                                {j.type==='handover' ? 'Completion Report' : 'Job Sheet'}
+                                {j.type==='handover' ? 'invoice' : 'Quote'}
                               </span>
                               <button onClick={e=>{e.stopPropagation();cycleStatus(j.id);}} className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
                               {j.gstEnabled && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
@@ -2161,7 +2161,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
             <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-6 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[95vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
               <div className="flex justify-between items-center mb-6 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
                 <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-                  {editingTaskId ? 'Edit' : 'New'} {activeJob?.type==='handover' ? 'Completion Entry' : 'Job Sheet Entry'}
+                  {editingTaskId ? 'Edit' : 'New'} {activeJob?.type==='handover' ? 'Completion Entry' : 'Quote Entry'}
                 </h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
