@@ -44,6 +44,7 @@
         .print-card .p-6 { padding: 12px !important; }
         .print-card h3 { font-size: 16px !important; margin-bottom: 4px; }
         .print-card p { font-size: 12px !important; line-height: 1.4; margin-bottom: 6px; }
+        .print-biz-header { display: flex !important; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; }
       }
       .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -97,15 +98,18 @@
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert,
-    Bookmark, Package, PlusCircle, Calendar
+    Bookmark, Package, PlusCircle, Calendar, Building2
   } from 'lucide-react';
 
-  const DB_KEY_JOBS   = 'jobsite-master-v4';
-  const DB_KEY_TEMPL  = 'joblog-templates';
-  const DB_KEY_MATS   = 'joblog-materials';
-  const MAX_STOPS     = 12;
-  const GST_RATE      = 0.1;
+  /* ─── Constants ─────────────────────────────────────────────── */
+  const DB_KEY_JOBS  = 'jobsite-master-v4';
+  const DB_KEY_TEMPL = 'joblog-templates';
+  const DB_KEY_MATS  = 'joblog-materials';
+  const BIZA_KEY     = 'joblog-business';
+  const MAX_STOPS    = 12;
+  const GST_RATE     = 0.1;
 
+  /* ─── Helpers ────────────────────────────────────────────────── */
   const parseTimeToMinutes = (str) => {
     if (!str) return 0;
     const s = str.toLowerCase().trim();
@@ -152,6 +156,28 @@
     };
   });
 
+  const compressLogo = (file) => new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onerror = () => rej(new Error('Logo read failed'));
+    reader.onload = (ev) => {
+      const img = new Image(); img.src = ev.target.result;
+      img.onerror = () => rej(new Error('Logo decode failed'));
+      img.onload = () => {
+        try {
+          const c = document.createElement('canvas');
+          const MAX = 320; let w = img.width, h = img.height;
+          if (w > MAX) { h *= MAX/w; w = MAX; }
+          if (h > MAX) { w *= MAX/h; h = MAX; }
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          res(c.toDataURL('image/webp', 0.88));
+        } catch(e) { rej(e); }
+      };
+    };
+  });
+
+  /* ─── Preset templates ───────────────────────────────────────── */
   const TEMPLATES = {
     quote: {
       painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools:"Brushes, Rollers, Extension Poles, Sandpaper", desc:"Surface prep, fill holes, prime and 2 finish coats" },
@@ -180,6 +206,7 @@
   ];
   const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
 
+  /* ─── Error Boundary ─────────────────────────────────────────── */
   class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, error: null }; }
     static getDerivedStateFromError(error) { return { hasError: true, error }; }
@@ -198,6 +225,7 @@
     }
   }
 
+  /* ─── ConfirmDialog ──────────────────────────────────────────── */
   const ConfirmDialog = ({ message, confirmLabel = 'Delete', onConfirm, onCancel, danger = true }) => (
     <div className="fixed inset-0 z-[350] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6">
       <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 w-full max-w-xs shadow-2xl border dark:border-slate-800">
@@ -210,6 +238,85 @@
     </div>
   );
 
+  /* ─── BusinessProfileEditor ──────────────────────────────────── */
+  const BusinessProfileEditor = ({ profile, onSave, onClose }) => {
+    const [form, setForm] = useState({
+      name:        profile.name        || '',
+      tradingName: profile.tradingName || '',
+      abn:         profile.abn         || '',
+      phone:       profile.phone       || '',
+      email:       profile.email       || '',
+      address:     profile.address     || '',
+      logo:        profile.logo        || '',
+    });
+
+    const handleLogoUpload = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try { setForm(f => ({ ...f, logo: await compressLogo(file) })); }
+      catch { alert('Logo could not be processed.'); }
+    };
+
+    return (
+      <div className="fixed inset-0 z-[190] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 max-h-[88vh] overflow-y-auto">
+          <div className="flex justify-between items-center mb-5">
+            <h3 className="font-black text-lg flex items-center gap-2"><Building2 size={18} className="text-orange-500"/> Business Profile</h3>
+            <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20}/></button>
+          </div>
+          {/* Logo area */}
+          <div className="flex items-center gap-4 mb-5 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+            <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+              {form.logo ? <img src={form.logo} className="w-full h-full object-contain p-1" alt="logo"/> : <ImageIcon size={26} className="text-slate-300 dark:text-slate-500"/>}
+            </div>
+            <div>
+              <p className="font-black text-sm mb-0.5">Business Logo</p>
+              <p className="text-[10px] text-slate-400 mb-2 font-medium">Appears on all printed reports</p>
+              <label className="inline-flex items-center gap-1.5 bg-slate-200 dark:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer text-[11px] font-black uppercase hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                <Upload size={11}/> Upload
+                <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload}/>
+              </label>
+              {form.logo && <button onClick={() => setForm(f=>({...f,logo:''}))} className="text-[10px] text-red-400 font-bold mt-1 ml-2 hover:text-red-600">Remove</button>}
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="e.g. Smith Building Services" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="T/A name (if different)" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">ABN</label>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="e.g. 12 345 678 901" value={form.abn} onChange={e=>setForm(f=>({...f,abn:e.target.value}))}/>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Phone</label>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="04xx xxx xxx" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="you@example.com" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/>
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Address</label>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="123 Example St, Sydney NSW 2000" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-5">
+            <button onClick={() => { onSave(form); onClose(); }} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-2xl font-black active:scale-95 transition-all flex items-center justify-center gap-2"><Check size={16}/> Save Profile</button>
+            <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-3 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* ─── TemplateManager ────────────────────────────────────────── */
   const TemplateManager = ({ templates, onSave, onClose }) => {
     const [list, setList] = useState([...templates]);
     const [editing, setEditing] = useState(null);
@@ -267,6 +374,7 @@
     );
   };
 
+  /* ─── MaterialManager ────────────────────────────────────────── */
   const MaterialManager = ({ materials, onSave, onClose }) => {
     const [list, setList] = useState([...materials]);
     const [newName, setNewName] = useState('');
@@ -310,12 +418,15 @@
     );
   };
 
-  const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials }) => {
+  /* ─── SettingsModal (with Business Profile) ───────────────────── */
+  const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
     const [showTemplates, setShowTemplates] = useState(false);
     const [showMaterials, setShowMaterials] = useState(false);
+    const [showBusiness, setShowBusiness] = useState(false);
     const save = () => { onSave(draftKey, draftModel); onClose(); };
+    const hasBiz = !!businessProfile?.name;
 
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
@@ -328,6 +439,29 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
           <div className="space-y-6">
+
+            {/* Business Profile */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Business</label>
+              <button onClick={() => setShowBusiness(true)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl active:scale-95 transition-all hover:border-orange-400 dark:hover:border-orange-500">
+                <div className="flex items-center gap-3">
+                  {businessProfile?.logo
+                    ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-white dark:bg-slate-700 p-0.5" alt="logo"/>
+                    : <div className="bg-orange-100 dark:bg-orange-900/40 p-2 rounded-xl"><Building2 size={16} className="text-orange-500"/></div>
+                  }
+                  <div className="text-left">
+                    <p className="font-black text-sm text-slate-800 dark:text-white">{hasBiz ? businessProfile.name : 'Set Up Business Profile'}</p>
+                    {hasBiz && businessProfile.abn && <p className="text-[10px] text-slate-400 font-mono">ABN {businessProfile.abn}</p>}
+                    {!hasBiz && <p className="text-[10px] text-slate-400">Logo, ABN, contact details on reports</p>}
+                  </div>
+                </div>
+                <Pencil size={14} className="text-slate-400"/>
+              </button>
+            </div>
+
+            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+
+            {/* Appearance */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
               <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700">
@@ -340,6 +474,8 @@
                 </div>
               </button>
             </div>
+
+            {/* Backup */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Backup & Restore</label>
               <div className="grid grid-cols-2 gap-3">
@@ -352,6 +488,8 @@
                 </label>
               </div>
             </div>
+
+            {/* Library */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Your Library</label>
               <div className="grid grid-cols-2 gap-3">
@@ -363,47 +501,38 @@
                 </button>
               </div>
             </div>
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"></div>
+
+            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+
+            {/* AI */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
               <div className="flex items-start gap-3 p-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl">
                 <ShieldAlert size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
                 <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium leading-relaxed">Your API key is stored in this browser only. Do not use on shared devices.</p>
               </div>
-              <input
-                type="password"
-                className="w-full p-4 mb-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
-                placeholder="Paste your Gemini API key…"
-                value={draftKey}
-                onChange={e => setDraftKey(e.target.value)}
-              />
+              <input type="password" className="w-full p-4 mb-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
               <div className="relative">
                 <Bot size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400"
-                  placeholder="e.g. gemini-2.5-flash"
-                  value={draftModel}
-                  onChange={e => setDraftModel(e.target.value)}
-                />
+                <input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
               <p className="text-[10px] text-slate-400 mt-2 font-medium">Enter the exact model name from Google AI Studio.</p>
             </div>
+
             <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
               <Check size={16}/> Save & Close
             </button>
           </div>
-          {showTemplates && (
-            <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)} />
-          )}
-          {showMaterials && (
-            <MaterialManager materials={userMaterials} onSave={saveUserMaterials} onClose={() => setShowMaterials(false)} />
-          )}
+
+          {showBusiness && <BusinessProfileEditor profile={businessProfile || {}} onSave={saveBusinessProfile} onClose={() => setShowBusiness(false)}/>}
+          {showTemplates && <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)}/>}
+          {showMaterials && <MaterialManager materials={userMaterials} onSave={saveUserMaterials} onClose={() => setShowMaterials(false)}/>}
         </div>
       </div>
     );
   };
 
+  /* ─── TemplatePopover ────────────────────────────────────────── */
   const TemplatePopover = ({ type, userTemplates, onSelect, onClose }) => {
     const allTemplates = [
       ...userTemplates.map(t => ({ ...t, isUser: true })),
@@ -413,23 +542,12 @@
         isUser: false
       }))
     ];
-
     return (
       <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-72 max-h-60 overflow-y-auto p-2">
-        {allTemplates.length === 0 && (
-          <p className="text-sm text-slate-400 p-2">No templates yet. Create one in Settings.</p>
-        )}
+        {allTemplates.length === 0 && <p className="text-sm text-slate-400 p-2">No templates yet. Create one in Settings.</p>}
         {allTemplates.map((t, i) => (
-          <button
-            key={i}
-            onClick={() => { onSelect(t.data); onClose(); }}
-            className="w-full text-left p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 group"
-          >
-            {t.isUser ? (
-              <Bookmark size={14} className="text-emerald-500" />
-            ) : (
-              <Sparkles size={14} className="text-orange-500" />
-            )}
+          <button key={i} onClick={() => { onSelect(t.data); onClose(); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 group">
+            {t.isUser ? <Bookmark size={14} className="text-emerald-500"/> : <Sparkles size={14} className="text-orange-500"/>}
             <div className="min-w-0">
               <div className="font-bold text-sm truncate">{t.name}</div>
               {t.data.title && <div className="text-[10px] text-slate-400 truncate">{t.data.title}</div>}
@@ -440,26 +558,20 @@
     );
   };
 
-  const MaterialPicker = ({ materials, onSelect, onClose }) => {
-    return (
-      <div className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-64 max-h-48 overflow-y-auto p-2">
-        {materials.length === 0 && (
-          <p className="text-sm text-slate-400 p-2">No saved materials. Add in Settings or save one below.</p>
-        )}
-        {materials.map((m, i) => (
-          <button
-            key={i}
-            onClick={() => { onSelect(m); onClose(); }}
-            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left"
-          >
-            <span className="font-medium text-sm">{m.name}</span>
-            <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{fmtAUD(parseFloat(m.price))}</span>
-          </button>
-        ))}
-      </div>
-    );
-  };
+  /* ─── MaterialPicker ─────────────────────────────────────────── */
+  const MaterialPicker = ({ materials, onSelect, onClose }) => (
+    <div className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-64 max-h-48 overflow-y-auto p-2">
+      {materials.length === 0 && <p className="text-sm text-slate-400 p-2">No saved materials.</p>}
+      {materials.map((m, i) => (
+        <button key={i} onClick={() => { onSelect(m); onClose(); }} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left">
+          <span className="font-medium text-sm">{m.name}</span>
+          <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{fmtAUD(parseFloat(m.price))}</span>
+        </button>
+      ))}
+    </div>
+  );
 
+  /* ─── NewJobModal (unchanged, with AI date extraction) ────────── */
   const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel }) => {
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
@@ -469,18 +581,9 @@
     const [isImporting, setIsImporting] = useState(false);
     const fileInputRef = useRef(null);
 
-    const handleFiles = (e) => {
-      const selected = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...selected]);
-      e.target.value = '';
-    };
-
+    const handleFiles = (e) => { setFiles(prev => [...prev, ...Array.from(e.target.files)]); e.target.value = ''; };
     const removeFile = (index) => setFiles(prev => prev.filter((_,i) => i!==index));
-
-    const createManual = () => {
-      if (!addr.trim()) return;
-      onSave(addr.trim(), client.trim(), [], dueDate);
-    };
+    const createManual = () => { if (!addr.trim()) return; onSave(addr.trim(), client.trim(), [], dueDate); };
 
     const createWithAI = async () => {
       if (!apiKey) { alert('Please save a Gemini API key in Settings first.'); return; }
@@ -495,49 +598,26 @@
               reader.onerror = reject;
               reader.readAsDataURL(file);
             });
-            fileParts.push({
-              inlineData: { mimeType: file.type || 'application/pdf', data: base64Data }
-            });
-          } else {
-            const text = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsText(file);
-            });
-            fileParts.push({ text });
+            fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
           }
         }
-
         const textPrompt = `Extract the following from the provided document(s) and additional text.
           Return ONLY a valid JSON object with keys:
           "address" (job site address),
           "clientName" (client or customer name),
           "dueDate" (ISO date string YYYY-MM-DD if a due date or completion date is mentioned, otherwise empty string),
           "tasks" (array of objects with: "title", "time" (e.g. "2h 30m"), "rate" (string, e.g. "85"), "materialsCost" (string, e.g. "320"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (string)).
-          Use the fields from the documents as defaults, but respect any overrides in the additional text.
-          Additional text provided by the user: ${additionalText || 'None'}`;
-
+          Additional text: ${additionalText || 'None'}`;
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: textPrompt }, ...fileParts] }],
-              generationConfig: { temperature: 0, response_mime_type: 'application/json' }
-            })
-          }
+          { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:textPrompt},...fileParts]}], generationConfig:{temperature:0,response_mime_type:'application/json'} }) }
         );
         if (!res.ok) { const errData = await res.json().catch(()=>({})); throw new Error(errData?.error?.message || `API error ${res.status}`); }
         const data = await res.json();
         const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-        const tasks = (json.tasks || []).map(t => ({
-          title: t.title || '', time: t.time || '', rate: String(t.rate || ''),
-          materialsCost: String(t.materialsCost || ''), materials: String(t.materials || ''), tools: String(t.tools || ''), desc: t.desc || '', images: [],
-        }));
-          onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
+        const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
+        onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
       } catch (err) { alert(`AI import failed: ${err.message}`); }
       finally { setIsImporting(false); }
     };
@@ -564,13 +644,11 @@
           <div className="space-y-4">
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Job Address *</label>
-              <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
-                placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
+              <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Client Name</label>
-              <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
-                placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
+              <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Due Date (optional)</label>
@@ -582,11 +660,11 @@
             <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
               <div className="mb-2">
                 <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Attach files (PDF, images, docs) and add any extra details below.</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Attach PDF or image files and add any extra details below.</p>
               </div>
               <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 transition-colors text-xs font-black uppercase">
-                <Upload size={14}/> Choose Files
-                <input ref={fileInputRef} type="file" multiple accept=".pdf,.docx,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/>
+                <Upload size={14}/> Choose Files (PDF / Images)
+                <input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/>
               </label>
               {files.length > 0 && (
                 <div className="mb-2">
@@ -598,23 +676,14 @@
                   ))}
                 </div>
               )}
-              <textarea
-                className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400"
-                placeholder="Additional details (e.g. client wants acoustic underlay, job must finish by Friday)"
-                value={additionalText}
-                onChange={e => setAdditionalText(e.target.value)}
-              />
+              <textarea className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400" placeholder="Additional details (e.g. client wants acoustic underlay, job must finish by Friday)" value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
             </div>
             <div className="flex gap-3">
-              <button onClick={createManual} disabled={!addr.trim()}
-                className={`flex-1 p-5 rounded-[2rem] font-black text-lg shadow-xl transition-all ${
-                  addr.trim() ? 'bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                }`}>
+              <button onClick={createManual} disabled={!addr.trim()} className={`flex-1 p-5 rounded-[2rem] font-black text-lg shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
                 Create Project
               </button>
               {apiKey && files.length > 0 && (
-                <button onClick={createWithAI} disabled={isImporting}
-                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
+                <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
                   <Sparkles size={20}/> Create with AI
                 </button>
               )}
@@ -625,7 +694,8 @@
     );
   };
 
-  const PrintPreview = ({ job, onClose }) => {
+  /* ─── PrintPreview (with business branding) ──────────────────── */
+  const PrintPreview = ({ job, businessProfile = {}, onClose }) => {
     const [tasks, setTasks] = useState(job.tasks.map(t => ({...t})));
     const [header, setHeader] = useState({
       address: job.address,
@@ -644,7 +714,9 @@
 
     const totals = getQuoteTotals(tasks, job.gstEnabled);
     const showCosts = job.type === 'handover' ? job.showCosts : true;
-    const totalHours = tasks.reduce((a,t)=>a+parseTimeToMinutes(t.time),0);
+    const totalHours = tasks.reduce((a,t) => a + parseTimeToMinutes(t.time), 0);
+    const biz = businessProfile;
+    const docLabel = job.type === 'handover' ? 'Completed Works' : 'Field Report';
 
     return createPortal(
       <div id="print-container" className="print-preview-overlay fixed inset-0 z-[250] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
@@ -656,10 +728,32 @@
               <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl font-black">Close</button>
             </div>
           </div>
+
           <div className="print-only-block">
+
+            {/* ── Business branding header ── */}
+            {biz.name && (
+              <div className="print-biz-header flex justify-between items-start pb-4 mb-4" style={{borderBottom:'3px solid #0f172a'}}>
+                <div className="flex items-center gap-4">
+                  {biz.logo && <img src={biz.logo} className="h-16 w-auto object-contain rounded-lg" alt={biz.name}/>}
+                  <div>
+                    <h1 className="text-2xl font-black text-slate-900 leading-tight">{biz.name}</h1>
+                    {biz.tradingName && <p className="text-sm text-slate-500 font-medium">T/A {biz.tradingName}</p>}
+                    {biz.abn && <p className="text-xs font-bold text-slate-600 mt-0.5 font-mono">ABN {biz.abn}</p>}
+                  </div>
+                </div>
+                <div className="text-right text-sm text-slate-600 space-y-0.5">
+                  {biz.phone && <p className="font-bold">{biz.phone}</p>}
+                  {biz.email && <p>{biz.email}</p>}
+                  {biz.address && <p className="text-slate-400 text-xs">{biz.address}</p>}
+                </div>
+              </div>
+            )}
+
+            {/* ── Document header ── */}
             <div className="print-header border-b-2 border-slate-300 pb-3 mb-4">
               <div className="flex justify-between text-xs font-black uppercase text-slate-500 mb-2">
-                <span>{job.type==='handover' ? 'Completed Works' : 'Field Report'}</span>
+                <span>{docLabel}</span>
                 <span>{new Date(job.date || Date.now()).toLocaleDateString('en-AU',{dateStyle:'full'})}</span>
               </div>
               <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
@@ -668,8 +762,8 @@
               {header.dueDate && <div className="text-sm font-bold text-amber-600 mb-2">Due: {fmtDate(header.dueDate)}</div>}
               {header.projectNotes && <textarea className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.projectNotes} onChange={e => setHeader({...header, projectNotes: e.target.value})} placeholder="Project notes"/>}
               {header.projectPhotos?.length > 0 && (
-                <div className="print-project-photo-row flex gap-2 mt-2 overflow-x-auto">
-                  {header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg"/>)}
+                <div className="flex gap-2 mt-2 overflow-x-auto">
+                  {header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}
                 </div>
               )}
               <div className="flex gap-4 mt-2 text-sm font-medium">
@@ -677,45 +771,35 @@
                 {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
               </div>
             </div>
+
+            {/* Tasks */}
             {tasks.map((t, idx) => {
               const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
-              const mats = parseFloat(t.materialsCost)||0;
-              const subtotal = labour+mats;
+              const mats   = parseFloat(t.materialsCost)||0;
+              const subtotal = labour + mats;
               return (
                 <div key={idx} className="print-card">
                   <div className={`px-5 py-3 font-black border-b flex justify-between items-center text-lg uppercase ${job.type==='handover' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-800 border-slate-200'}`}>
-                    <input className="flex-1 font-black bg-transparent border-none" value={t.title} onChange={e => updateTask(idx, 'title', e.target.value)}/>
-                    <input className="w-20 text-sm bg-transparent border-none text-right" value={t.time} onChange={e => updateTask(idx, 'time', e.target.value)}/>
+                    <input className="flex-1 font-black bg-transparent border-none outline-none" value={t.title} onChange={e => updateTask(idx, 'title', e.target.value)}/>
+                    <input className="w-20 text-sm bg-transparent border-none outline-none text-right" value={t.time} onChange={e => updateTask(idx, 'time', e.target.value)}/>
                     {showCosts && subtotal > 0 && <span className="text-sm text-emerald-700 ml-4">{fmtAUD(subtotal)}</span>}
                   </div>
                   <div className="p-6">
-                    <textarea className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent resize-none" rows={2} value={t.desc} onChange={e => updateTask(idx, 'desc', e.target.value)}/>
+                    <textarea className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent resize-none outline-none" rows={2} value={t.desc} onChange={e => updateTask(idx, 'desc', e.target.value)}/>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="p-4 bg-slate-50 rounded-xl border">
                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
-                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)}/>
+                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)}/>
                       </div>
                       <div className="p-4 bg-slate-50 rounded-xl border">
                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}</label>
-                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)}/>
+                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)}/>
                       </div>
-                      {showCosts && job.type==='quote' && (labour>0||mats>0) && (
+                      {showCosts && (labour > 0 || mats > 0) && (
                         <>
                           <div className="p-4 bg-slate-50 rounded-xl border">
                             <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
-                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)} ({t.rate ? `$${t.rate}/hr` : '-'})</span>
-                          </div>
-                          <div className="p-4 bg-slate-50 rounded-xl border">
-                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label>
-                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(mats)}</span>
-                          </div>
-                        </>
-                      )}
-                      {showCosts && job.type==='handover' && (labour>0||mats>0) && (
-                        <>
-                          <div className="p-4 bg-slate-50 rounded-xl border">
-                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
-                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}</span>
+                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}{t.rate ? ` ($${t.rate}/hr)` : ''}</span>
                           </div>
                           <div className="p-4 bg-slate-50 rounded-xl border">
                             <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label>
@@ -724,7 +808,7 @@
                         </>
                       )}
                     </div>
-                    {t.images?.length>0 && (
+                    {t.images?.length > 0 && (
                       <div className="print-img-container">
                         {t.images.map((img,i) => <div key={i} className="rounded-lg overflow-hidden border aspect-[4/3] shadow-sm bg-slate-100"><img src={img} className="w-full h-full object-cover"/></div>)}
                       </div>
@@ -733,12 +817,18 @@
                 </div>
               );
             })}
-            {showCosts && job.type==='quote' && totals.total>0 && (
+
+            {showCosts && job.type === 'quote' && totals.total > 0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
                   <p className="font-black uppercase text-slate-500 text-sm">Labour: {fmtAUD(totals.labour)}</p>
                   <p className="font-black uppercase text-slate-500 text-sm">Materials: {fmtAUD(totals.mats)}</p>
-                  {job.gstEnabled && <><p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p><p className="font-black uppercase text-slate-600 text-sm">GST (10%): {fmtAUD(totals.gst)}</p></>}
+                  {job.gstEnabled && (
+                    <>
+                      <p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p>
+                      <p className="font-black uppercase text-slate-600 text-sm">GST (10%): {fmtAUD(totals.gst)}</p>
+                    </>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{job.gstEnabled ? 'Total inc. GST' : 'Quote Total'}</p>
@@ -754,10 +844,17 @@
     );
   };
 
+  /* ═══════════════════════════════════════════════════════════
+     APP
+  ═══════════════════════════════════════════════════════════ */
   const App = () => {
+    // ── State ──
     const [jobs, setJobs] = useState([]);
     const [userTemplates, setUserTemplates] = useState([]);
     const [userMaterials, setUserMaterials] = useState([]);
+    const [businessProfile, setBusinessProfile] = useState(() => {
+      try { return JSON.parse(localStorage.getItem(BIZA_KEY) || '{}'); } catch { return {}; }
+    });
     const [activeJobId, setActiveJobId] = useState(null);
     const [viewMode, setViewMode] = useState('dashboard');
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
@@ -812,31 +909,21 @@
     const [showTemplatePop, setShowTemplatePop] = useState(false);
     const [showMaterialPop, setShowMaterialPop] = useState(false);
 
+    /* ── DB helpers ── */
     const loadJobs = async () => {
       const d = await get(DB_KEY_JOBS) || [];
       const migrated = d.map(j => {
         const mj = { ...j };
         if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false;
-        if (!mj.createdAt) {
-          mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now();
-        }
+        if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now();
         return mj;
       });
       setJobs(migrated);
       updMetric(migrated);
       setIsLoading(false);
     };
-    
-    const loadTemplates = async () => {
-      const t = await get(DB_KEY_TEMPL) || [];
-      setUserTemplates(t);
-    };
-    
-    const loadMaterials = async () => {
-      const m = await get(DB_KEY_MATS) || [];
-      setUserMaterials(m);
-    };
-    
+    const loadTemplates = async () => setUserTemplates(await get(DB_KEY_TEMPL) || []);
+    const loadMaterials = async () => setUserMaterials(await get(DB_KEY_MATS) || []);
     useEffect(() => { loadJobs(); loadTemplates(); loadMaterials(); }, []);
 
     const updMetric = (d) => setDbSize(`${(new TextEncoder().encode(JSON.stringify(d)).length/1024/1024).toFixed(2)} MB`);
@@ -847,6 +934,7 @@
     };
     const saveUserTemplates = async (arr) => { setUserTemplates(arr); await set(DB_KEY_TEMPL, arr); };
     const saveUserMaterials = async (arr) => { setUserMaterials(arr); await set(DB_KEY_MATS, arr); };
+    const saveBusinessProfile = (profile) => { setBusinessProfile(profile); localStorage.setItem(BIZA_KEY, JSON.stringify(profile)); };
 
     useEffect(() => {
       const root = document.documentElement;
@@ -858,6 +946,7 @@
     const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
     const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled) : null;
 
+    /* ── Voice ── */
     const toggleVoice = () => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) return alert('Voice dictation not supported.');
@@ -867,75 +956,43 @@
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.onstart  = () => setIsListening(true);
-      recognition.onresult = (e) => {
-        const transcript = e.results[0][0].transcript;
-        setTaskData(p => ({ ...p, desc: p.desc ? p.desc + ' ' + transcript : transcript }));
-      };
-      recognition.onerror = () => { setIsListening(false); recognitionRef.current = null; };
-      recognition.onend   = () => { setIsListening(false); recognitionRef.current = null; };
+      recognition.onresult = (e) => { const t = e.results[0][0].transcript; setTaskData(p => ({ ...p, desc: p.desc ? p.desc + ' ' + t : t })); };
+      recognition.onerror  = () => { setIsListening(false); recognitionRef.current = null; };
+      recognition.onend    = () => { setIsListening(false); recognitionRef.current = null; };
       recognition.start();
     };
 
     const saveApiSettings = (key, model) => {
-      const trimmedKey = key.trim();
-      const trimmedModel = model.trim();
-      setApiKey(trimmedKey); setGeminiModel(trimmedModel);
-      localStorage.setItem('geminiApiKey', trimmedKey); localStorage.setItem('geminiModel', trimmedModel);
+      const k = key.trim(), m = model.trim();
+      setApiKey(k); setGeminiModel(m);
+      localStorage.setItem('geminiApiKey', k); localStorage.setItem('geminiModel', m);
     };
 
+    /* ── AI suggest ── */
     const [isAiSuggesting, setIsAiSuggesting] = useState(false);
     const handleAiSuggest = async () => {
-      if (!taskData.title.trim() && !taskData.desc.trim()) {
-        alert('Enter at least a title or description first.');
-        return;
-      }
+      if (!taskData.title.trim() && !taskData.desc.trim()) { alert('Enter at least a title or description first.'); return; }
       if (!apiKey) { alert('Please add your Gemini API key in Settings first.'); return; }
       setIsAiSuggesting(true);
-      const prompt = `You are a construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title" (refined title), "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string of materials), "tools" (comma-separated string of tools), "desc" (professional description). Use reasonable Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
+      const prompt = `You are a construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (professional description). Use reasonable Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
       try {
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.3, response_mime_type: 'application/json' }
-            })
-          }
-        );
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.3,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error('AI request failed');
         const data = await res.json();
         const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-        setTaskData(prev => ({
-          ...prev,
-          title: json.title || prev.title,
-          time: json.time || prev.time,
-          rate: json.rate || prev.rate,
-          materialsCost: json.materialsCost || prev.materialsCost,
-          materials: json.materials || prev.materials,
-          tools: json.tools || prev.tools,
-          desc: json.desc || prev.desc,
-        }));
+        setTaskData(prev => ({ ...prev, title: json.title||prev.title, time: json.time||prev.time, rate: json.rate||prev.rate, materialsCost: json.materialsCost||prev.materialsCost, materials: json.materials||prev.materials, tools: json.tools||prev.tools, desc: json.desc||prev.desc }));
       } catch (err) { alert(`AI suggest failed: ${err.message}`); }
       finally { setIsAiSuggesting(false); }
     };
 
+    /* ── Template save ── */
     const [saveTemplateName, setSaveTemplateName] = useState('');
     const [isNamingTemplate, setIsNamingTemplate] = useState(false);
-    const handleSaveAsTemplate = () => {
-      if (!taskData.title) return alert('Task title is required.');
-      setIsNamingTemplate(true);
-      setSaveTemplateName('');
-    };
+    const handleSaveAsTemplate = () => { if (!taskData.title) return alert('Task title is required.'); setIsNamingTemplate(true); setSaveTemplateName(''); };
     const confirmSaveTemplate = () => {
       if (!saveTemplateName.trim()) return;
-      const tpl = {
-        name: saveTemplateName.trim(),
-        type: activeJob?.type || 'quote',
-        data: { title: taskData.title, time: taskData.time, rate: taskData.rate, materialsCost: taskData.materialsCost, materials: taskData.materials, tools: taskData.tools, desc: taskData.desc }
-      };
+      const tpl = { name: saveTemplateName.trim(), type: activeJob?.type || 'quote', data: { title: taskData.title, time: taskData.time, rate: taskData.rate, materialsCost: taskData.materialsCost, materials: taskData.materials, tools: taskData.tools, desc: taskData.desc } };
       saveUserTemplates([...userTemplates, tpl]);
       setIsNamingTemplate(false);
     };
@@ -944,13 +1001,11 @@
       const matName = String(taskData.materials || '').trim();
       const matCost = String(taskData.materialsCost || '').trim();
       if (!matName || !matCost) return;
-      const exists = userMaterials.find(
-        m => String(m.name) === matName && String(m.price) === matCost
-      );
-      if (exists) return;
+      if (userMaterials.find(m => String(m.name)===matName && String(m.price)===matCost)) return;
       saveUserMaterials([...userMaterials, { name: matName, price: matCost }]);
     };
 
+    /* ── Export / Import ── */
     const exportData = () => {
       const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -959,28 +1014,22 @@
       URL.revokeObjectURL(url);
     };
     const importData = (e) => {
-      const file = e.target.files[0];
-      if (!file) return; e.target.value = '';
+      const file = e.target.files[0]; if (!file) return; e.target.value = '';
       const reader = new FileReader();
       reader.onload = async (ev) => {
         try {
           const imported = JSON.parse(ev.target.result);
           if (!Array.isArray(imported)) throw new Error('Invalid format');
           showConfirm(`Found ${imported.length} project(s). This will replace ALL current data. Are you sure?`, async () => {
-            const migrated = imported.map(j => {
-              const mj = { ...j };
-              if (mj.type==='handover' && mj.showCosts===undefined) mj.showCosts = false;
-              if (mj.createdAt===undefined) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now();
-              return mj;
-            });
-            await saveToDB(migrated);
-            window.location.reload();
+            const migrated = imported.map(j => { const mj={...j}; if (mj.type==='handover' && mj.showCosts===undefined) mj.showCosts=false; if (!mj.createdAt) mj.createdAt = mj.date?new Date(mj.date).getTime():Date.now(); return mj; });
+            await saveToDB(migrated); window.location.reload();
           }, 'Replace All');
         } catch { alert('Invalid backup file.'); }
       };
       reader.readAsText(file);
     };
 
+    /* ── Create job ── */
     const handleCreateJob = (address, clientName, tasks = [], dueDate = '') => {
       const now = Date.now();
       const newJob = {
@@ -1000,63 +1049,43 @@
       setNewJobModal(null);
     };
 
+    /* ── Status / toggles ── */
     const cycleStatus = (id) => {
       const j = jobs.find(x=>x.id===id), idx = STATUSES.findIndex(s=>s.key===(j.status||'draft'));
       saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x));
     };
-    const toggleGST = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
-    const toggleCosts = (id) => {
-      saveToDB(jobs.map(j => j.id===id && j.type==='handover' ? {...j, showCosts: !j.showCosts} : j));
-    };
+    const toggleGST   = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
+    const toggleCosts  = (id) => saveToDB(jobs.map(j=>j.id===id&&j.type==='handover'?{...j,showCosts:!j.showCosts}:j));
 
+    /* ── Header edit ── */
     const startEditHeader = () => {
-      setHeaderDraft({
-        address: activeJob.address,
-        clientName: activeJob.clientName,
-        clientRef: activeJob.clientRef || '',
-        dueDate: activeJob.dueDate || '',
-        projectNotes: activeJob.projectNotes || '',
-        projectPhotos: activeJob.projectPhotos || []
-      });
+      setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] });
       setIsEditingHeader(true);
     };
     const saveHeaderEdit = () => {
       if (!headerDraft.address.trim()) return;
-      saveToDB(jobs.map(j => j.id===activeJobId ? {
-        ...j,
-        address: headerDraft.address.trim(),
-        clientName: headerDraft.clientName,
-        clientRef: headerDraft.clientRef,
-        dueDate: headerDraft.dueDate,
-        projectNotes: headerDraft.projectNotes,
-        projectPhotos: headerDraft.projectPhotos
-      } : j));
+      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, dueDate:headerDraft.dueDate, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j));
       setIsEditingHeader(false);
     };
     const handleProjectPhotoUpload = async (e) => {
-      try { const compressed = await Promise.all(Array.from(e.target.files).map(compressImage)); setHeaderDraft(d => ({...d, projectPhotos:[...d.projectPhotos,...compressed]})); }
+      try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setHeaderDraft(d => ({...d,projectPhotos:[...d.projectPhotos,...c]})); }
       catch { alert('One or more images could not be processed.'); }
     };
 
+    /* ── Task CRUD ── */
     const handleSaveTask = () => {
       if (!taskData.title) return alert('Task title is required.');
       if (!activeJob) return;
       const updated = editingTaskId
         ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t)
-        : [...activeJob.tasks, { ...taskData, id:Date.now() }];
+        : [...activeJob.tasks, { ...taskData, id: Date.now() }];
       saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j));
       closeModal();
     };
-
     const closeModal = () => {
-      recognitionRef.current?.stop();
-      recognitionRef.current = null;
-      setIsListening(false);
-      setIsTaskFormOpen(false);
-      setEditingTaskId(null);
-      setTaskData(EMPTY_TASK);
-      setRateError(false);
-      setMatError(false);
+      recognitionRef.current?.stop(); recognitionRef.current = null;
+      setIsListening(false); setIsTaskFormOpen(false); setEditingTaskId(null);
+      setTaskData(EMPTY_TASK); setRateError(false); setMatError(false);
       setIsNamingTemplate(false);
     };
     const handleImageUpload = async (e) => {
@@ -1066,21 +1095,16 @@
     const validateRate = (val) => { const n = parseFloat(val); setRateError(val !== '' && isNaN(n)); };
     const validateMat  = (val) => { const n = parseFloat(val); setMatError(val !== ''  && isNaN(n)); };
 
-    const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => {
-      setConfirmDialog({ message, onConfirm, confirmLabel, danger });
-    };
+    /* ── Confirm dialog helper ── */
+    const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => setConfirmDialog({ message, onConfirm, confirmLabel, danger });
     const dismissConfirm = () => setConfirmDialog(null);
 
+    /* ── Route planning ── */
     const exitSelectionMode = () => { setSelectionMode(false); setSelectedJobs([]); setLocStatus('idle'); setCurrentCoords(null); };
     const toggleSelectionMode = () => selectionMode ? exitSelectionMode() : setSelectionMode(true);
     const toggleJobSelection = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
     const clearSelection = () => setSelectedJobs([]);
-    const selectAllVisible = () => {
-      setSelectedJobs(prev => {
-        const e = new Set(prev);
-        return [...prev, ...filteredJobs.map(j=>j.id).filter(id=>!e.has(id))].slice(0,MAX_STOPS);
-      });
-    };
+    const selectAllVisible = () => setSelectedJobs(prev => { const e=new Set(prev); return [...prev,...filteredJobs.map(j=>j.id).filter(id=>!e.has(id))].slice(0,MAX_STOPS); });
     const getMyLocation = () => {
       if (!navigator.geolocation) { setLocStatus('denied'); return; }
       setLocStatus('loading');
@@ -1104,6 +1128,7 @@
     };
     const atStopLimit = selectedJobs.length >= MAX_STOPS;
 
+    /* ── Filtered jobs ── */
     const filteredJobs = jobs
       .filter(j => filterType==='all' || j.type===filterType)
       .filter(j => !searchQ.trim() || (j.address || '').toLowerCase().includes(searchQ.toLowerCase()) || (j.clientName||'').toLowerCase().includes(searchQ.toLowerCase()))
@@ -1124,13 +1149,14 @@
         return 0;
       });
 
+    /* ── Canvas editor ── */
     const resetView = () => { setCanvasZoom(1); zoomRef.current=1; setCanvasPan({x:0,y:0}); panRef.current={x:0,y:0}; setCanvasMode('draw'); modeRef.current='draw'; };
     useEffect(() => {
-      if (editingImageIdx!==null && canvasRef.current) {
+      if (editingImageIdx !== null && canvasRef.current) {
         resetView();
-        const cvs=canvasRef.current, ctx=cvs.getContext('2d'), img=new Image();
-        img.src=taskData.images[editingImageIdx];
-        img.onload=()=>{ cvs.width=img.width; cvs.height=img.height; ctx.drawImage(img,0,0,img.width,img.height); setUndoStack([cvs.toDataURL()]); };
+        const cvs = canvasRef.current, ctx = cvs.getContext('2d'), img = new Image();
+        img.src = taskData.images[editingImageIdx];
+        img.onload = () => { cvs.width=img.width; cvs.height=img.height; ctx.drawImage(img,0,0,img.width,img.height); setUndoStack([cvs.toDataURL()]); };
       }
     }, [editingImageIdx, taskData.images]);
 
@@ -1200,19 +1226,17 @@
       if (e.touches.length===0) { panStartRef.current=null; if (modeRef.current==='draw') stopDraw(); }
     };
     const toggleMode = () => { const n=modeRef.current==='draw'?'pan':'draw'; setCanvasMode(n); modeRef.current=n; };
-    const onMDown = (e) => {
-      if (modeRef.current==='draw') startDraw(e);
-      else panStartRef.current={ clientX:e.clientX, clientY:e.clientY, panX:panRef.current.x, panY:panRef.current.y };
-    };
+    const onMDown = (e) => { if (modeRef.current==='draw') startDraw(e); else panStartRef.current={clientX:e.clientX,clientY:e.clientY,panX:panRef.current.x,panY:panRef.current.y}; };
     const onMMove = (e) => {
       if (modeRef.current==='draw') doDraw(e);
       else if (modeRef.current==='pan' && panStartRef.current) {
-        const np={ x:panStartRef.current.panX+(e.clientX-panStartRef.current.clientX), y:panStartRef.current.panY+(e.clientY-panStartRef.current.clientY) };
+        const np={x:panStartRef.current.panX+(e.clientX-panStartRef.current.clientX),y:panStartRef.current.panY+(e.clientY-panStartRef.current.clientY)};
         setCanvasPan(np); panRef.current=np;
       }
     };
     const onMUp = () => { panStartRef.current=null; stopDraw(); };
 
+    /* ── Loading ── */
     if (isLoading) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
@@ -1224,6 +1248,7 @@
       );
     }
 
+    /* ══════════════════ RENDER ══════════════════ */
     return (
       <div className="min-h-screen pb-6">
         {confirmDialog && (
@@ -1231,10 +1256,14 @@
             onConfirm={() => { confirmDialog.onConfirm(); dismissConfirm(); }} onCancel={dismissConfirm}/>
         )}
 
+        {/* ── Header ── */}
         <header className="bg-slate-900 dark:bg-slate-950 text-white px-4 py-3 no-print flex justify-between items-center shadow-lg sticky top-0 z-50 border-b border-slate-800">
           <div className="flex items-center gap-2 cursor-pointer flex-shrink-0" onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }}>
-            <div className="bg-orange-500 p-1.5 rounded-xl"><Hammer size={20}/></div>
-            <h1 className="font-black text-lg tracking-tight uppercase">JobLog</h1>
+            {businessProfile?.logo
+              ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-white/10 p-0.5" alt=""/>
+              : <div className="bg-orange-500 p-1.5 rounded-xl"><Hammer size={20}/></div>
+            }
+            <h1 className="font-black text-lg tracking-tight uppercase">{businessProfile?.name || 'JobLog'}</h1>
           </div>
           <div className="flex items-center gap-2">
             {viewMode==='dashboard' && (
@@ -1257,6 +1286,7 @@
           </div>
         </header>
 
+        {/* ══════════ DASHBOARD ══════════ */}
         {viewMode==='dashboard' ? (
           <main className="p-4 max-w-2xl mx-auto">
             {selectionMode && (
@@ -1280,12 +1310,11 @@
                     <button onClick={selectAllVisible} disabled={atStopLimit} className={`text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border transition-all ${atStopLimit?'border-slate-700 text-slate-600 cursor-not-allowed':'border-blue-600 text-blue-400 hover:bg-blue-900/40'}`}>Select All Visible</button>
                     {selectedJobs.length > 0 && <button onClick={clearSelection} className="text-[11px] font-black uppercase px-3 py-2 rounded-xl border border-red-700 text-red-400 hover:bg-red-900/40">Clear</button>}
                   </div>
-                  <div className="text-right">
-                    <span className={`text-sm font-black ${atStopLimit?'text-amber-400':'text-white'}`}>{selectedJobs.length}/{MAX_STOPS} stops</span>
-                  </div>
+                  <span className={`text-sm font-black ${atStopLimit?'text-amber-400':'text-white'}`}>{selectedJobs.length}/{MAX_STOPS} stops</span>
                 </div>
               </div>
             )}
+
             {!selectionMode && (
               <div className="mb-5">
                 <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight mb-4 uppercase">Projects</h2>
@@ -1299,12 +1328,13 @@
                 </div>
               </div>
             )}
+
             <div className="relative mb-3">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"/>
               <input className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 rounded-2xl border-2 border-slate-200 dark:border-slate-700 outline-none font-medium text-sm dark:text-white dark:placeholder-slate-500 focus:border-orange-400" placeholder="Search address or client…" value={searchQ} onChange={e => setSearchQ(e.target.value)}/>
               {searchQ && <button onClick={() => setSearchQ('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X size={14}/></button>}
             </div>
-            
+
             <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
               <div className="flex gap-2">
                 {[{key:'all',label:'All'},{key:'quote',label:'Field Reports'},{key:'handover',label:'Completed'}].map(f => (
@@ -1338,8 +1368,8 @@
                   <div key={j.id}
                     onClick={() => { if (selectionMode) { if (canSelect) toggleJobSelection(j.id); } else { setActiveJobId(j.id); setViewMode('detail'); setIsEditingHeader(false); }}}
                     className={`bg-white dark:bg-slate-800 rounded-[2rem] border-2 transition-all cursor-pointer shadow-sm
-                      ${selectionMode ? (isSelected ? 'border-blue-500 ring-2 ring-blue-500/30' : canSelect ? 'border-slate-200 dark:border-slate-700 hover:border-blue-400' : 'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed')
-                      : j.type==='handover' ? 'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500' : 'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
+                      ${selectionMode?(isSelected?'border-blue-500 ring-2 ring-blue-500/30':canSelect?'border-slate-200 dark:border-slate-700 hover:border-blue-400':'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed')
+                      :j.type==='handover'?'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500':'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
                     <div className="p-6 flex justify-between items-start">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
                         {selectionMode && (
@@ -1353,7 +1383,7 @@
                               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
                                 {j.type==='handover'?'Completed':'Field Report'}
                               </span>
-                              <button onClick={e => { e.stopPropagation(); cycleStatus(j.id); }} className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
+                              <button onClick={e=>{e.stopPropagation();cycleStatus(j.id);}} className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
                               {j.gstEnabled && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
                               {isDueSoon && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">Due soon</span>}
                               {isOverdue && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300">Overdue</span>}
@@ -1367,22 +1397,24 @@
                       <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Hours</span>
                         <span className="font-black text-slate-900 dark:text-slate-200 text-sm">{getTotals(j.tasks).str}</span>
-                          {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && (
-                            <div className="flex flex-col items-end">
-                              <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt || handoverQt).total)}</span>
-                              {j.gstEnabled && <span className="text-[9px] text-slate-400 font-black uppercase">inc. GST</span>}
-                            </div>
-                          )}
+                        {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && (
+                          <div className="flex flex-col items-end">
+                            <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt||handoverQt).total)}</span>
+                            {j.gstEnabled && <span className="text-[9px] text-slate-400 font-black uppercase">inc. GST</span>}
+                          </div>
+                        )}
                         {!selectionMode && <ChevronRight size={16} className="text-slate-300 dark:text-slate-600 mt-1"/>}
                       </div>
                     </div>
                   </div>
                 );
               })}
-              {filteredJobs.length===0 && <div className="text-center py-10 text-slate-400 text-sm font-bold uppercase tracking-widest">{searchQ ? 'No results found' : 'No Projects Found'}</div>}
+              {filteredJobs.length===0 && <div className="text-center py-10 text-slate-400 text-sm font-bold uppercase tracking-widest">{searchQ?'No results found':'No Projects Found'}</div>}
             </div>
           </main>
+
         ) : (
+          /* ══════════ DETAIL VIEW ══════════ */
           <main className="p-4 max-w-2xl mx-auto no-print">
             <div className="flex justify-between items-center mb-6">
               <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300">
@@ -1391,27 +1423,28 @@
               <button onClick={() => showConfirm('Permanently delete this project and all its data?', () => { saveToDB(jobs.filter(x=>x.id!==activeJobId)); setViewMode('dashboard'); }, 'Delete')}
                 className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase"><Trash2 size={14}/> Delete</button>
             </div>
+
             <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
                   <div className="flex items-center gap-2 mb-3"><Edit3 size={14} className="text-orange-500"/><span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Editing Job Details</span></div>
-                  <input className="w-full text-2xl font-black bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e => setHeaderDraft(d=>({...d,address:e.target.value}))}/>
-                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Name" value={headerDraft.clientName} onChange={e => setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
-                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e => setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
+                  <input className="w-full text-2xl font-black bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e=>setHeaderDraft(d=>({...d,address:e.target.value}))}/>
+                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
+                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
                   <div className="mb-3">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Due Date</label>
-                    <input type="date" className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none font-medium dark:text-white" value={headerDraft.dueDate} onChange={e => setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/>
+                    <input type="date" className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none font-medium dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/>
                   </div>
-                  <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e => setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
+                  <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e=>setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
                   <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase">
                     <ImageIcon size={14}/> Add Project Photos
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleProjectPhotoUpload}/>
                   </label>
-                  {headerDraft.projectPhotos.length>0 && (
+                  {headerDraft.projectPhotos.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto pb-2 mt-2">
                       {headerDraft.projectPhotos.map((p,i) => (
                         <div key={i} className="relative h-20 w-20 flex-shrink-0">
-                          <img src={p} className="w-full h-full object-cover rounded-lg"/>
+                          <img src={p} className="w-full h-full object-cover rounded-lg" alt=""/>
                           <button onClick={() => setHeaderDraft(d=>({...d,projectPhotos:d.projectPhotos.filter((_,idx)=>idx!==i)}))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button>
                         </div>
                       ))}
@@ -1430,7 +1463,7 @@
                     {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
                     {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDate(activeJob.dueDate)}</p>}
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
-                    {activeJob?.projectPhotos?.length>0 && <div className="flex gap-2 mt-2 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-12 rounded-lg"/>)}</div>}
+                    {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-2 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-12 rounded-lg" alt=""/>)}</div>}
                     <button onClick={startEditHeader} className="mt-3 flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors group">
                       <Pencil size={11} className="group-hover:text-orange-500"/> Edit Details
                     </button>
@@ -1445,8 +1478,8 @@
                       <Tag size={12}/> {getStatus(activeJob?.status||'draft').label}
                     </button>
                     {activeJob?.type==='handover' && (
-                      <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
-                        <DollarSign size={12}/> Costs {activeJob.showCosts ? 'ON' : 'OFF'}
+                      <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
+                        <DollarSign size={12}/> Costs {activeJob.showCosts?'ON':'OFF'}
                       </button>
                     )}
                   </div>
@@ -1454,7 +1487,7 @@
               )}
             </div>
 
-            {/* Quote summary – only if applicable */}
+            {/* Cost summary */}
             {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && activeJob && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled).total > 0 && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
@@ -1470,11 +1503,10 @@
                       <div className="grid grid-cols-3 gap-3">
                         <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-base">{fmtAUD(qt.labour)}</p></div>
                         <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-base">{fmtAUD(qt.mats)}</p></div>
-                        {activeJob.gstEnabled ? (
-                          <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-base">{fmtAUD(qt.subtotal)}</p></div>
-                        ) : (
-                          <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
-                        )}
+                        {activeJob.gstEnabled
+                          ? <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-base">{fmtAUD(qt.subtotal)}</p></div>
+                          : <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
+                        }
                       </div>
                       {activeJob.gstEnabled && (
                         <div className="grid grid-cols-2 gap-3 mt-3">
@@ -1488,19 +1520,20 @@
               </div>
             )}
 
+            {/* Task cards */}
             <div className="space-y-6 mb-32">
               {activeJob?.tasks.map((t, i) => {
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
-                const mats = parseFloat(t.materialsCost)||0;
-                const subtotal = labour+mats;
-                const showCosts = activeJob.type === 'handover' ? activeJob.showCosts : true;
+                const mats   = parseFloat(t.materialsCost)||0;
+                const subtotal = labour + mats;
+                const showCosts = activeJob.type==='handover' ? activeJob.showCosts : true;
                 return (
                   <div key={t.id} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-b dark:border-slate-700 flex justify-between items-center px-6">
                       <span className="font-black text-slate-400 dark:text-slate-500 text-[10px] tracking-widest uppercase">Entry #{i+1}</span>
                       <div className="flex gap-2">
                         <button onClick={() => { setEditingTaskId(t.id); setTaskData({rate:'',materialsCost:'',images:[],...t}); setIsTaskFormOpen(true); }} className="p-2 text-slate-400 hover:text-blue-500"><Pencil size={18}/></button>
-                        <button onClick={() => showConfirm('Delete this log entry?', () => saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j))) } className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18}/></button>
+                        <button onClick={() => showConfirm('Delete this log entry?', () => saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j)))} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18}/></button>
                       </div>
                     </div>
                     <div className="p-6">
@@ -1509,14 +1542,14 @@
                         <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-black ml-2 flex-shrink-0">{t.time}</span>
                       </div>
                       <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3">{t.desc}</p>
-                      {showCosts && subtotal>0 && (
+                      {showCosts && subtotal > 0 && (
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {labour>0 && <span className="text-[11px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-full">Labour {fmtAUD(labour)}</span>}
                           {mats>0   && <span className="text-[11px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-3 py-1 rounded-full">Materials {fmtAUD(mats)}</span>}
                           <span className="text-[11px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-3 py-1 rounded-full">Subtotal {fmtAUD(subtotal)}</span>
                         </div>
                       )}
-                      {t.images?.length>0 && (
+                      {t.images?.length > 0 && (
                         <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                           {t.images.map((img,idx) => <div key={idx} className="h-24 w-32 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}
                         </div>
@@ -1534,18 +1567,19 @@
           </main>
         )}
 
+        {/* ── Route planning bottom bar ── */}
         {selectionMode && (
           <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 p-4 no-print safe-pb">
-            {selectedJobs.length>0 && (
+            {selectedJobs.length > 0 && (
               <div className="flex gap-2 overflow-x-auto no-scrollbar mb-3 pb-1">
                 {useMyLocation && locStatus==='ok' && <div className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-900/60 border border-emerald-700 px-3 py-1.5 rounded-full"><LocateFixed size={11} className="text-emerald-400"/><span className="text-emerald-300 text-[11px] font-black uppercase">You</span></div>}
                 {selectedJobs.map((id, idx) => {
-                  const j=jobs.find(x=>x.id===id);
+                  const j = jobs.find(x=>x.id===id);
                   return j ? (
                     <div key={id} className="flex-shrink-0 flex items-center gap-1.5 bg-slate-800 border border-slate-700 pl-1.5 pr-3 py-1.5 rounded-full">
                       <div className="w-5 h-5 rounded-full bg-blue-500 text-white text-[10px] font-black flex items-center justify-center">{idx+1}</div>
                       <span className="text-slate-200 text-[11px] font-black truncate max-w-[120px]">{j.address}</span>
-                      <button onClick={e=>{ e.stopPropagation(); toggleJobSelection(id); }} className="text-slate-500 hover:text-red-400 ml-1"><X size={12}/></button>
+                      <button onClick={e=>{e.stopPropagation();toggleJobSelection(id);}} className="text-slate-500 hover:text-red-400 ml-1"><X size={12}/></button>
                     </div>
                   ) : null;
                 })}
@@ -1564,58 +1598,42 @@
           </div>
         )}
 
+        {/* ── Settings ── */}
         {showSettings && (
           <SettingsModal
-            apiKey={apiKey}
-            geminiModel={geminiModel}
-            isDarkMode={isDarkMode}
-            toggleTheme={() => setIsDarkMode(!isDarkMode)}
-            exportData={exportData}
-            importData={importData}
-            userTemplates={userTemplates}
-            saveUserTemplates={saveUserTemplates}
-            userMaterials={userMaterials}
-            saveUserMaterials={saveUserMaterials}
-            onSave={saveApiSettings}
-            onClose={() => setShowSettings(false)}
+            apiKey={apiKey} geminiModel={geminiModel}
+            isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)}
+            exportData={exportData} importData={importData}
+            userTemplates={userTemplates} saveUserTemplates={saveUserTemplates}
+            userMaterials={userMaterials} saveUserMaterials={saveUserMaterials}
+            businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile}
+            onSave={saveApiSettings} onClose={() => setShowSettings(false)}
           />
         )}
 
+        {/* ── New job modal ── */}
         {newJobModal && (
-          <NewJobModal
-            type={newJobModal}
-            apiKey={apiKey}
-            geminiModel={geminiModel}
-            onSave={handleCreateJob}
-            onClose={() => setNewJobModal(null)}
-          />
+          <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel}
+            onSave={handleCreateJob} onClose={() => setNewJobModal(null)}/>
         )}
 
+        {/* ── Task form ── */}
         {isTaskFormOpen && (
           <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md p-4 overflow-y-auto">
-            <div className="bg-white dark:bg-slate-900 rounded-[3rem] max-w-md mx-auto p-8 shadow-2xl mt-4 border dark:border-slate-800">
+            <div className="relative bg-white dark:bg-slate-900 rounded-[3rem] max-w-md mx-auto p-8 shadow-2xl mt-4 border dark:border-slate-800">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-black text-slate-900 dark:text-white">{editingTaskId?'Edit':'New'} {activeJob?.type==='handover'?'Works Record':'Report Entry'}</h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
               <div className="mb-4 relative">
-                <button
-                  onClick={() => setShowTemplatePop(!showTemplatePop)}
-                  className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl font-black text-sm border border-slate-100 dark:border-slate-700 hover:border-purple-400 transition-colors"
-                >
-                  <span className="flex items-center gap-2">
-                    <Sparkles size={16} className="text-purple-500"/>
-                    Templates
-                  </span>
-                  <ChevronDown size={16} className={showTemplatePop ? 'rotate-180' : ''}/>
+                <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl font-black text-sm border border-slate-100 dark:border-slate-700 hover:border-purple-400 transition-colors">
+                  <span className="flex items-center gap-2"><Sparkles size={16} className="text-purple-500"/>Templates</span>
+                  <ChevronDown size={16} className={showTemplatePop?'rotate-180':''}/>
                 </button>
                 {showTemplatePop && (
-                  <TemplatePopover
-                    type={activeJob?.type || 'quote'}
-                    userTemplates={userTemplates}
-                    onSelect={(data) => setTaskData(prev => ({...prev, ...data}))}
-                    onClose={() => setShowTemplatePop(false)}
-                  />
+                  <TemplatePopover type={activeJob?.type||'quote'} userTemplates={userTemplates}
+                    onSelect={(data) => setTaskData(prev=>({...prev,...data}))}
+                    onClose={() => setShowTemplatePop(false)}/>
                 )}
               </div>
               <div className="space-y-4">
@@ -1631,42 +1649,29 @@
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/>
                   </label>
                 </div>
-
                 {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && (
                   <div className="flex gap-3 mt-2">
                     <div className="flex-1 relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                      <input placeholder="Rate/hr" className={`w-full pl-7 pr-10 p-4 rounded-2xl outline-none font-black text-sm ${rateError ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500' : 'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
+                      <input placeholder="Rate/hr" className={`w-full pl-7 pr-10 p-4 rounded-2xl outline-none font-black text-sm ${rateError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
                         value={taskData.rate}
-                        onChange={e => { const v=e.target.value; setTaskData(p=>({...p,rate:v})); validateRate(v); }}
-                        onBlur={e => validateRate(e.target.value)}
-                      />
+                        onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,rate:v}));validateRate(v);}}
+                        onBlur={e=>validateRate(e.target.value)}/>
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-black uppercase">/hr</span>
                     </div>
                     <div className="flex-1 relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
                       <div className="flex items-center">
-                        <input placeholder="Materials $" className={`w-full pl-7 pr-10 p-4 rounded-2xl outline-none font-black text-sm ${matError ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500' : 'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
+                        <input placeholder="Materials $" className={`w-full pl-7 pr-10 p-4 rounded-2xl outline-none font-black text-sm ${matError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
                           value={taskData.materialsCost}
-                          onChange={e => { const v=e.target.value; setTaskData(p=>({...p,materialsCost:v})); validateMat(v); }}
-                          onBlur={e => validateMat(e.target.value)}
-                        />
+                          onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,materialsCost:v}));validateMat(v);}}
+                          onBlur={e=>validateMat(e.target.value)}/>
                         {userMaterials.length > 0 && (
                           <div className="relative ml-1">
-                            <button
-                              onClick={() => setShowMaterialPop(!showMaterialPop)}
-                              className="bg-slate-200 dark:bg-slate-700 p-3 rounded-xl text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600"
-                              title="Pick saved material"
-                            >
-                              <Package size={16}/>
-                            </button>
+                            <button onClick={() => setShowMaterialPop(!showMaterialPop)} className="bg-slate-200 dark:bg-slate-700 p-3 rounded-xl text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600" title="Pick saved material"><Package size={16}/></button>
                             {showMaterialPop && (
                               <div className="absolute right-0 top-full mt-1 z-50">
-                                <MaterialPicker
-                                  materials={userMaterials}
-                                  onSelect={(m) => { setTaskData(p => ({...p, materials: m.name, materialsCost: m.price})); }}
-                                  onClose={() => setShowMaterialPop(false)}
-                                />
+                                <MaterialPicker materials={userMaterials} onSelect={(m)=>{setTaskData(p=>({...p,materials:m.name,materialsCost:m.price}));}} onClose={()=>setShowMaterialPop(false)}/>
                               </div>
                             )}
                           </div>
@@ -1675,7 +1680,6 @@
                     </div>
                   </div>
                 )}
-
                 {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && (() => {
                   const hrs=parseTimeToMinutes(taskData.time)/60;
                   const labour=hrs*(parseFloat(taskData.rate)||0);
@@ -1684,70 +1688,56 @@
                   return total>0 ? (
                     <div className="bg-slate-900 dark:bg-slate-800 rounded-2xl px-5 py-3 flex justify-between items-center">
                       <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        {labour>0 && <span className="mr-3">Labour {fmtAUD(labour)}</span>}
-                        {mats>0 && <span>Mats {fmtAUD(mats)}</span>}
+                        {labour>0&&<span className="mr-3">Labour {fmtAUD(labour)}</span>}
+                        {mats>0&&<span>Mats {fmtAUD(mats)}</span>}
                       </div>
                       <div className="text-white font-black">{fmtAUD(total)}</div>
                     </div>
                   ) : null;
                 })()}
-
-                {taskData.images.length>0 && (
+                {taskData.images.length > 0 && (
                   <div className="mt-6 img-preview-grid">
                     {taskData.images.map((img,i) => (
                       <div key={i} className="relative w-full aspect-[4/3] group cursor-pointer" onClick={() => setEditingImageIdx(i)}>
                         <img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-700 shadow-sm"/>
                         <div className="absolute inset-0 bg-slate-900/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white drop-shadow-md" size={24}/></div>
-                        <button onClick={e=>{ e.stopPropagation(); setTaskData(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)})); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md z-10"><X size={12}/></button>
+                        <button onClick={e=>{e.stopPropagation();setTaskData(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}));}} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md z-10"><X size={12}/></button>
                       </div>
                     ))}
                     <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
                   </div>
                 )}
-
                 <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
                 <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
-
                 <div className="relative">
                   <textarea placeholder="Full details…" className="w-full p-4 pr-12 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-28 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
-                  <button onClick={toggleVoice} type="button" className={`absolute right-3 bottom-4 p-2.5 rounded-full text-white shadow-md transition-all ${isListening ? 'bg-red-500 animate-pulse' : 'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Tap to dictate">
+                  <button onClick={toggleVoice} type="button" className={`absolute right-3 bottom-4 p-2.5 rounded-full text-white shadow-md transition-all ${isListening?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Tap to dictate">
                     <Mic size={16}/>
                   </button>
                 </div>
-
-                <button onClick={handleAiSuggest} disabled={isAiSuggesting || !apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 ${apiKey ? 'bg-purple-600 hover:bg-purple-500 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
-                  <Sparkles size={16}/> {isAiSuggesting ? 'Thinking…' : 'AI Suggest Details'}
+                <button onClick={handleAiSuggest} disabled={isAiSuggesting||!apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 ${apiKey?'bg-purple-600 hover:bg-purple-500 text-white':'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
+                  <Sparkles size={16}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}
                 </button>
-
                 <div className="flex gap-3">
                   <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
                     <Bookmark size={16}/> Save as Template
                   </button>
-                  {String(taskData.materials || '').trim() && String(taskData.materialsCost || '').trim() && (
+                  {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (
                     <button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
                       <Package size={16}/> Save Material
                     </button>
                   )}
                 </div>
-
                 {isNamingTemplate && (
                   <div className="absolute inset-0 bg-slate-900/80 rounded-[3rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm p-6">
                     <h3 className="text-white font-black text-xl mb-4">Template Name</h3>
-                    <input
-                      autoFocus
-                      className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl outline-none font-bold mb-3"
-                      placeholder="e.g. Bathroom Patch"
-                      value={saveTemplateName}
-                      onChange={e => setSaveTemplateName(e.target.value)}
-                      onKeyDown={e => e.key==='Enter' && confirmSaveTemplate()}
-                    />
+                    <input autoFocus className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl outline-none font-bold mb-3 dark:text-white" placeholder="e.g. Bathroom Patch" value={saveTemplateName} onChange={e=>setSaveTemplateName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&confirmSaveTemplate()}/>
                     <div className="flex gap-3 w-full">
                       <button onClick={confirmSaveTemplate} className="flex-1 bg-emerald-600 text-white py-3 rounded-2xl font-black">Save</button>
                       <button onClick={() => setIsNamingTemplate(false)} className="flex-1 bg-slate-700 text-white py-3 rounded-2xl font-black">Cancel</button>
                     </div>
                   </div>
                 )}
-
                 <button onClick={handleSaveTask} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600'}`}>
                   <Save size={20}/> SAVE ENTRY
                 </button>
@@ -1756,7 +1746,8 @@
           </div>
         )}
 
-        {editingImageIdx!==null && (
+        {/* ── Canvas annotation editor ── */}
+        {editingImageIdx !== null && (
           <div className="fixed inset-0 z-[200] bg-slate-950 flex flex-col">
             <div className="flex justify-between items-center p-4 bg-slate-900 border-b border-slate-800 shadow-md z-10 flex-shrink-0">
               <button onClick={() => setEditingImageIdx(null)} className="text-slate-300 hover:text-white font-bold text-sm px-4 py-2">CANCEL</button>
@@ -1774,12 +1765,8 @@
               <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Pinch to zoom · 2 fingers</div>
             </div>
             <div className="flex-1 overflow-hidden relative flex items-center justify-center bg-slate-950 canvas-editor-area">
-              <div style={{ transform:`translate(${canvasPan.x}px,${canvasPan.y}px) scale(${canvasZoom})`, transformOrigin:'center center', willChange:'transform' }}>
-                <canvas ref={canvasRef}
-                  onMouseDown={onMDown} onMouseMove={onMMove} onMouseUp={onMUp} onMouseLeave={onMUp}
-                  onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
-                  className="max-w-full max-h-full object-contain shadow-2xl"
-                  style={{ cursor:canvasMode==='draw'?'crosshair':'grab', display:'block' }}/>
+              <div style={{transform:`translate(${canvasPan.x}px,${canvasPan.y}px) scale(${canvasZoom})`,transformOrigin:'center center',willChange:'transform'}}>
+                <canvas ref={canvasRef} onMouseDown={onMDown} onMouseMove={onMMove} onMouseUp={onMUp} onMouseLeave={onMUp} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} className="max-w-full max-h-full object-contain shadow-2xl" style={{cursor:canvasMode==='draw'?'crosshair':'grab',display:'block'}}/>
               </div>
             </div>
             <div className="bg-slate-900 border-t border-slate-800 p-4 z-10 flex-shrink-0">
@@ -1791,7 +1778,7 @@
                   <button onClick={toggleMode} className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase transition-colors px-3 py-2 rounded-xl ${canvasMode==='pan'?'bg-blue-500/20 text-blue-400':'text-slate-400 hover:text-white'}`}>
                     {canvasMode==='draw'?<Move size={20}/>:<Pencil size={20}/>} {canvasMode==='draw'?'Pan':'Draw'}
                   </button>
-                  {canvasZoom>1 && <button onClick={() => { setCanvasZoom(1); zoomRef.current=1; setCanvasPan({x:0,y:0}); panRef.current={x:0,y:0}; }} className="flex flex-col items-center gap-1 text-[10px] font-black uppercase text-slate-400 hover:text-white"><ZoomIn size={20}/>Reset</button>}
+                  {canvasZoom>1 && <button onClick={() => {setCanvasZoom(1);zoomRef.current=1;setCanvasPan({x:0,y:0});panRef.current={x:0,y:0};}} className="flex flex-col items-center gap-1 text-[10px] font-black uppercase text-slate-400 hover:text-white"><ZoomIn size={20}/>Reset</button>}
                   <button onClick={handleUndo} disabled={undoStack.length<=1} className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase ${undoStack.length<=1?'text-slate-700':'text-slate-300 hover:text-white'}`}><Undo size={20}/>Undo</button>
                   <button onClick={handleClear} disabled={undoStack.length<=1} className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase ${undoStack.length<=1?'text-slate-700':'text-red-400 hover:text-red-300'}`}><RefreshCcw size={20}/>Clear</button>
                 </div>
@@ -1800,8 +1787,9 @@
           </div>
         )}
 
+        {/* ── Print preview ── */}
         {printPreviewJob && (
-          <PrintPreview job={printPreviewJob} onClose={() => setPrintPreviewJob(null)}/>
+          <PrintPreview job={printPreviewJob} businessProfile={businessProfile} onClose={() => setPrintPreviewJob(null)}/>
         )}
       </div>
     );
