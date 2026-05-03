@@ -1438,9 +1438,9 @@
           materialsCost: t.materialsCost, materials: t.materials, desc: t.desc
         }));
         const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
-        const docType = job.type === 'handover' ? 'Completion Invoice' : 'Quotation';
+        const docType = job.type === 'handover' ? 'Invoice' : 'Quotation';
 
-        const prompt = `You are a shrewd pragmatic Australian trade document writer. Generate a concise, yet detailed ${docType} for the client using the data below.
+        const prompt = `You are a shrewd pragmatic professional. Generate a concise ${docType} for the client using the data below.
 Return ONLY a valid JSON object with exactly these keys:
 - "summary": a detailed opening section (can include multiple paragraphs using \\n\\n) addressing the client by name, summarising the scope of work, and stating the total cost clearly.
 - "tasks": an array of objects, each with "title" (keep original), "desc" (a polished, client-friendly description of the work — include key materials, estimated time, and what the outcome will be).
@@ -2150,7 +2150,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
             onClose={() => setShowAIAssistModal(false)}
             onGenerate={handleGenerateDocument}
             isGenerating={isGenerating}
-            docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'}
+            docType={activeJob.type === 'handover' ? 'Invoice' : 'Quotation'}
             apiKey={apiKey}
           />
         )}
