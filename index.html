@@ -606,29 +606,7 @@
             </div>
             
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar</label>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border dark:border-slate-700 space-y-3">
-                <input
-                  type="text"
-                  className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
-                  placeholder="Google Client ID"
-                  value={draftGoogleClientId}
-                  onChange={e => setDraftGoogleClientId(e.target.value)}
-                />
-                {isGoogleConnected ? (
-                  <button onClick={() => {disconnectGoogleCalendar(); showToast('Calendar Disconnected','info');}} className="w-full bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2">
-                    <X size={16}/> Disconnect Calendar
-                  </button>
-                ) : (
-                  <button onClick={() => connectGoogleCalendar(draftGoogleClientId)} disabled={!draftGoogleClientId} className={`w-full font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${draftGoogleClientId ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
-                    <CalendarPlus size={16}/> Connect Google Calendar
-                  </button>
-                )}
-                <p className="text-[10px] text-slate-400 font-medium">Enter your OAuth 2.0 Client ID.</p>
-              </div>
-            </div>
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
               <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700">
@@ -682,6 +660,29 @@
                 <input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
+                        <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar</label>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border dark:border-slate-700 space-y-3">
+                <input
+                  type="text"
+                  className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
+                  placeholder="Google Client ID"
+                  value={draftGoogleClientId}
+                  onChange={e => setDraftGoogleClientId(e.target.value)}
+                />
+                {isGoogleConnected ? (
+                  <button onClick={() => {disconnectGoogleCalendar(); showToast('Calendar Disconnected','info');}} className="w-full bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2">
+                    <X size={16}/> Disconnect Calendar
+                  </button>
+                ) : (
+                  <button onClick={() => connectGoogleCalendar(draftGoogleClientId)} disabled={!draftGoogleClientId} className={`w-full font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${draftGoogleClientId ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
+                    <CalendarPlus size={16}/> Connect Google Calendar Optional/Advanced
+                  </button>
+                )}
+                <p className="text-[10px] text-slate-400 font-medium">Enter your OAuth 2.0 Client ID.</p>
+              </div>
+            </div>
+            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
             <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all mt-4">
               <Check size={16}/> Save & Close
             </button>
