@@ -661,7 +661,7 @@
               </div>
             </div>
                         <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar Optional/Advanced</label>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border dark:border-slate-700 space-y-3">
                 <input
                   type="text"
@@ -676,7 +676,7 @@
                   </button>
                 ) : (
                   <button onClick={() => connectGoogleCalendar(draftGoogleClientId)} disabled={!draftGoogleClientId} className={`w-full font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${draftGoogleClientId ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
-                    <CalendarPlus size={16}/> Connect Google Calendar Optional/Advanced
+                    <CalendarPlus size={16}/> Connect Google Calendar
                   </button>
                 )}
                 <p className="text-[10px] text-slate-400 font-medium">Enter your OAuth 2.0 Client ID.</p>
