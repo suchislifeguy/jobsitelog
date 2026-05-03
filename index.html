@@ -127,6 +127,14 @@
   const DB_KEY_TEMPL     = 'joblog-templates';
   const DB_KEY_MATS      = 'joblog-materials';
   const DB_KEY_APPOINTMENTS = 'joblog-appointments';
+
+  /* ─── Embedded Licence Keys (edit this list to add more) ─── */
+  const LICENCE_KEYS = [
+    { key: "JOBLOG-DEMO-1234", expiry: null },          // permanent demo
+    { key: "JOBLOG-PRO-001",   expiry: "2027-01-01" },  // yearly example
+    { key: "JOBLOG-PRO-002",   expiry: null },          // permanent example
+  ];
+
   const BIZA_KEY         = 'joblog-business';
   const MAX_STOPS        = 12;
   const GST_RATE         = 0.1;
@@ -270,14 +278,22 @@
   /* ─── UpgradeModal ───────────────────────────────────────────── */
   const UpgradeModal = ({ onClose, onUnlock, showToast }) => {
     const [key, setKey] = useState('');
+
     const handleUnlock = () => {
-      if (key.trim() === 'JOBLOG-DEMO-1234') {
-        onUnlock();
-        showToast('App Unlocked Forever!', 'success');
-        onClose();
-      } else {
-        showToast('Invalid Licence Key', 'error');
+      const input = key.trim().toUpperCase();
+      const found = LICENCE_KEYS.find(k => k.key === input);
+
+      if (!found) {
+        showToast('Invalid licence key', 'error');
+        return;
       }
+      if (found.expiry && new Date(found.expiry) < new Date()) {
+        showToast('This key has expired', 'error');
+        return;
+      }
+      onUnlock(found);
+      showToast('Full version unlocked!', 'success');
+      onClose();
     };
 
     return (
@@ -288,7 +304,7 @@
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Limit Reached</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-            You've reached the limit of 3 free projects. Enter a valid licence key to unlock unlimited jobs forever.
+            You've reached the 3‑job free limit. Enter a licence key for full‑version features.
           </p>
           <input 
             className="w-full p-4 mb-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-mono text-center font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 uppercase" 
@@ -489,7 +505,7 @@
   };
 
   /* ─── SettingsModal ───────────────────────────────────────────── */
-  const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize }) => {
+  const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
     const [draftExtraTax, setDraftExtraTax] = useState(extraTaxRate);
@@ -497,6 +513,8 @@
     const [showTemplates, setShowTemplates] = useState(false);
     const [showMaterials, setShowMaterials] = useState(false);
     const [showBusiness, setShowBusiness] = useState(false);
+    const [licenceInput, setLicenceInput] = useState('');
+    
     const save = () => {
       onSave(draftKey, draftModel, draftExtraTax);
       setGoogleClientId(draftGoogleClientId);
@@ -504,6 +522,16 @@
       showToast('Settings Saved', 'success');
     };
     const hasBiz = !!businessProfile?.name;
+
+    const handleLicenceUnlock = () => {
+      const input = licenceInput.trim().toUpperCase();
+      const found = LICENCE_KEYS.find(k => k.key === input);
+      if (!found) return showToast('Invalid licence key', 'error');
+      if (found.expiry && new Date(found.expiry) < new Date()) return showToast('Key expired', 'error');
+      onUnlockPro(found);
+      setLicenceInput('');
+      showToast('Full version unlocked!', 'success');
+    };
 
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
@@ -516,6 +544,39 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
           <div className="space-y-6">
+            
+            {/* Pro Licence */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Pro Licence</label>
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-4 space-y-3">
+                {isPro ? (
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black text-sm">
+                    <CheckCircle2 size={16}/> Full version active – unlimited jobs
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                      Enter a licence key for full‑version features.
+                    </p>
+                    <input 
+                      type="text" 
+                      className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl font-mono text-sm dark:text-white uppercase" 
+                      placeholder="Licence key" 
+                      value={licenceInput} 
+                      onChange={e => setLicenceInput(e.target.value)}
+                    />
+                    <button 
+                      onClick={handleLicenceUnlock} 
+                      className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"
+                    >
+                      <Lock size={16}/> Unlock Full Version
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Business</label>
               <button onClick={() => setShowBusiness(true)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl active:scale-95 transition-all hover:border-orange-400 dark:hover:border-orange-500">
@@ -1197,7 +1258,21 @@
       try { return JSON.parse(localStorage.getItem(BIZA_KEY) || '{}'); } catch { return {}; }
     });
 
-    const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('joblog-unlocked') === 'true');
+    const [isUnlocked, setIsUnlocked] = useState(() => {
+      const stored = localStorage.getItem('joblog-licence');
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          if (data.expiry && new Date(data.expiry) < new Date()) {
+            localStorage.removeItem('joblog-unlocked');
+            localStorage.removeItem('joblog-licence');
+            return false;
+          }
+          return true;
+        } catch {}
+      }
+      return localStorage.getItem('joblog-unlocked') === 'true';
+    });
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [extraTaxRate, setExtraTaxRate] = useState(() => Number(localStorage.getItem('joblog-extratax') || 0));
 
@@ -1373,9 +1448,10 @@
       }
     };
 
-    const handleUnlockSuccess = () => {
+    const handleUnlockSuccess = (keyData) => {
       setIsUnlocked(true);
       localStorage.setItem('joblog-unlocked', 'true');
+      if (keyData) localStorage.setItem('joblog-licence', JSON.stringify(keyData));
     };
 
     // Voice
@@ -2063,6 +2139,7 @@
             }}
             onClose={() => setShowSettings(false)}
             showToast={showToast} dbSize={dbSize}
+            isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}
           />
         )}
         
