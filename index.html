@@ -224,7 +224,23 @@
     return new Date(d.setDate(diff));
   };
 
-  /* ─── Error Boundary ─────────────────────────────────────────── */
+  /* ─── Components ─────────────────────────────────────────────── */
+
+  // A robust contentEditable wrapper designed to perfectly retain whitespace and resize natively for PDFs/Printing
+  const PrintEditableDiv = ({ value, onChange, placeholder, className }) => {
+    return (
+      <div
+        contentEditable
+        suppressContentEditableWarning
+        onBlur={e => onChange(e.currentTarget.innerText)}
+        className={`empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 whitespace-pre-wrap outline-none ${className}`}
+        data-placeholder={placeholder}
+      >
+        {value}
+      </div>
+    );
+  };
+
   class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, error: null }; }
     static getDerivedStateFromError(error) { return { hasError: true, error }; }
@@ -309,6 +325,45 @@
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-black">Cancel</button>
             <button onClick={handleUnlock} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black">Unlock</button>
           </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* ─── AIAssistModal ───────────────────────────────────────────── */
+  const AIAssistModal = ({ onClose, onGenerate, isGenerating, docType, apiKey }) => {
+    const [prompt, setPrompt] = useState('');
+
+    return (
+      <div className="fixed inset-0 z-[600] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 animate-slide-up sm:animate-none">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 pb-safe">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-black text-lg flex items-center gap-2"><Sparkles className="text-purple-500" size={20}/> AI Assist</h3>
+            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full"><X size={20}/></button>
+          </div>
+          {!apiKey ? (
+             <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-bold mb-4">
+               Please add your Gemini API Key in Settings to use AI Assist features.
+             </div>
+          ) : (
+            <>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 font-medium leading-relaxed">
+                Provide optional instructions to guide the AI when generating this {docType}. For example: <span className="italic text-slate-600 dark:text-slate-300">"Include a 10% discount", "Focus on the high quality of materials used"</span>.
+              </p>
+              <textarea
+                className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-32 resize-none dark:text-white dark:placeholder-slate-500 mb-4 focus:ring-2 focus:ring-purple-500 border border-slate-200 dark:border-slate-700"
+                placeholder="Additional instructions (optional)..."
+                value={prompt}
+                onChange={e => setPrompt(e.target.value)}
+              />
+              <div className="flex gap-3">
+                <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300 active:scale-95 transition-all">Cancel</button>
+                <button onClick={() => onGenerate(prompt)} disabled={isGenerating} className={`flex-1 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all active:scale-95 ${isGenerating ? 'bg-purple-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-500/20'}`}>
+                  {isGenerating ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/> : <><Sparkles size={16}/> Generate</>}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -833,18 +888,16 @@
     };
 
     const totals = getQuoteTotals(tasks, job.gstEnabled, extraTaxRate);
-    // For invoices (handover), always show costs; for quotes, always show costs
-    const showCosts = job.type === 'handover' ? true : true;
+    const showCosts = job.showCosts; // Now we respect the job setting for both quotes and handovers
     const totalHours = tasks.reduce((a,t) => a + parseTimeToMinutes(t.time), 0);
     const biz = businessProfile;
-    // ─── Consistent doc label ───
     const docLabel = job.type === 'handover' ? 'Completion Report' : 'Quotation';
 
     return createPortal(
       <div id="print-container" className="print-preview-overlay fixed inset-0 z-[500] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
         <div className="max-w-2xl mx-auto">
           <div className="flex justify-between items-center mb-6 no-print">
-            <h2 className="text-xl font-black">Edit & Print {docLabel}</h2>
+            <h2 className="text-xl font-black">Edit & Print Document</h2>
             <div className="flex gap-3">
               <button onClick={() => window.print()} className="bg-slate-900 dark:bg-slate-700 text-white px-6 py-2 rounded-xl font-black flex items-center gap-2"><Printer size={16}/> Print</button>
               <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl font-black">Close</button>
@@ -873,11 +926,17 @@
                 <span>{docLabel}</span>
                 <span>{new Date(job.date || Date.now()).toLocaleDateString('en-AU',{dateStyle:'full'})}</span>
               </div>
-              <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
-              {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
-              <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
+              <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
+              {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1 outline-none" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
+              <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
               {header.dueDate && <div className="text-sm font-bold text-amber-600 mb-2">Due: {fmtDate(header.dueDate)}</div>}
-              {header.projectNotes && <textarea className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.projectNotes} onChange={e => setHeader({...header, projectNotes: e.target.value})} placeholder="Project notes"/>}
+              {/* projectNotes wrapped in PrintEditableDiv for perfect print reflow */}
+              <PrintEditableDiv
+                value={header.projectNotes}
+                onChange={v => setHeader({...header, projectNotes: v})}
+                placeholder="Project notes / Document Summary"
+                className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1"
+              />
               {header.projectPhotos?.length > 0 && (
                 <div className="flex gap-2 mt-2 overflow-x-auto">
                   {header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}
@@ -885,7 +944,7 @@
               )}
               <div className="flex gap-4 mt-2 text-sm font-medium">
                 <span>TOTAL TIME: {fmtMins(totalHours)}</span>
-                {totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
+                {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
               </div>
             </div>
             {tasks.map((t, idx) => {
@@ -900,7 +959,12 @@
                     {showCosts && subtotal > 0 && <span className="text-sm text-emerald-700 ml-4">{fmtAUD(subtotal)}</span>}
                   </div>
                   <div className="p-6">
-                    <textarea className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent resize-none outline-none" rows={2} value={t.desc} onChange={e => updateTask(idx, 'desc', e.target.value)}/>
+                    <PrintEditableDiv
+                      value={t.desc}
+                      onChange={v => updateTask(idx, 'desc', v)}
+                      placeholder="Task description"
+                      className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent outline-none"
+                    />
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="p-4 bg-slate-50 rounded-xl border">
                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
@@ -932,7 +996,7 @@
                 </div>
               );
             })}
-            {totals.total > 0 && (
+            {showCosts && totals.total > 0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
                   <p className="font-black uppercase text-slate-500 text-sm">Labour: {fmtAUD(totals.labour)}</p>
@@ -1219,6 +1283,7 @@
     const [appointmentFromJob, setAppointmentFromJob] = useState(null);
 
     // ─── AI generation state ───────────────────────────────────
+    const [showAIAssistModal, setShowAIAssistModal] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
 
     const EMPTY_TASK = { title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'', images:[] };
@@ -1257,6 +1322,7 @@
       const migrated = d.map(j => {
         const mj = { ...j };
         if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false;
+        if (mj.type === 'quote' && mj.showCosts === undefined) mj.showCosts = true;
         if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now();
         return mj;
       });
@@ -1361,8 +1427,8 @@
       return JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
     };
 
-    // ─── Generate Quotation (type = 'quote') ───────────────────
-    const handleGenerateQuote = async () => {
+    // ─── Generate Document (Quote or Invoice via AI) ───────────────────
+    const handleGenerateDocument = async (customPrompt) => {
       if (!apiKey) { showToast('Please add your Gemini API key in Settings.', 'error'); return; }
       setIsGenerating(true);
       try {
@@ -1372,59 +1438,23 @@
           materialsCost: t.materialsCost, materials: t.materials, desc: t.desc
         }));
         const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
-        const prompt = `You are a professional Australian trade quotation writer. Generate a formal, detailed quotation for the client using the data below.
+        const docType = job.type === 'handover' ? 'Completion Invoice' : 'Quotation';
+
+        const prompt = `You are a professional Australian trade document writer. Generate a formal, detailed ${docType} for the client using the data below.
 Return ONLY a valid JSON object with exactly these keys:
-- "summary": a one-paragraph introduction addressing the client by name, summarising the scope of work, and stating the total cost clearly.
+- "summary": a detailed opening section (can include multiple paragraphs using \\n\\n) addressing the client by name, summarising the scope of work, and stating the total cost clearly.
 - "tasks": an array of objects, each with "title" (keep original), "desc" (a polished, client-friendly description of the work — include key materials, estimated time, and what the outcome will be).
-- "footer": a professional closing paragraph — thank the client, include a payment terms placeholder (e.g. "Payment due within 14 days of invoice"), and a contact details placeholder.
+- "footer": a professional closing paragraph — thank the client, include payment terms (if an invoice, add a bank details placeholder).
+
 Job data:
 Address: ${job.address}
 Client: ${job.clientName || 'the client'}
 Tasks: ${JSON.stringify(tasksData, null, 2)}
 Costs: Labour $${qt.labour.toFixed(2)}, Materials $${qt.mats.toFixed(2)}, Subtotal $${qt.subtotal.toFixed(2)}, ${job.gstEnabled ? 'GST (10%) $' + qt.gst.toFixed(2) + ', ' : ''}${extraTaxRate > 0 ? 'Markup (' + extraTaxRate + '%) $' + qt.extra.toFixed(2) + ', ' : ''}Total $${qt.total.toFixed(2)}.
-GST Enabled: ${job.gstEnabled}`;
-        const result = await callGemini(prompt);
-        const updatedTasks = job.tasks.map((t, idx) => ({
-          ...t,
-          desc: result.tasks?.[idx]?.desc || t.desc,
-          title: result.tasks?.[idx]?.title || t.title,
-        }));
-        setPrintPreviewJob({
-          ...job,
-          projectNotes: result.summary + (result.footer ? '\n\n' + result.footer : ''),
-          tasks: updatedTasks,
-        });
-        showToast('AI Quotation generated — review & print!', 'success');
-      } catch (err) {
-        showToast('Failed to generate quotation: ' + err.message, 'error');
-      } finally {
-        setIsGenerating(false);
-      }
-    };
+GST Enabled: ${job.gstEnabled}
 
-    // ─── Generate Invoice (type = 'handover') ─────────────────
-    const handleGenerateInvoice = async () => {
-      if (!apiKey) { showToast('Please add your Gemini API key in Settings.', 'error'); return; }
-      setIsGenerating(true);
-      try {
-        const job = activeJob;
-        const tasksData = job.tasks.map((t, i) => ({
-          index: i + 1, title: t.title, time: t.time, rate: t.rate,
-          materialsCost: t.materialsCost, materials: t.materials, desc: t.desc
-        }));
-        // Always use costs for an invoice
-        const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
-        const prompt = `You are a professional Australian tradesperson creating a tax invoice. Generate a formal completion invoice for the client using the data below.
-Return ONLY a valid JSON object with exactly these keys:
-- "summary": a one-paragraph opening confirming all works have been completed, addressing the client by name, and stating the total amount due.
-- "tasks": an array of objects, each with "title" (keep original), "desc" (a clear, client-friendly description of the completed work — include materials used, time taken, and what was delivered or installed).
-- "footer": professional payment instructions — include a bank details placeholder (e.g. "BSB: XXX-XXX  Account: XXXXXXXXX"), payment due date placeholder (e.g. "Payment due within 14 days"), and a thank-you note.
-Job data:
-Address: ${job.address}
-Client: ${job.clientName || 'the client'}
-Completed Tasks: ${JSON.stringify(tasksData, null, 2)}
-Costs: Labour $${qt.labour.toFixed(2)}, Materials $${qt.mats.toFixed(2)}, Subtotal $${qt.subtotal.toFixed(2)}, ${job.gstEnabled ? 'GST (10%) $' + qt.gst.toFixed(2) + ', ' : ''}${extraTaxRate > 0 ? 'Markup (' + extraTaxRate + '%) $' + qt.extra.toFixed(2) + ', ' : ''}Total Due $${qt.total.toFixed(2)}.
-GST Enabled: ${job.gstEnabled}`;
+Additional User Instructions/Focus: ${customPrompt || 'None'}`;
+
         const result = await callGemini(prompt);
         const updatedTasks = job.tasks.map((t, idx) => ({
           ...t,
@@ -1433,13 +1463,13 @@ GST Enabled: ${job.gstEnabled}`;
         }));
         setPrintPreviewJob({
           ...job,
-          showCosts: true,
           projectNotes: result.summary + (result.footer ? '\n\n' + result.footer : ''),
           tasks: updatedTasks,
         });
-        showToast('AI Invoice generated — review & print!', 'success');
+        setShowAIAssistModal(false);
+        showToast(`AI ${docType} generated — review & print!`, 'success');
       } catch (err) {
-        showToast('Failed to generate invoice: ' + err.message, 'error');
+        showToast('Failed to generate document: ' + err.message, 'error');
       } finally {
         setIsGenerating(false);
       }
@@ -1513,7 +1543,7 @@ GST Enabled: ${job.gstEnabled}`;
           const imported = JSON.parse(ev.target.result);
           if (!Array.isArray(imported)) throw new Error('Invalid format');
           showConfirm(`Found ${imported.length} project(s). This will replace ALL current data. Are you sure?`, async () => {
-            const migrated = imported.map(j => { const mj={...j}; if (mj.type==='handover' && mj.showCosts===undefined) mj.showCosts=false; if (!mj.createdAt) mj.createdAt = mj.date?new Date(mj.date).getTime():Date.now(); return mj; });
+            const migrated = imported.map(j => { const mj={...j}; if (mj.type==='handover' && mj.showCosts===undefined) mj.showCosts=false; if (mj.type==='quote' && mj.showCosts===undefined) mj.showCosts=true; if (!mj.createdAt) mj.createdAt = mj.date?new Date(mj.date).getTime():Date.now(); return mj; });
             await saveToDB(migrated); window.location.reload();
           }, 'Replace All');
         } catch { showToast('Invalid backup file.', 'error'); }
@@ -1546,7 +1576,7 @@ GST Enabled: ${job.gstEnabled}`;
       saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x));
     };
     const toggleGST   = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
-    const toggleCosts  = (id) => saveToDB(jobs.map(j=>j.id===id&&j.type==='handover'?{...j,showCosts:!j.showCosts}:j));
+    const toggleCosts = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,showCosts:!j.showCosts}:j));
 
     const startEditHeader = () => {
       setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] });
@@ -1748,37 +1778,9 @@ GST Enabled: ${job.gstEnabled}`;
                 <button onClick={handleShare} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 active:scale-95" title="Share summary">
                   <Share2 size={16}/>
                 </button>
-                <button onClick={() => setPrintPreviewJob(activeJob)} className="p-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full active:scale-95" title="Print preview">
+                <button onClick={() => setPrintPreviewJob(activeJob)} className="p-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full active:scale-95 shadow-md" title="Print preview">
                   <Printer size={16}/>
                 </button>
-                {/* ── AI Quotation button (quote jobs) ── */}
-                {activeJob.type === 'quote' && (
-                  <button
-                    onClick={handleGenerateQuote}
-                    disabled={isGenerating || !apiKey}
-                    className={`p-2 rounded-full active:scale-95 transition-all text-white ${isGenerating ? 'bg-orange-400 cursor-not-allowed' : apiKey ? 'bg-orange-500 hover:bg-orange-400' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'}`}
-                    title={apiKey ? 'Generate AI Quotation' : 'Add Gemini API key in Settings to enable'}
-                  >
-                    {isGenerating
-                      ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                      : <FileText size={16}/>
-                    }
-                  </button>
-                )}
-                {/* ── AI Invoice button (handover/completion jobs) ── */}
-                {activeJob.type === 'handover' && (
-                  <button
-                    onClick={handleGenerateInvoice}
-                    disabled={isGenerating || !apiKey}
-                    className={`p-2 rounded-full active:scale-95 transition-all text-white ${isGenerating ? 'bg-emerald-400 cursor-not-allowed' : apiKey ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-slate-300 dark:bg-slate-700 cursor-not-allowed'}`}
-                    title={apiKey ? 'Generate AI Invoice' : 'Add Gemini API key in Settings to enable'}
-                  >
-                    {isGenerating
-                      ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                      : <FileText size={16}/>
-                    }
-                  </button>
-                )}
               </>
             )}
           </div>
@@ -1969,14 +1971,17 @@ GST Enabled: ${job.gstEnabled}`;
                     <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm mt-1">{activeJob?.clientName}</p>
                     {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
                     {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDate(activeJob.dueDate)}</p>}
-                    {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
+                    {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3 whitespace-pre-wrap">{activeJob.projectNotes}</p>}
                     {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-2 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-12 rounded-lg" alt=""/>)}</div>}
-                    <div className="flex items-center gap-3 mt-3">
+                    <div className="flex items-center gap-3 mt-4 flex-wrap">
                       <button onClick={startEditHeader} className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors">
                         <Pencil size={11}/> Edit Details
                       </button>
                       <button onClick={() => openAppointmentForJob(activeJobId)} className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors">
                         <CalendarPlus size={12}/> Schedule Appointment
+                      </button>
+                      <button onClick={() => setShowAIAssistModal(true)} className="flex items-center gap-1.5 text-[10px] font-black text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 uppercase tracking-widest transition-colors bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-lg">
+                        <Sparkles size={11}/> AI Assist
                       </button>
                     </div>
                   </div>
@@ -1989,18 +1994,16 @@ GST Enabled: ${job.gstEnabled}`;
                     <button onClick={() => cycleStatus(activeJobId)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-black text-[11px] uppercase tracking-widest border-2 transition-all active:scale-95 ${getStatus(activeJob?.status||'draft').cls}`}>
                       <Tag size={12}/> {getStatus(activeJob?.status||'draft').label}
                     </button>
-                    {activeJob?.type==='handover' && (
-                      <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
-                        <DollarSign size={12}/> Costs {activeJob.showCosts?'ON':'OFF'}
-                      </button>
-                    )}
+                    <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
+                      <DollarSign size={12}/> Costs {activeJob.showCosts?'ON':'OFF'}
+                    </button>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Cost summary */}
-            {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && activeJob && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total > 0 && (
+            {activeJob?.showCosts && activeJob && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total > 0 && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2"><DollarSign size={16} className="text-orange-500"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cost Summary</span></div>
@@ -2045,7 +2048,7 @@ GST Enabled: ${job.gstEnabled}`;
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
                 const mats   = parseFloat(t.materialsCost)||0;
                 const subtotal = labour + mats;
-                const showCosts = activeJob.type==='handover' ? activeJob.showCosts : true;
+                const showCosts = activeJob.showCosts;
                 return (
                   <div key={t.id} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-b dark:border-slate-700 flex justify-between items-center px-6">
@@ -2060,7 +2063,7 @@ GST Enabled: ${job.gstEnabled}`;
                         <h3 className="font-black text-xl text-slate-900 dark:text-white">{t.title}</h3>
                         <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-black ml-2 flex-shrink-0">{t.time}</span>
                       </div>
-                      <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3">{t.desc}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3 whitespace-pre-wrap">{t.desc}</p>
                       {showCosts && subtotal > 0 && (
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {labour>0 && <span className="text-[11px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-full">Labour {fmtAUD(labour)}</span>}
@@ -2141,6 +2144,17 @@ GST Enabled: ${job.gstEnabled}`;
 
         {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast}/>}
 
+        {/* AIAssistModal */}
+        {showAIAssistModal && activeJob && (
+          <AIAssistModal
+            onClose={() => setShowAIAssistModal(false)}
+            onGenerate={handleGenerateDocument}
+            isGenerating={isGenerating}
+            docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'}
+            apiKey={apiKey}
+          />
+        )}
+
         {/* Task Form */}
         {isTaskFormOpen && (
           <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
@@ -2175,7 +2189,7 @@ GST Enabled: ${job.gstEnabled}`;
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/>
                   </label>
                 </div>
-                {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && (
+                {activeJob?.showCosts && (
                   <div className="flex gap-3 mt-2">
                     <div className="flex-1 relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
@@ -2206,7 +2220,7 @@ GST Enabled: ${job.gstEnabled}`;
                     </div>
                   </div>
                 )}
-                {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && (() => {
+                {activeJob?.showCosts && (() => {
                   const hrs=parseTimeToMinutes(taskData.time)/60;
                   const labour=hrs*(parseFloat(taskData.rate)||0);
                   const mats=parseFloat(taskData.materialsCost)||0;
