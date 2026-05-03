@@ -978,7 +978,7 @@
       if (!taskData.title.trim() && !taskData.desc.trim()) { alert('Enter at least a title or description first.'); return; }
       if (!apiKey) { alert('Please add your Gemini API key in Settings first.'); return; }
       setIsAiSuggesting(true);
-      const prompt = `You are a construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (professional description). Use reasonable Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
+      const prompt = `You are a construction trade assistant. Based on the task below, return ONLY a valid JSON object (no extra text) with keys: … "desc" (a short, factual description; do not add fluff or marketing language). Use typical Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.3,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error('AI request failed');
