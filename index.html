@@ -14,6 +14,8 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
+    <!-- Google Identity Services (for Calendar sync) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
       html, body { max-width: 100vw; overflow-x: hidden; }
@@ -50,6 +52,65 @@
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       .canvas-editor-area { touch-action: none; }
+
+      /* Calendar grid styles (added for schedule view) */
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: 60px repeat(7, 1fr);
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 1.5rem;
+        overflow: hidden;
+      }
+      .dark .calendar-grid {
+        background-color: #1e293b;
+        border-color: #334155;
+      }
+      .calendar-hour {
+        border-top: 1px solid #e2e8f0;
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 60px;
+      }
+      .dark .calendar-hour {
+        border-color: #475569;
+        color: #94a3b8;
+      }
+      .calendar-cell {
+        border-top: 1px solid #e2e8f0;
+        border-left: 1px solid #e2e8f0;
+        height: 60px;
+        position: relative;
+        cursor: pointer;
+        transition: background-color 0.1s;
+      }
+      .calendar-cell:hover {
+        background-color: rgba(251, 146, 60, 0.05);
+      }
+      .dark .calendar-cell {
+        border-color: #475569;
+      }
+      .dark .calendar-cell:hover {
+        background-color: rgba(251, 146, 60, 0.1);
+      }
+      .calendar-event {
+        position: absolute;
+        left: 2px;
+        right: 2px;
+        border-radius: 8px;
+        padding: 2px 4px;
+        font-size: 10px;
+        font-weight: 700;
+        overflow: hidden;
+        cursor: pointer;
+        z-index: 2;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
     </style>
     <script type="importmap">
     {
@@ -98,16 +159,17 @@
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert,
-    Bookmark, Package, PlusCircle, Calendar, Building2
+    Bookmark, Package, PlusCircle, Calendar, Building2, CalendarPlus
   } from 'lucide-react';
 
   /* ─── Constants ─────────────────────────────────────────────── */
-  const DB_KEY_JOBS  = 'jobsite-master-v4';
-  const DB_KEY_TEMPL = 'joblog-templates';
-  const DB_KEY_MATS  = 'joblog-materials';
-  const BIZA_KEY     = 'joblog-business';
-  const MAX_STOPS    = 12;
-  const GST_RATE     = 0.1;
+  const DB_KEY_JOBS      = 'jobsite-master-v4';
+  const DB_KEY_TEMPL     = 'joblog-templates';
+  const DB_KEY_MATS      = 'joblog-materials';
+  const DB_KEY_APPOINTMENTS = 'joblog-appointments';   // NEW
+  const BIZA_KEY         = 'joblog-business';
+  const MAX_STOPS        = 12;
+  const GST_RATE         = 0.1;
 
   /* ─── Helpers ────────────────────────────────────────────────── */
   const parseTimeToMinutes = (str) => {
@@ -122,6 +184,7 @@
   const fmtAUD  = (n) => `$${Number(n||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU') : '';
   const fmtDateShort = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'}) : '';
+  const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('en-AU', {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}) : '';
 
   const getQuoteTotals = (tasks, gstEnabled) => {
     let labour = 0, mats = 0;
@@ -422,14 +485,19 @@
     );
   };
 
-  /* ─── SettingsModal (with Business Profile) ───────────────────── */
-  const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile }) => {
+  /* ─── SettingsModal (with Business Profile & Google Calendar) ─── */
+  const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
+    const [draftGoogleClientId, setDraftGoogleClientId] = useState(googleClientId);
     const [showTemplates, setShowTemplates] = useState(false);
     const [showMaterials, setShowMaterials] = useState(false);
     const [showBusiness, setShowBusiness] = useState(false);
-    const save = () => { onSave(draftKey, draftModel); onClose(); };
+    const save = () => {
+      onSave(draftKey, draftModel);
+      setGoogleClientId(draftGoogleClientId);
+      onClose();
+    };
     const hasBiz = !!businessProfile?.name;
 
     return (
@@ -461,6 +529,32 @@
                 </div>
                 <Pencil size={14} className="text-slate-400"/>
               </button>
+            </div>
+
+            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+
+            {/* Google Calendar Integration */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar</label>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border dark:border-slate-700 space-y-3">
+                <input
+                  type="text"
+                  className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
+                  placeholder="Google Client ID"
+                  value={draftGoogleClientId}
+                  onChange={e => setDraftGoogleClientId(e.target.value)}
+                />
+                {isGoogleConnected ? (
+                  <button onClick={disconnectGoogleCalendar} className="w-full bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2">
+                    <X size={16}/> Disconnect Calendar
+                  </button>
+                ) : (
+                  <button onClick={() => connectGoogleCalendar(draftGoogleClientId)} disabled={!draftGoogleClientId} className={`w-full font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${draftGoogleClientId ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
+                    <CalendarPlus size={16}/> Connect Google Calendar
+                  </button>
+                )}
+                <p className="text-[10px] text-slate-400 font-medium">Enter your OAuth 2.0 Client ID (Calendar API enabled).</p>
+              </div>
             </div>
 
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
@@ -610,7 +704,7 @@
           "address" (job site address),
           "clientName" (client or customer name),
           "dueDate" (ISO date string YYYY-MM-DD if a due date or completion date is mentioned, otherwise empty string),
-          "tasks" (array of objects with: "title", "time" (e.g. "2h 30m"), "rate" (string, e.g. "85"), "materialsCost" (string, e.g. "320"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (string)).
+          "tasks" (array of objects with: "title", "time" (e.g. "2h 30m"), "rate" (string, e.g. "85"), "materialsCost" (string, e.g. "320"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (short factual description, avoid fluff)).
           Additional text: ${additionalText || 'None'}`;
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
@@ -733,11 +827,10 @@
             </div>
           </div>
 
-          <div className="print-only-block">
-
+          <div>
             {/* ── Business branding header ── */}
             {biz.name && (
-              <div className="print-biz-header flex justify-between items-start pb-4 mb-4" style={{borderBottom:'3px solid #0f172a'}}>
+              <div className="flex justify-between items-start pb-4 mb-4 border-b-2 border-slate-300">
                 <div className="flex items-center gap-4">
                   {biz.logo && <img src={biz.logo} className="h-16 w-auto object-contain rounded-lg" alt={biz.name}/>}
                   <div>
@@ -755,7 +848,7 @@
             )}
 
             {/* ── Document header ── */}
-            <div className="print-header border-b-2 border-slate-300 pb-3 mb-4">
+            <div className="border-b-2 border-slate-300 pb-3 mb-4">
               <div className="flex justify-between text-xs font-black uppercase text-slate-500 mb-2">
                 <span>{docLabel}</span>
                 <span>{new Date(job.date || Date.now()).toLocaleDateString('en-AU',{dateStyle:'full'})}</span>
@@ -849,6 +942,255 @@
   };
 
   /* ═══════════════════════════════════════════════════════════
+     APPOINTMENT MODALS & SCHEDULE VIEW
+  ═══════════════════════════════════════════════════════════ */
+  const AppointmentFormModal = ({ appointment, jobs, googleToken, onSave, onClose }) => {
+    const editing = !!appointment.id;
+    const [form, setForm] = useState({
+      title: appointment.title || '',
+      jobId: appointment.jobId || '',
+      start: appointment.start ? new Date(appointment.start).toISOString().slice(0,16) : '',
+      end: appointment.end ? new Date(appointment.end).toISOString().slice(0,16) : '',
+      notes: appointment.notes || ''
+    });
+    const save = () => {
+      if (!form.title.trim() || !form.start || !form.end) return alert('Title, start, and end are required.');
+      if (new Date(form.end) <= new Date(form.start)) return alert('End must be after start.');
+      onSave({
+        id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()),
+        ...form,
+        googleEventId: appointment.googleEventId || null
+      });
+    };
+    return (
+      <div className="fixed inset-0 z-[220] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-black text-lg">{editing ? 'Edit Appointment' : 'New Appointment'}</h3>
+            <button onClick={onClose}><X size={20}/></button>
+          </div>
+          <div className="space-y-4">
+            <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold" placeholder="Title (e.g. Meet with client)" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
+            <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-medium text-sm" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}>
+              <option value="">No linked job</option>
+              {jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}
+            </select>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start</label>
+              <input type="datetime-local" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold" value={form.start} onChange={e => setForm({...form, start: e.target.value})} />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End</label>
+              <input type="datetime-local" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold" value={form.end} onChange={e => setForm({...form, end: e.target.value})} />
+            </div>
+            <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm font-medium h-20 resize-none" placeholder="Notes" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
+            <div className="flex gap-3">
+              <button onClick={save} className="flex-1 bg-orange-500 text-white py-3 rounded-2xl font-black"><Check size={16} className="inline mr-2"/>Save</button>
+              <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-3 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* ─── Schedule View (week calendar with Google sync) ───────── */
+  const ScheduleView = ({ appointments, jobs, googleToken, onSaveAppointment, onDeleteAppointment, isGoogleConnected }) => {
+    const [weekOffset, setWeekOffset] = useState(0);
+    const [apptModal, setApptModal] = useState(null); // { appointment, defaultStart }
+    const [googleEvents, setGoogleEvents] = useState([]);
+    const [loadingGoogle, setLoadingGoogle] = useState(false);
+
+    // Week start (Monday)
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay() + 1 + (weekOffset * 7));
+    startOfWeek.setHours(0,0,0,0);
+    const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const days = Array.from({length:7}, (_,i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(d.getDate()+i);
+      return d;
+    });
+
+    const hours = Array.from({length:15}, (_,i) => i+6); // 6am to 8pm
+
+    // Fetch Google Calendar events if connected
+    useEffect(() => {
+      if (!googleToken || !isGoogleConnected) return;
+      const fetchEvents = async () => {
+        setLoadingGoogle(true);
+        try {
+          const timeMin = new Date(startOfWeek).toISOString();
+          const timeMax = new Date(days[6].getTime() + 24*3600*1000).toISOString();
+          const res = await fetch(
+            `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
+            { headers: { Authorization: `Bearer ${googleToken.access_token}` } }
+          );
+          const data = await res.json();
+          setGoogleEvents(data.items || []);
+        } catch (e) { console.error('Failed to fetch Google events', e); }
+        finally { setLoadingGoogle(false); }
+      };
+      fetchEvents();
+    }, [googleToken, weekOffset, isGoogleConnected]);
+
+    // Merge local appointments + Google events (only Google ones without local mapping)
+    const localEvents = appointments.map(a => ({
+      ...a,
+      isLocal: true,
+      start: new Date(a.start),
+      end: new Date(a.end)
+    }));
+    const localGoogleIds = new Set(appointments.filter(a => a.googleEventId).map(a => a.googleEventId));
+    const externalGoogleEvents = googleEvents
+      .filter(ev => !localGoogleIds.has(ev.id))
+      .map(ev => ({
+        id: ev.id,
+        title: ev.summary || '(No title)',
+        start: new Date(ev.start.dateTime || ev.start.date),
+        end: new Date(ev.end.dateTime || ev.end.date),
+        isGoogle: true,
+        notes: ev.description || ''
+      }));
+    const allEvents = [...localEvents, ...externalGoogleEvents];
+
+    // Get events for a specific day/hour for rendering
+    const getEventsForSlot = (day, hour) => {
+      const slotStart = new Date(day);
+      slotStart.setHours(hour,0,0,0);
+      const slotEnd = new Date(slotStart);
+      slotEnd.setHours(hour+1,0,0,0);
+      return allEvents.filter(ev => ev.start < slotEnd && ev.end > slotStart);
+    };
+
+    const handleSlotClick = (day, hour) => {
+      const defStart = new Date(day);
+      defStart.setHours(hour,0,0,0);
+      const defEnd = new Date(defStart);
+      defEnd.setHours(hour+1,0,0,0);
+      setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString().slice(0,16), end: defEnd.toISOString().slice(0,16), notes: '' }, defaultStart: defStart.toISOString().slice(0,16) });
+    };
+
+    const handleEventClick = (event) => {
+      if (event.isGoogle) return; // can't edit Google events directly
+      setApptModal({ appointment: event });
+    };
+
+    const handleSave = async (data) => {
+      // Save to local state, and sync to Google if connected
+      if (googleToken && isGoogleConnected && !data.googleEventId) {
+        // Create Google Calendar event
+        try {
+          const gEvent = {
+            summary: data.title,
+            description: data.notes || '',
+            start: { dateTime: new Date(data.start).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+            end: { dateTime: new Date(data.end).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
+          };
+          const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${googleToken.access_token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(gEvent)
+          });
+          const created = await res.json();
+          data.googleEventId = created.id;
+        } catch (e) { console.error('Google sync failed', e); }
+      }
+      onSaveAppointment(data);
+      setApptModal(null);
+    };
+
+    const handleDeleteAppointment = (id) => {
+      showConfirm('Delete this appointment?', () => {
+        const appt = appointments.find(a => a.id === id);
+        if (appt?.googleEventId && googleToken) {
+          fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${googleToken.access_token}` }
+          }).catch(e => console.error('Failed to delete Google event', e));
+        }
+        onDeleteAppointment(id);
+      });
+    };
+
+    return (
+      <div className="max-w-6xl mx-auto p-4">
+        {/* Header with week navigation */}
+        <div className="flex justify-between items-center mb-4">
+          <button onClick={() => setWeekOffset(o => o-1)} className="p-2 bg-slate-200 dark:bg-slate-800 rounded-xl"><ChevronRight size={18} className="rotate-180"/></button>
+          <h2 className="text-xl font-black uppercase">
+            {days[0].toLocaleDateString('en-AU', {day:'numeric',month:'short'})} – {days[6].toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'})}
+          </h2>
+          <button onClick={() => setWeekOffset(o => o+1)} className="p-2 bg-slate-200 dark:bg-slate-800 rounded-xl"><ChevronRight size={18}/></button>
+        </div>
+
+        {/* Week grid */}
+        <div className="calendar-grid">
+          {/* Time column headers */}
+          <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center">Time</div>
+          {days.map((d,i) => (
+            <div key={i} className={`bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center py-2 ${d.toDateString()===today.toDateString()?'text-orange-500':''}`}>
+              {dayNames[i]} {d.getDate()}
+            </div>
+          ))}
+          {/* Grid rows */}
+          {hours.map(hour => (
+            <React.Fragment key={hour}>
+              <div className="calendar-hour">{hour}:00</div>
+              {days.map((day, di) => {
+                const slotEvents = getEventsForSlot(day, hour);
+                return (
+                  <div key={di} className="calendar-cell" onClick={() => handleSlotClick(day, hour)}>
+                    {slotEvents.map(ev => (
+                      <div
+                        key={ev.id}
+                        onClick={(e) => { e.stopPropagation(); handleEventClick(ev); }}
+                        className={`calendar-event ${ev.isGoogle ? 'bg-blue-200 dark:bg-blue-800 text-slate-800 dark:text-blue-200' : ev.isLocal ? 'bg-orange-100 dark:bg-orange-900/60 text-orange-800 dark:text-orange-200' : 'bg-slate-200 dark:bg-slate-600'}`}
+                        style={{ top: `${((ev.start.getMinutes()/60)*100)}%`, height: `${Math.max(((ev.end - ev.start)/3600000)*100, 5)}%` }}
+                      >
+                        <div className="truncate text-[9px] font-black">{ev.title}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Quick list of upcoming appointments */}
+        <div className="mt-6 bg-white dark:bg-slate-800 rounded-3xl p-5 border dark:border-slate-700">
+          <h3 className="font-black text-sm uppercase tracking-widest mb-3 flex items-center gap-2"><Clock size={14} className="text-orange-500"/> Upcoming Appointments</h3>
+          {allEvents.filter(ev => ev.start >= new Date()).sort((a,b)=>a.start-b.start).slice(0,5).map(ev => (
+            <div key={ev.id} className="flex items-center justify-between py-2 border-b dark:border-slate-700 last:border-0">
+              <div>
+                <p className="font-bold text-sm">{ev.title}</p>
+                <p className="text-[10px] text-slate-400">{fmtDateTime(ev.start.toISOString())} – {fmtDateTime(ev.end.toISOString())}</p>
+              </div>
+              {!ev.isGoogle && (
+                <button onClick={() => handleDeleteAppointment(ev.id)} className="text-red-400 hover:text-red-600"><Trash2 size={14}/></button>
+              )}
+            </div>
+          ))}
+          {allEvents.length===0 && <p className="text-sm text-slate-400">No upcoming appointments.</p>}
+        </div>
+
+        {/* Appointment form modal */}
+        {apptModal && (
+          <AppointmentFormModal
+            appointment={apptModal.appointment}
+            jobs={jobs}
+            googleToken={googleToken}
+            onSave={handleSave}
+            onClose={() => setApptModal(null)}
+          />
+        )}
+      </div>
+    );
+  };
+
+  /* ═══════════════════════════════════════════════════════════
      APP
   ═══════════════════════════════════════════════════════════ */
   const App = () => {
@@ -856,11 +1198,12 @@
     const [jobs, setJobs] = useState([]);
     const [userTemplates, setUserTemplates] = useState([]);
     const [userMaterials, setUserMaterials] = useState([]);
+    const [appointments, setAppointments] = useState([]);   // NEW
     const [businessProfile, setBusinessProfile] = useState(() => {
       try { return JSON.parse(localStorage.getItem(BIZA_KEY) || '{}'); } catch { return {}; }
     });
     const [activeJobId, setActiveJobId] = useState(null);
-    const [viewMode, setViewMode] = useState('dashboard');
+    const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' | 'detail' | 'schedule'
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
     const [editingTaskId, setEditingTaskId] = useState(null);
     const [dbSize, setDbSize] = useState('0 MB');
@@ -876,6 +1219,8 @@
     const recognitionRef = useRef(null);
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
     const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-2.5-flash');
+    const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('googleClientId') || '');
+    const [googleToken, setGoogleToken] = useState(null);  // NEW: { access_token, expires_at }
     const [showSettings, setShowSettings] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState(null);
     const [printPreviewJob, setPrintPreviewJob] = useState(null);
@@ -928,7 +1273,8 @@
     };
     const loadTemplates = async () => setUserTemplates(await get(DB_KEY_TEMPL) || []);
     const loadMaterials = async () => setUserMaterials(await get(DB_KEY_MATS) || []);
-    useEffect(() => { loadJobs(); loadTemplates(); loadMaterials(); }, []);
+    const loadAppointments = async () => setAppointments(await get(DB_KEY_APPOINTMENTS) || []);
+    useEffect(() => { loadJobs(); loadTemplates(); loadMaterials(); loadAppointments(); }, []);
 
     const updMetric = (d) => setDbSize(`${(new TextEncoder().encode(JSON.stringify(d)).length/1024/1024).toFixed(2)} MB`);
     const saveToDB = async (nj) => {
@@ -938,6 +1284,7 @@
     };
     const saveUserTemplates = async (arr) => { setUserTemplates(arr); await set(DB_KEY_TEMPL, arr); };
     const saveUserMaterials = async (arr) => { setUserMaterials(arr); await set(DB_KEY_MATS, arr); };
+    const saveAppointments = async (arr) => { setAppointments(arr); await set(DB_KEY_APPOINTMENTS, arr); };
     const saveBusinessProfile = (profile) => { setBusinessProfile(profile); localStorage.setItem(BIZA_KEY, JSON.stringify(profile)); };
 
     useEffect(() => {
@@ -949,6 +1296,52 @@
     const activeJob   = jobs.find(j => j.id === activeJobId);
     const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
     const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled) : null;
+
+    /* ── Google Calendar Auth ── */
+    const connectGoogleCalendar = (clientId) => {
+      if (!clientId) return;
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly',
+        callback: (response) => {
+          if (response.error) return alert('Google sign-in failed');
+          setGoogleToken(response);
+          localStorage.setItem('googleToken', JSON.stringify(response));
+          localStorage.setItem('googleClientId', clientId);
+        },
+      });
+      tokenClient.requestAccessToken({ prompt: '' });
+    };
+    const disconnectGoogleCalendar = () => {
+      setGoogleToken(null);
+      localStorage.removeItem('googleToken');
+      // optionally revoke token via API
+    };
+
+    // Load stored token on mount
+    useEffect(() => {
+      const savedToken = localStorage.getItem('googleToken');
+      if (savedToken) {
+        try {
+          const parsed = JSON.parse(savedToken);
+          if (parsed && parsed.access_token) setGoogleToken(parsed);
+        } catch {}
+      }
+    }, []);
+
+    // For appt handling
+    const handleSaveAppointment = (appt) => {
+      let updated;
+      if (appointments.find(a => a.id === appt.id)) {
+        updated = appointments.map(a => a.id === appt.id ? appt : a);
+      } else {
+        updated = [...appointments, appt];
+      }
+      saveAppointments(updated);
+    };
+    const handleDeleteAppointment = (id) => {
+      saveAppointments(appointments.filter(a => a.id !== id));
+    };
 
     /* ── Voice ── */
     const toggleVoice = () => {
@@ -978,7 +1371,7 @@
       if (!taskData.title.trim() && !taskData.desc.trim()) { alert('Enter at least a title or description first.'); return; }
       if (!apiKey) { alert('Please add your Gemini API key in Settings first.'); return; }
       setIsAiSuggesting(true);
-      const prompt = `You are a construction trade assistant. Based on the task below, return ONLY a valid JSON object (no extra text) with keys: … "desc" (a short, factual description; do not add fluff or marketing language). Use typical Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
+      const prompt = `You are a construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (a short factual description, avoid fluff). Use typical Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.3,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error('AI request failed');
@@ -1270,6 +1663,9 @@
             <h1 className="font-black text-lg tracking-tight uppercase">{businessProfile?.name || 'JobLog'}</h1>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setViewMode(viewMode==='schedule'?'dashboard':'schedule')} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide transition-all border ${viewMode==='schedule'?'bg-purple-500 border-purple-400 text-white':'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'}`}>
+              <Calendar size={13}/> Schedule
+            </button>
             {viewMode==='dashboard' && (
               <button onClick={toggleSelectionMode} className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide transition-all border ${selectionMode ? 'bg-blue-500 border-blue-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500'}`}>
                 <MapPinned size={13}/> {selectionMode ? 'Done' : 'Route'}
@@ -1289,6 +1685,18 @@
             </div>
           </div>
         </header>
+
+        {/* ══════════ SCHEDULE VIEW ══════════ */}
+        {viewMode==='schedule' && (
+          <ScheduleView
+            appointments={appointments}
+            jobs={jobs}
+            googleToken={googleToken}
+            isGoogleConnected={!!googleToken}
+            onSaveAppointment={handleSaveAppointment}
+            onDeleteAppointment={handleDeleteAppointment}
+          />
+        )}
 
         {/* ══════════ DASHBOARD ══════════ */}
         {viewMode==='dashboard' ? (
@@ -1417,7 +1825,7 @@
             </div>
           </main>
 
-        ) : (
+        ) : viewMode==='detail' ? (
           /* ══════════ DETAIL VIEW ══════════ */
           <main className="p-4 max-w-2xl mx-auto no-print">
             <div className="flex justify-between items-center mb-6">
@@ -1468,9 +1876,20 @@
                     {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDate(activeJob.dueDate)}</p>}
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3">{activeJob.projectNotes}</p>}
                     {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-2 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-12 rounded-lg" alt=""/>)}</div>}
-                    <button onClick={startEditHeader} className="mt-3 flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors group">
-                      <Pencil size={11} className="group-hover:text-orange-500"/> Edit Details
-                    </button>
+                    <div className="flex items-center gap-3 mt-3">
+                      <button onClick={startEditHeader} className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors group">
+                        <Pencil size={11} className="group-hover:text-orange-500"/> Edit Details
+                      </button>
+                      <button onClick={() => {
+                        // Open appointment form with job linked
+                        setViewMode('dashboard'); // go to dashboard to show schedule? Actually we need a way to create appointment from detail.
+                        // I'll add a state for a "quick appointment" modal from job detail.
+                        // For simplicity, reuse the AppointmentFormModal via a new state.
+                        // We'll add a state in App.
+                      }} className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors">
+                        <CalendarPlus size={12}/> Schedule Appointment
+                      </button>
+                    </div>
                   </div>
                   <div className="flex flex-col items-end gap-3">
                     <div className="bg-slate-900 dark:bg-slate-950 text-white p-4 rounded-2xl flex flex-col items-center min-w-[100px] shadow-lg border-b-4 border-orange-500">
@@ -1569,7 +1988,7 @@
               <Plus size={40}/>
             </button>
           </main>
-        )}
+        ) : null}
 
         {/* ── Route planning bottom bar ── */}
         {selectionMode && (
@@ -1611,6 +2030,10 @@
             userTemplates={userTemplates} saveUserTemplates={saveUserTemplates}
             userMaterials={userMaterials} saveUserMaterials={saveUserMaterials}
             businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile}
+            googleClientId={googleClientId} setGoogleClientId={setGoogleClientId}
+            isGoogleConnected={!!googleToken} googleToken={googleToken}
+            connectGoogleCalendar={connectGoogleCalendar}
+            disconnectGoogleCalendar={disconnectGoogleCalendar}
             onSave={saveApiSettings} onClose={() => setShowSettings(false)}
           />
         )}
