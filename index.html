@@ -44,7 +44,6 @@
         .print-card .p-6 { padding: 12px !important; }
         .print-card h3 { font-size: 16px !important; margin-bottom: 4px; }
         .print-card p { font-size: 12px !important; line-height: 1.4; margin-bottom: 6px; }
-        .print-biz-header { display: flex !important; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; }
       }
       .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -98,18 +97,15 @@
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert,
-    Bookmark, Package, PlusCircle, Calendar, Building2
+    Bookmark, Package, PlusCircle, Calendar
   } from 'lucide-react';
 
-  /* ─── Constants ────────────────────────────────────────── */
-  const DB_KEY_JOBS  = 'jobsite-master-v4';
-  const DB_KEY_TEMPL = 'joblog-templates';
-  const DB_KEY_MATS  = 'joblog-materials';
-  const BIZA_KEY     = 'joblog-business';
-  const MAX_STOPS    = 12;
-  const GST_RATE     = 0.1;
+  const DB_KEY_JOBS   = 'jobsite-master-v4';
+  const DB_KEY_TEMPL  = 'joblog-templates';
+  const DB_KEY_MATS   = 'joblog-materials';
+  const MAX_STOPS     = 12;
+  const GST_RATE      = 0.1;
 
-  /* ─── Helpers ───────────────────────────────────────────── */
   const parseTimeToMinutes = (str) => {
     if (!str) return 0;
     const s = str.toLowerCase().trim();
@@ -156,28 +152,6 @@
     };
   });
 
-  const compressLogo = (file) => new Promise((res, rej) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onerror = () => rej(new Error('Logo read failed'));
-    reader.onload = (ev) => {
-      const img = new Image(); img.src = ev.target.result;
-      img.onerror = () => rej(new Error('Logo decode failed'));
-      img.onload = () => {
-        try {
-          const c = document.createElement('canvas');
-          const MAX = 320; let w = img.width, h = img.height;
-          if (w > MAX) { h *= MAX/w; w = MAX; }
-          if (h > MAX) { w *= MAX/h; h = MAX; }
-          c.width = w; c.height = h;
-          c.getContext('2d').drawImage(img, 0, 0, w, h);
-          res(c.toDataURL('image/webp', 0.88));
-        } catch(e) { rej(e); }
-      };
-    };
-  });
-
-  /* ─── Preset templates ─────────────────────────────────── */
   const TEMPLATES = {
     quote: {
       painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools:"Brushes, Rollers, Extension Poles, Sandpaper", desc:"Surface prep, fill holes, prime and 2 finish coats" },
@@ -206,7 +180,6 @@
   ];
   const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
 
-  /* ─── Error Boundary ──────────────────────────────────────── */
   class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, error: null }; }
     static getDerivedStateFromError(error) { return { hasError: true, error }; }
@@ -225,7 +198,6 @@
     }
   }
 
-  /* ─── ConfirmDialog ───────────────────────────────────────── */
   const ConfirmDialog = ({ message, confirmLabel = 'Delete', onConfirm, onCancel, danger = true }) => (
     <div className="fixed inset-0 z-[350] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6">
       <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-6 w-full max-w-xs shadow-2xl border dark:border-slate-800">
@@ -238,85 +210,6 @@
     </div>
   );
 
-  /* ─── BusinessProfileEditor ───────────────────────────────── */
-  const BusinessProfileEditor = ({ profile, onSave, onClose }) => {
-    const [form, setForm] = useState({
-      name:        profile.name        || '',
-      tradingName: profile.tradingName || '',
-      abn:         profile.abn         || '',
-      phone:       profile.phone       || '',
-      email:       profile.email       || '',
-      address:     profile.address     || '',
-      logo:        profile.logo        || '',
-    });
-
-    const handleLogoUpload = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      try { setForm(f => ({ ...f, logo: await compressLogo(file) })); }
-      catch { alert('Logo could not be processed.'); }
-    };
-
-    return (
-      <div className="fixed inset-0 z-[190] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 max-h-[88vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-5">
-            <h3 className="font-black text-lg flex items-center gap-2"><Building2 size={18} className="text-orange-500"/> Business Profile</h3>
-            <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20}/></button>
-          </div>
-          {/* Logo area */}
-          <div className="flex items-center gap-4 mb-5 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
-            <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-              {form.logo ? <img src={form.logo} className="w-full h-full object-contain p-1" alt="logo"/> : <ImageIcon size={26} className="text-slate-300 dark:text-slate-500"/>}
-            </div>
-            <div>
-              <p className="font-black text-sm mb-0.5">Business Logo</p>
-              <p className="text-[10px] text-slate-400 mb-2 font-medium">Appears on all printed reports</p>
-              <label className="inline-flex items-center gap-1.5 bg-slate-200 dark:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer text-[11px] font-black uppercase hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
-                <Upload size={11}/> Upload
-                <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload}/>
-              </label>
-              {form.logo && <button onClick={() => setForm(f=>({...f,logo:''}))} className="text-[10px] text-red-400 font-bold mt-1 ml-2 hover:text-red-600">Remove</button>}
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="e.g. Smith Building Services" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/>
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="T/A name (if different)" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/>
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">ABN</label>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="e.g. 12 345 678 901" value={form.abn} onChange={e=>setForm(f=>({...f,abn:e.target.value}))}/>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Phone</label>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="04xx xxx xxx" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/>
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="you@example.com" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/>
-              </div>
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Address</label>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="123 Example St, Sydney NSW 2000" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/>
-            </div>
-          </div>
-          <div className="flex gap-3 mt-5">
-            <button onClick={() => { onSave(form); onClose(); }} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-2xl font-black active:scale-95 transition-all flex items-center justify-center gap-2"><Check size={16}/> Save Profile</button>
-            <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-3 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  /* ─── TemplateManager ─────────────────────────────────────── */
   const TemplateManager = ({ templates, onSave, onClose }) => {
     const [list, setList] = useState([...templates]);
     const [editing, setEditing] = useState(null);
@@ -374,7 +267,6 @@
     );
   };
 
-  /* ─── MaterialManager ─────────────────────────────────────── */
   const MaterialManager = ({ materials, onSave, onClose }) => {
     const [list, setList] = useState([...materials]);
     const [newName, setNewName] = useState('');
@@ -418,15 +310,12 @@
     );
   };
 
-  /* ─── SettingsModal (now includes Business Profile button) ──── */
-  const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile }) => {
+  const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
     const [showTemplates, setShowTemplates] = useState(false);
     const [showMaterials, setShowMaterials] = useState(false);
-    const [showBusiness, setShowBusiness] = useState(false);
     const save = () => { onSave(draftKey, draftModel); onClose(); };
-    const hasBiz = !!businessProfile?.name;
 
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
@@ -439,29 +328,6 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
           <div className="space-y-6">
-
-            {/* Business Profile */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Business</label>
-              <button onClick={() => setShowBusiness(true)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl active:scale-95 transition-all hover:border-orange-400 dark:hover:border-orange-500">
-                <div className="flex items-center gap-3">
-                  {businessProfile?.logo
-                    ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-white dark:bg-slate-700 p-0.5" alt="logo"/>
-                    : <div className="bg-orange-100 dark:bg-orange-900/40 p-2 rounded-xl"><Building2 size={16} className="text-orange-500"/></div>
-                  }
-                  <div className="text-left">
-                    <p className="font-black text-sm text-slate-800 dark:text-white">{hasBiz ? businessProfile.name : 'Set Up Business Profile'}</p>
-                    {hasBiz && businessProfile.abn && <p className="text-[10px] text-slate-400 font-mono">ABN {businessProfile.abn}</p>}
-                    {!hasBiz && <p className="text-[10px] text-slate-400">Logo, ABN, contact details on reports</p>}
-                  </div>
-                </div>
-                <Pencil size={14} className="text-slate-400"/>
-              </button>
-            </div>
-
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-
-            {/* Appearance */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
               <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700">
@@ -474,8 +340,6 @@
                 </div>
               </button>
             </div>
-
-            {/* Backup */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Backup & Restore</label>
               <div className="grid grid-cols-2 gap-3">
@@ -488,8 +352,6 @@
                 </label>
               </div>
             </div>
-
-            {/* Library */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Your Library</label>
               <div className="grid grid-cols-2 gap-3">
@@ -501,38 +363,47 @@
                 </button>
               </div>
             </div>
-
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-
-            {/* AI */}
+            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"></div>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
               <div className="flex items-start gap-3 p-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl">
                 <ShieldAlert size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
                 <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium leading-relaxed">Your API key is stored in this browser only. Do not use on shared devices.</p>
               </div>
-              <input type="password" className="w-full p-4 mb-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
+              <input
+                type="password"
+                className="w-full p-4 mb-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
+                placeholder="Paste your Gemini API key…"
+                value={draftKey}
+                onChange={e => setDraftKey(e.target.value)}
+              />
               <div className="relative">
                 <Bot size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
+                <input
+                  type="text"
+                  className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400"
+                  placeholder="e.g. gemini-2.5-flash"
+                  value={draftModel}
+                  onChange={e => setDraftModel(e.target.value)}
+                />
               </div>
               <p className="text-[10px] text-slate-400 mt-2 font-medium">Enter the exact model name from Google AI Studio.</p>
             </div>
-
             <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
               <Check size={16}/> Save & Close
             </button>
           </div>
-
-          {showBusiness && <BusinessProfileEditor profile={businessProfile || {}} onSave={saveBusinessProfile} onClose={() => setShowBusiness(false)}/>}
-          {showTemplates && <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)}/>}
-          {showMaterials && <MaterialManager materials={userMaterials} onSave={saveUserMaterials} onClose={() => setShowMaterials(false)}/>}
+          {showTemplates && (
+            <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)} />
+          )}
+          {showMaterials && (
+            <MaterialManager materials={userMaterials} onSave={saveUserMaterials} onClose={() => setShowMaterials(false)} />
+          )}
         </div>
       </div>
     );
   };
 
-  /* ─── TemplatePopover ─────────────────────────────────────── */
   const TemplatePopover = ({ type, userTemplates, onSelect, onClose }) => {
     const allTemplates = [
       ...userTemplates.map(t => ({ ...t, isUser: true })),
@@ -542,12 +413,23 @@
         isUser: false
       }))
     ];
+
     return (
       <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-72 max-h-60 overflow-y-auto p-2">
-        {allTemplates.length === 0 && <p className="text-sm text-slate-400 p-2">No templates yet. Create one in Settings.</p>}
+        {allTemplates.length === 0 && (
+          <p className="text-sm text-slate-400 p-2">No templates yet. Create one in Settings.</p>
+        )}
         {allTemplates.map((t, i) => (
-          <button key={i} onClick={() => { onSelect(t.data); onClose(); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 group">
-            {t.isUser ? <Bookmark size={14} className="text-emerald-500"/> : <Sparkles size={14} className="text-orange-500"/>}
+          <button
+            key={i}
+            onClick={() => { onSelect(t.data); onClose(); }}
+            className="w-full text-left p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 group"
+          >
+            {t.isUser ? (
+              <Bookmark size={14} className="text-emerald-500" />
+            ) : (
+              <Sparkles size={14} className="text-orange-500" />
+            )}
             <div className="min-w-0">
               <div className="font-bold text-sm truncate">{t.name}</div>
               {t.data.title && <div className="text-[10px] text-slate-400 truncate">{t.data.title}</div>}
@@ -558,20 +440,26 @@
     );
   };
 
-  /* ─── MaterialPicker ──────────────────────────────────────── */
-  const MaterialPicker = ({ materials, onSelect, onClose }) => (
-    <div className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-64 max-h-48 overflow-y-auto p-2">
-      {materials.length === 0 && <p className="text-sm text-slate-400 p-2">No saved materials.</p>}
-      {materials.map((m, i) => (
-        <button key={i} onClick={() => { onSelect(m); onClose(); }} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left">
-          <span className="font-medium text-sm">{m.name}</span>
-          <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{fmtAUD(parseFloat(m.price))}</span>
-        </button>
-      ))}
-    </div>
-  );
+  const MaterialPicker = ({ materials, onSelect, onClose }) => {
+    return (
+      <div className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-64 max-h-48 overflow-y-auto p-2">
+        {materials.length === 0 && (
+          <p className="text-sm text-slate-400 p-2">No saved materials. Add in Settings or save one below.</p>
+        )}
+        {materials.map((m, i) => (
+          <button
+            key={i}
+            onClick={() => { onSelect(m); onClose(); }}
+            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left"
+          >
+            <span className="font-medium text-sm">{m.name}</span>
+            <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{fmtAUD(parseFloat(m.price))}</span>
+          </button>
+        ))}
+      </div>
+    );
+  };
 
-  /* ─── NewJobModal (unchanged, with AI date extraction) ───────── */
   const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel }) => {
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
@@ -581,9 +469,18 @@
     const [isImporting, setIsImporting] = useState(false);
     const fileInputRef = useRef(null);
 
-    const handleFiles = (e) => { setFiles(prev => [...prev, ...Array.from(e.target.files)]); e.target.value = ''; };
+    const handleFiles = (e) => {
+      const selected = Array.from(e.target.files);
+      setFiles(prev => [...prev, ...selected]);
+      e.target.value = '';
+    };
+
     const removeFile = (index) => setFiles(prev => prev.filter((_,i) => i!==index));
-    const createManual = () => { if (!addr.trim()) return; onSave(addr.trim(), client.trim(), [], dueDate); };
+
+    const createManual = () => {
+      if (!addr.trim()) return;
+      onSave(addr.trim(), client.trim(), [], dueDate);
+    };
 
     const createWithAI = async () => {
       if (!apiKey) { alert('Please save a Gemini API key in Settings first.'); return; }
@@ -598,26 +495,49 @@
               reader.onerror = reject;
               reader.readAsDataURL(file);
             });
-            fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
+            fileParts.push({
+              inlineData: { mimeType: file.type || 'application/pdf', data: base64Data }
+            });
+          } else {
+            const text = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = reject;
+              reader.readAsText(file);
+            });
+            fileParts.push({ text });
           }
         }
+
         const textPrompt = `Extract the following from the provided document(s) and additional text.
           Return ONLY a valid JSON object with keys:
           "address" (job site address),
           "clientName" (client or customer name),
           "dueDate" (ISO date string YYYY-MM-DD if a due date or completion date is mentioned, otherwise empty string),
           "tasks" (array of objects with: "title", "time" (e.g. "2h 30m"), "rate" (string, e.g. "85"), "materialsCost" (string, e.g. "320"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (string)).
-          Additional text: ${additionalText || 'None'}`;
+          Use the fields from the documents as defaults, but respect any overrides in the additional text.
+          Additional text provided by the user: ${additionalText || 'None'}`;
+
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
-          { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:textPrompt},...fileParts]}], generationConfig:{temperature:0,response_mime_type:'application/json'} }) }
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: textPrompt }, ...fileParts] }],
+              generationConfig: { temperature: 0, response_mime_type: 'application/json' }
+            })
+          }
         );
         if (!res.ok) { const errData = await res.json().catch(()=>({})); throw new Error(errData?.error?.message || `API error ${res.status}`); }
         const data = await res.json();
         const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-        const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
-        onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
+        const tasks = (json.tasks || []).map(t => ({
+          title: t.title || '', time: t.time || '', rate: String(t.rate || ''),
+          materialsCost: String(t.materialsCost || ''), materials: String(t.materials || ''), tools: String(t.tools || ''), desc: t.desc || '', images: [],
+        }));
+          onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
       } catch (err) { alert(`AI import failed: ${err.message}`); }
       finally { setIsImporting(false); }
     };
@@ -644,11 +564,13 @@
           <div className="space-y-4">
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Job Address *</label>
-              <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
+              <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
+                placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Client Name</label>
-              <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
+              <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400"
+                placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
             </div>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Due Date (optional)</label>
@@ -660,11 +582,11 @@
             <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
               <div className="mb-2">
                 <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Attach PDF or image files and add any extra details below.</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Attach files (PDF, images, docs) and add any extra details below.</p>
               </div>
               <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-700 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 transition-colors text-xs font-black uppercase">
-                <Upload size={14}/> Choose Files (PDF / Images)
-                <input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/>
+                <Upload size={14}/> Choose Files
+                <input ref={fileInputRef} type="file" multiple accept=".pdf,.docx,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/>
               </label>
               {files.length > 0 && (
                 <div className="mb-2">
@@ -676,14 +598,23 @@
                   ))}
                 </div>
               )}
-              <textarea className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400" placeholder="Additional details (e.g. client wants acoustic underlay, job must finish by Friday)" value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
+              <textarea
+                className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400"
+                placeholder="Additional details (e.g. client wants acoustic underlay, job must finish by Friday)"
+                value={additionalText}
+                onChange={e => setAdditionalText(e.target.value)}
+              />
             </div>
             <div className="flex gap-3">
-              <button onClick={createManual} disabled={!addr.trim()} className={`flex-1 p-5 rounded-[2rem] font-black text-lg shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
+              <button onClick={createManual} disabled={!addr.trim()}
+                className={`flex-1 p-5 rounded-[2rem] font-black text-lg shadow-xl transition-all ${
+                  addr.trim() ? 'bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                }`}>
                 Create Project
               </button>
               {apiKey && files.length > 0 && (
-                <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
+                <button onClick={createWithAI} disabled={isImporting}
+                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
                   <Sparkles size={20}/> Create with AI
                 </button>
               )}
@@ -694,25 +625,139 @@
     );
   };
 
-  /* ─── PrintPreview (unchanged) ──────────────────────────────── */
   const PrintPreview = ({ job, onClose }) => {
-    // ... identical to your previous print preview ...
-    // For brevity, I include the same code as the version you last posted.
-    // (full print preview code is in the answer below – it's long but unchanged)
-    // I'll include it in the final file.
+    const [tasks, setTasks] = useState(job.tasks.map(t => ({...t})));
+    const [header, setHeader] = useState({
+      address: job.address,
+      clientName: job.clientName,
+      clientRef: job.clientRef || '',
+      dueDate: job.dueDate || '',
+      projectNotes: job.projectNotes || '',
+      projectPhotos: job.projectPhotos || [],
+    });
+
+    const updateTask = (index, field, value) => {
+      const updated = [...tasks];
+      updated[index] = { ...updated[index], [field]: value };
+      setTasks(updated);
+    };
+
+    const totals = getQuoteTotals(tasks, job.gstEnabled);
+    const showCosts = job.type === 'handover' ? job.showCosts : true;
+    const totalHours = tasks.reduce((a,t)=>a+parseTimeToMinutes(t.time),0);
+
+    return createPortal(
+      <div id="print-container" className="print-preview-overlay fixed inset-0 z-[250] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-between items-center mb-6 no-print">
+            <h2 className="text-xl font-black">Edit & Print Report</h2>
+            <div className="flex gap-3">
+              <button onClick={() => window.print()} className="bg-slate-900 dark:bg-slate-700 text-white px-6 py-2 rounded-xl font-black flex items-center gap-2"><Printer size={16}/> Print</button>
+              <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl font-black">Close</button>
+            </div>
+          </div>
+          <div className="print-only-block">
+            <div className="print-header border-b-2 border-slate-300 pb-3 mb-4">
+              <div className="flex justify-between text-xs font-black uppercase text-slate-500 mb-2">
+                <span>{job.type==='handover' ? 'Completed Works' : 'Field Report'}</span>
+                <span>{new Date(job.date || Date.now()).toLocaleDateString('en-AU',{dateStyle:'full'})}</span>
+              </div>
+              <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
+              {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
+              <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
+              {header.dueDate && <div className="text-sm font-bold text-amber-600 mb-2">Due: {fmtDate(header.dueDate)}</div>}
+              {header.projectNotes && <textarea className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1" value={header.projectNotes} onChange={e => setHeader({...header, projectNotes: e.target.value})} placeholder="Project notes"/>}
+              {header.projectPhotos?.length > 0 && (
+                <div className="print-project-photo-row flex gap-2 mt-2 overflow-x-auto">
+                  {header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg"/>)}
+                </div>
+              )}
+              <div className="flex gap-4 mt-2 text-sm font-medium">
+                <span>TOTAL TIME: {fmtMins(totalHours)}</span>
+                {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
+              </div>
+            </div>
+            {tasks.map((t, idx) => {
+              const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
+              const mats = parseFloat(t.materialsCost)||0;
+              const subtotal = labour+mats;
+              return (
+                <div key={idx} className="print-card">
+                  <div className={`px-5 py-3 font-black border-b flex justify-between items-center text-lg uppercase ${job.type==='handover' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-800 border-slate-200'}`}>
+                    <input className="flex-1 font-black bg-transparent border-none" value={t.title} onChange={e => updateTask(idx, 'title', e.target.value)}/>
+                    <input className="w-20 text-sm bg-transparent border-none text-right" value={t.time} onChange={e => updateTask(idx, 'time', e.target.value)}/>
+                    {showCosts && subtotal > 0 && <span className="text-sm text-emerald-700 ml-4">{fmtAUD(subtotal)}</span>}
+                  </div>
+                  <div className="p-6">
+                    <textarea className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent resize-none" rows={2} value={t.desc} onChange={e => updateTask(idx, 'desc', e.target.value)}/>
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div className="p-4 bg-slate-50 rounded-xl border">
+                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
+                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)}/>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-xl border">
+                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}</label>
+                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)}/>
+                      </div>
+                      {showCosts && job.type==='quote' && (labour>0||mats>0) && (
+                        <>
+                          <div className="p-4 bg-slate-50 rounded-xl border">
+                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
+                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)} ({t.rate ? `$${t.rate}/hr` : '-'})</span>
+                          </div>
+                          <div className="p-4 bg-slate-50 rounded-xl border">
+                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label>
+                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(mats)}</span>
+                          </div>
+                        </>
+                      )}
+                      {showCosts && job.type==='handover' && (labour>0||mats>0) && (
+                        <>
+                          <div className="p-4 bg-slate-50 rounded-xl border">
+                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
+                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}</span>
+                          </div>
+                          <div className="p-4 bg-slate-50 rounded-xl border">
+                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label>
+                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(mats)}</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {t.images?.length>0 && (
+                      <div className="print-img-container">
+                        {t.images.map((img,i) => <div key={i} className="rounded-lg overflow-hidden border aspect-[4/3] shadow-sm bg-slate-100"><img src={img} className="w-full h-full object-cover"/></div>)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            {showCosts && job.type==='quote' && totals.total>0 && (
+              <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
+                <div>
+                  <p className="font-black uppercase text-slate-500 text-sm">Labour: {fmtAUD(totals.labour)}</p>
+                  <p className="font-black uppercase text-slate-500 text-sm">Materials: {fmtAUD(totals.mats)}</p>
+                  {job.gstEnabled && <><p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p><p className="font-black uppercase text-slate-600 text-sm">GST (10%): {fmtAUD(totals.gst)}</p></>}
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{job.gstEnabled ? 'Total inc. GST' : 'Quote Total'}</p>
+                  <p className="text-4xl font-black text-slate-900">{fmtAUD(totals.total)}</p>
+                  {job.gstEnabled && <p className="text-xs text-slate-400 font-bold mt-1">GST included: {fmtAUD(totals.gst)}</p>}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
   };
 
-  /* ═══════════════════════════════════════════════════════════
-     APP
-  ═══════════════════════════════════════════════════════════ */
   const App = () => {
-    // ── State ──
     const [jobs, setJobs] = useState([]);
     const [userTemplates, setUserTemplates] = useState([]);
     const [userMaterials, setUserMaterials] = useState([]);
-    const [businessProfile, setBusinessProfile] = useState(() => {
-      try { return JSON.parse(localStorage.getItem(BIZA_KEY) || '{}'); } catch { return {}; }
-    });
     const [activeJobId, setActiveJobId] = useState(null);
     const [viewMode, setViewMode] = useState('dashboard');
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
@@ -767,21 +812,31 @@
     const [showTemplatePop, setShowTemplatePop] = useState(false);
     const [showMaterialPop, setShowMaterialPop] = useState(false);
 
-    /* ── DB helpers ── */
     const loadJobs = async () => {
       const d = await get(DB_KEY_JOBS) || [];
       const migrated = d.map(j => {
         const mj = { ...j };
         if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false;
-        if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now();
+        if (!mj.createdAt) {
+          mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now();
+        }
         return mj;
       });
       setJobs(migrated);
       updMetric(migrated);
       setIsLoading(false);
     };
-    const loadTemplates = async () => setUserTemplates(await get(DB_KEY_TEMPL) || []);
-    const loadMaterials = async () => setUserMaterials(await get(DB_KEY_MATS) || []);
+    
+    const loadTemplates = async () => {
+      const t = await get(DB_KEY_TEMPL) || [];
+      setUserTemplates(t);
+    };
+    
+    const loadMaterials = async () => {
+      const m = await get(DB_KEY_MATS) || [];
+      setUserMaterials(m);
+    };
+    
     useEffect(() => { loadJobs(); loadTemplates(); loadMaterials(); }, []);
 
     const updMetric = (d) => setDbSize(`${(new TextEncoder().encode(JSON.stringify(d)).length/1024/1024).toFixed(2)} MB`);
@@ -792,7 +847,6 @@
     };
     const saveUserTemplates = async (arr) => { setUserTemplates(arr); await set(DB_KEY_TEMPL, arr); };
     const saveUserMaterials = async (arr) => { setUserMaterials(arr); await set(DB_KEY_MATS, arr); };
-    const saveBusinessProfile = (profile) => { setBusinessProfile(profile); localStorage.setItem(BIZA_KEY, JSON.stringify(profile)); };
 
     useEffect(() => {
       const root = document.documentElement;
