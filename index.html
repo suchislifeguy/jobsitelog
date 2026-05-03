@@ -281,7 +281,7 @@
   /* ─── ConfirmDialog ──────────────────────────────────────────── */
   const ConfirmDialog = ({ message, confirmLabel = 'Delete', onConfirm, onCancel, danger = true }) => (
     <div className="fixed inset-0 z-[350] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 w-full max-w-sm shadow-2xl border dark:border-slate-800 pb-safe animate-slide-up sm:animate-none">
+      <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-sm shadow-2xl border dark:border-slate-800 pb-safe animate-slide-up sm:animate-none">
         <p className="font-bold text-slate-800 dark:text-white text-center mb-6 leading-relaxed text-lg">{message}</p>
         <div className="flex gap-3">
           <button onClick={onCancel} className="flex-1 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-black text-sm text-slate-600 dark:text-slate-300 active:scale-95 transition-all">Cancel</button>
@@ -390,7 +390,7 @@
 
     return (
       <div className="fixed inset-0 z-[190] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 max-h-[90vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[90vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-5 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
             <h3 className="font-black text-lg flex items-center gap-2"><Building2 size={18} className="text-orange-500"/> Business Profile</h3>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20}/></button>
@@ -465,7 +465,7 @@
 
     return (
       <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-4 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
             <h3 className="font-black text-lg">Task Templates</h3>
             <button onClick={onClose} className="p-1"><X size={20}/></button>
@@ -519,7 +519,7 @@
 
     return (
       <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-4 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
             <h3 className="font-black text-lg">Saved Materials</h3>
             <button onClick={onClose} className="p-1"><X size={20}/></button>
@@ -800,66 +800,66 @@
     const isHandover = type === 'handover';
     return (
       <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl border dark:border-slate-800 relative overflow-hidden animate-slide-up sm:animate-none pb-safe">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 relative overflow-hidden animate-slide-up sm:animate-none pb-safe">
           {isImporting && (
             <div className="absolute inset-0 bg-slate-900/80 rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
               <p className="text-white font-black text-sm uppercase">Processing with AI…</p>
             </div>
           )}
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-5">
             <div>
               <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
-                {isHandover ? 'invoice' : 'Quote'}
+                {isHandover ? 'Completion Report' : 'Job Sheet'}
               </span>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-2">New Project</h2>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1">New Project</h2>
             </div>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
-          <div className="space-y-4 max-h-[70vh] overflow-y-auto no-scrollbar pb-4">
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto no-scrollbar pb-4">
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Job Address *</label>
-              <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Job Address *</label>
+              <input autoFocus className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
             </div>
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Client Name</label>
-              <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Client Name</label>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
             </div>
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Due Date (optional)</label>
-              <input type="date" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" value={dueDate} onChange={e => setDueDate(e.target.value)}/>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date (optional)</label>
+              <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" value={dueDate} onChange={e => setDueDate(e.target.value)}/>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 py-1">
               <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or use AI</span><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
             </div>
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-100 dark:border-slate-700">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
               <div className="mb-2">
                 <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Attach PDF or image files and add any extra details below.</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Attach PDF/image files and add extra details below.</p>
               </div>
-              <label className="flex items-center gap-2 mb-2 bg-slate-200 dark:bg-slate-700 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-300 transition-colors text-xs font-black uppercase">
-                <Upload size={14}/> Add PDFs / Images
+              <label className="flex items-center gap-2 mb-2 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors text-xs font-black uppercase">
+                <Upload size={14}/> Add Documents
                 <input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/>
               </label>
               {files.length > 0 && (
                 <div className="mb-2">
                   {files.map((f, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1">
-                      <span className="text-xs truncate flex-1">{f.name}</span>
+                    <div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1 shadow-sm">
+                      <span className="text-[11px] font-medium truncate flex-1">{f.name}</span>
                       <button onClick={() => removeFile(i)} className="text-red-400"><X size={14}/></button>
                     </div>
                   ))}
                 </div>
               )}
-              <textarea className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400" placeholder="Additional details..." value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
+              <textarea className="w-full p-3 bg-white dark:bg-slate-700 rounded-lg outline-none text-xs font-medium resize-none h-16 dark:text-white dark:placeholder-slate-400 shadow-sm" placeholder="Additional details..." value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={createManual} className={`flex-1 py-4 rounded-2xl font-black text-sm shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
-              Create Project
+            <button onClick={createManual} className={`flex-1 py-3 rounded-xl font-black text-sm shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
+              Create
             </button>
             {apiKey && files.length > 0 && (
-              <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
+              <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
                 <Sparkles size={16}/> Auto-Fill
               </button>
             )}
@@ -888,10 +888,10 @@
     };
 
     const totals = getQuoteTotals(tasks, job.gstEnabled, extraTaxRate);
-    const showCosts = job.showCosts; // Now we respect the job setting for both quotes and handovers
+    const showCosts = job.showCosts; // Respect the job setting
     const totalHours = tasks.reduce((a,t) => a + parseTimeToMinutes(t.time), 0);
     const biz = businessProfile;
-    const docLabel = job.type === 'handover' ? 'invoice' : 'Quotation';
+    const docLabel = job.type === 'handover' ? 'Completion Report' : 'Quotation';
 
     return createPortal(
       <div id="print-container" className="print-preview-overlay fixed inset-0 z-[500] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
@@ -930,13 +930,14 @@
               {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1 outline-none" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
               <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
               {header.dueDate && <div className="text-sm font-bold text-amber-600 mb-2">Due: {fmtDate(header.dueDate)}</div>}
-              {/* projectNotes wrapped in PrintEditableDiv for perfect print reflow */}
+              
               <PrintEditableDiv
                 value={header.projectNotes}
                 onChange={v => setHeader({...header, projectNotes: v})}
                 placeholder="Project notes / Document Summary"
                 className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1"
               />
+              
               {header.projectPhotos?.length > 0 && (
                 <div className="flex gap-2 mt-2 overflow-x-auto">
                   {header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}
@@ -1438,9 +1439,9 @@
           materialsCost: t.materialsCost, materials: t.materials, desc: t.desc
         }));
         const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
-        const docType = job.type === 'handover' ? 'Invoice' : 'Quotation';
+        const docType = job.type === 'handover' ? 'Completion Invoice' : 'Quotation';
 
-        const prompt = `You are a shrewd pragmatic professional. Generate a concise ${docType} for the client using the data below.
+        const prompt = `You are a professional Australian trade document writer. Generate a formal, detailed ${docType} for the client using the data below.
 Return ONLY a valid JSON object with exactly these keys:
 - "summary": a detailed opening section (can include multiple paragraphs using \\n\\n) addressing the client by name, summarising the scope of work, and stating the total cost clearly.
 - "tasks": an array of objects, each with "title" (keep original), "desc" (a polished, client-friendly description of the work — include key materials, estimated time, and what the outcome will be).
@@ -1495,7 +1496,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
       if (!taskData.title.trim() && !taskData.desc.trim()) { showToast('Enter at least a title or description first.', 'error'); return; }
       if (!apiKey) { showToast('Please add your Gemini API key in Settings first.', 'error'); return; }
       setIsAiSuggesting(true);
-      const prompt = `You are a shrewd construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (short factual description, avoid fluff). Use typical Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
+      const prompt = `You are a construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (short factual description, avoid fluff). Use typical Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.3,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error('AI request failed');
@@ -1826,40 +1827,40 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
             )}
 
             {!selectionMode && (
-              <div className="mb-5">
-                <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => handleNewJobClick('quote')} className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white p-4 rounded-3xl text-xs font-black shadow-sm flex flex-col items-center gap-2 active:scale-95 transition-all uppercase hover:border-orange-500 dark:hover:border-orange-500">
-                    <Plus size={24} className="text-orange-500"/> New Quotation
-                  </button>
-                  <button onClick={() => handleNewJobClick('handover')} className="bg-slate-900 dark:bg-emerald-950 text-white p-4 rounded-3xl text-xs font-black shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all uppercase border-2 border-slate-900 dark:border-emerald-900 hover:border-emerald-400">
-                    <CheckCircle2 size={24} className="text-emerald-400"/> New Invoice
-                  </button>
-                </div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <button onClick={() => handleNewJobClick('quote')} className="bg-orange-500 hover:bg-orange-400 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all">
+                  <Plus size={18}/> New Quote
+                </button>
+                <button onClick={() => handleNewJobClick('handover')} className="bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all">
+                  <CheckCircle2 size={18}/> Completion
+                </button>
               </div>
             )}
 
-            <div className="relative mb-3">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"/>
-              <input className="w-full pl-10 pr-4 py-4 bg-white dark:bg-slate-800 rounded-2xl border-2 border-slate-200 dark:border-slate-700 outline-none font-medium text-sm dark:text-white dark:placeholder-slate-500 focus:border-orange-400 shadow-sm" placeholder="Search address or client…" value={searchQ} onChange={e => setSearchQ(e.target.value)}/>
-              {searchQ && <button onClick={() => setSearchQ('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"><X size={14}/></button>}
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-              <div className="flex gap-2">
-                {[{key:'all',label:'All'},{key:'quote',label:'Quotations'},{key:'handover',label:'Invoices'}].map(f => (
-                  <button key={f.key} onClick={() => setFilterType(f.key)} className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border-2 ${filterType===f.key?'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700':'bg-white dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400'}`}>{f.label}</button>
-                ))}
+            {/* Tight Search and Sort Row */}
+            <div className="flex items-center gap-2 mb-3">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+                <input className="w-full pl-9 pr-8 py-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 outline-none font-medium text-sm dark:text-white dark:placeholder-slate-500 focus:border-orange-400 shadow-sm transition-all" placeholder="Search address or client…" value={searchQ} onChange={e => setSearchQ(e.target.value)}/>
+                {searchQ && <button onClick={() => setSearchQ('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={14}/></button>}
               </div>
-              <div className="relative">
-                <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="appearance-none bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 px-3 py-2 pr-8 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none focus:border-orange-400 cursor-pointer">
-                  <option value="created_desc">Newest First</option>
-                  <option value="created_asc">Oldest First</option>
-                  <option value="due_asc">Due: Soonest</option>
-                  <option value="due_desc">Due: Latest</option>
-                  <option value="az">Address A-Z</option>
+              <div className="relative w-28 flex-shrink-0">
+                <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-3 pr-8 rounded-xl text-[11px] font-black uppercase tracking-widest outline-none focus:border-orange-400 shadow-sm cursor-pointer">
+                  <option value="created_desc">Newest</option>
+                  <option value="created_asc">Oldest</option>
+                  <option value="due_asc">Due Soon</option>
+                  <option value="due_desc">Due Late</option>
+                  <option value="az">A-Z</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
               </div>
+            </div>
+
+            {/* Scrollable Filter Pills */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1">
+              {[{key:'all',label:'All Projects'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'}].map(f => (
+                <button key={f.key} onClick={() => setFilterType(f.key)} className={`px-4 py-2 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border ${filterType===f.key?'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700 shadow-md':'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>{f.label}</button>
+              ))}
             </div>
 
             <div className="grid gap-4">
@@ -1876,43 +1877,41 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                 return (
                   <div key={j.id}
                     onClick={() => { if (selectionMode) { if (canSelect) toggleJobSelection(j.id); } else { setActiveJobId(j.id); setViewMode('detail'); setIsEditingHeader(false); }}}
-                    className={`bg-white dark:bg-slate-800 rounded-[2rem] border-2 transition-all cursor-pointer shadow-sm
+                    className={`bg-white dark:bg-slate-800 rounded-2xl border-2 transition-all cursor-pointer shadow-sm
                       ${selectionMode?(isSelected?'border-blue-500 ring-2 ring-blue-500/30':canSelect?'border-slate-200 dark:border-slate-700 hover:border-blue-400':'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed')
                       :j.type==='handover'?'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500':'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
-                    <div className="p-6 flex justify-between items-start">
+                    <div className="p-4 flex justify-between items-start">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
                         {selectionMode && (
-                          <div className={`w-7 h-7 rounded-full flex-shrink-0 mt-1 flex items-center justify-center text-xs font-black transition-all ${isSelected?'bg-blue-500 text-white shadow-lg shadow-blue-500/30':'border-2 border-slate-300 dark:border-slate-600 text-transparent'}`}>
+                          <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black transition-all ${isSelected?'bg-blue-500 text-white shadow-lg shadow-blue-500/30':'border-2 border-slate-300 dark:border-slate-600 text-transparent'}`}>
                             {isSelected ? stopIdx+1 : ''}
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
                           {!selectionMode && (
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
-                                {j.type==='handover' ? 'invoice' : 'Quote'}
+                            <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
+                                {j.type==='handover' ? 'Completion' : 'Quote'}
                               </span>
-                              <button onClick={e=>{e.stopPropagation();cycleStatus(j.id);}} className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
-                              {j.gstEnabled && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
-                              {isDueSoon && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">Due soon</span>}
-                              {isOverdue && <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300">Overdue</span>}
+                              <button onClick={e=>{e.stopPropagation();cycleStatus(j.id);}} className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
+                              {j.gstEnabled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
+                              {isDueSoon && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">Due soon</span>}
+                              {isOverdue && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300">Overdue</span>}
                             </div>
                           )}
-                          <p className={`font-black text-slate-900 dark:text-white text-lg truncate ${selectionMode?'':'mt-1'}`}>{j.address}</p>
-                          <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">{j.clientName||'—'}{!selectionMode&&` · ${fmtDate(j.date)}`}</p>
-                          {j.dueDate && !selectionMode && <p className="text-xs font-black text-amber-600 mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDateShort(j.dueDate)}</p>}
+                          <p className={`font-black text-slate-900 dark:text-white text-base leading-tight truncate ${selectionMode?'':'mt-0.5'}`}>{j.address}</p>
+                          <p className="text-slate-400 dark:text-slate-500 text-[11px] font-medium mt-0.5">{j.clientName||'—'}{!selectionMode&&` · ${fmtDateShort(j.date)}`}</p>
+                          {j.dueDate && !selectionMode && <p className="text-[10px] font-black text-amber-600 mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDateShort(j.dueDate)}</p>}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Hours</span>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hrs</span>
                         <span className="font-black text-slate-900 dark:text-slate-200 text-sm">{getTotals(j.tasks).str}</span>
                         {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && (
-                          <div className="flex flex-col items-end">
-                            <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt||handoverQt).total)}</span>
-                            {j.gstEnabled && <span className="text-[9px] text-slate-400 font-black uppercase">inc. GST</span>}
+                          <div className="flex flex-col items-end mt-1">
+                            <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt||handoverQt).total)}</span>
                           </div>
                         )}
-                        {!selectionMode && <ChevronRight size={16} className="text-slate-300 dark:text-slate-600 mt-1"/>}
                       </div>
                     </div>
                   </div>
@@ -1926,33 +1925,33 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
         {/* DETAIL VIEW */}
         {viewMode==='detail' && activeJob && (
           <main className="p-4 max-w-2xl mx-auto no-print animate-slide-up">
-            <div className="flex justify-between items-center mb-6">
-              <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300">
+            <div className="flex justify-between items-center mb-4">
+              <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
                 <ChevronRight size={14} className="rotate-180"/> Dashboard
               </button>
               <button onClick={() => showConfirm('Permanently delete this project?', () => { saveToDB(jobs.filter(x=>x.id!==activeJobId)); setViewMode('dashboard'); showToast('Project Deleted','success'); }, 'Delete')} className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase"><Trash2 size={14}/> Delete</button>
             </div>
 
-            <div className={`p-8 rounded-[2.5rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
+            <div className={`p-5 sm:p-8 rounded-[2rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
                   <div className="flex items-center gap-2 mb-3"><Edit3 size={14} className="text-orange-500"/><span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Editing Job Details</span></div>
-                  <input className="w-full text-2xl font-black bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e=>setHeaderDraft(d=>({...d,address:e.target.value}))}/>
-                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
-                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-2xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
+                  <input className="w-full text-xl font-black bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e=>setHeaderDraft(d=>({...d,address:e.target.value}))}/>
+                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
+                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
                   <div className="mb-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Due Date</label>
-                    <input type="date" className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none font-medium dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date</label>
+                    <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none font-medium text-sm dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/>
                   </div>
-                  <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-700 rounded-2xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e=>setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
-                  <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase">
-                    <ImageIcon size={14}/> Add Project Photos
+                  <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e=>setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
+                  <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase w-fit">
+                    <ImageIcon size={14}/> Add Photos
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleProjectPhotoUpload}/>
                   </label>
                   {headerDraft.projectPhotos.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto pb-2 mt-2">
                       {headerDraft.projectPhotos.map((p,i) => (
-                        <div key={i} className="relative h-20 w-20 flex-shrink-0">
+                        <div key={i} className="relative h-16 w-16 flex-shrink-0">
                           <img src={p} className="w-full h-full object-cover rounded-lg" alt=""/>
                           <button onClick={() => setHeaderDraft(d=>({...d,projectPhotos:d.projectPhotos.filter((_,idx)=>idx!==i)}))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button>
                         </div>
@@ -1960,42 +1959,42 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                     </div>
                   )}
                   <div className="flex gap-3 mt-4">
-                    <button onClick={saveHeaderEdit} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-2"><Check size={16}/> Save Changes</button>
-                    <button onClick={() => setIsEditingHeader(false)} className="px-6 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 py-3 rounded-2xl font-black text-sm">Cancel</button>
+                    <button onClick={saveHeaderEdit} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"><Check size={16}/> Save</button>
+                    <button onClick={() => setIsEditingHeader(false)} className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 py-3 rounded-xl font-black text-sm">Cancel</button>
                   </div>
                 </div>
               ) : (
-                <div className="flex justify-between items-start">
-                  <div className="flex-1 min-w-0 mr-4">
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-tight truncate">{activeJob?.address}</h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-sm mt-1">{activeJob?.clientName}</p>
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{activeJob?.address}</h2>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold text-sm mt-1">{activeJob?.clientName}</p>
                     {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
                     {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDate(activeJob.dueDate)}</p>}
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3 whitespace-pre-wrap">{activeJob.projectNotes}</p>}
-                    {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-2 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-12 rounded-lg" alt=""/>)}</div>}
-                    <div className="flex items-center gap-3 mt-4 flex-wrap">
-                      <button onClick={startEditHeader} className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors">
-                        <Pencil size={11}/> Edit Details
-                      </button>
-                      <button onClick={() => openAppointmentForJob(activeJobId)} className="flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 uppercase tracking-widest transition-colors">
-                        <CalendarPlus size={12}/> Schedule Appointment
-                      </button>
-                      <button onClick={() => setShowAIAssistModal(true)} className="flex items-center gap-1.5 text-[10px] font-black text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 uppercase tracking-widest transition-colors bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded-lg">
-                        <Sparkles size={11}/> AI Assist
-                      </button>
-                    </div>
+                    {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
                   </div>
-                  <div className="flex flex-col items-end gap-3">
-                    <div className="bg-slate-900 dark:bg-slate-950 text-white p-4 rounded-2xl flex flex-col items-center min-w-[100px] shadow-lg border-b-4 border-orange-500">
-                      <Clock size={16} className="mb-1 text-orange-500"/>
-                      <span className="text-[10px] font-black uppercase text-slate-400">Total Hours</span>
-                      <span className="text-xl font-black">{getTotals(activeJob?.tasks||[]).str}</span>
+                  
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-sm border border-orange-200 dark:border-orange-800">
+                      <Clock size={12}/> {getTotals(activeJob?.tasks||[]).str}
                     </div>
-                    <button onClick={() => cycleStatus(activeJobId)} className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-black text-[11px] uppercase tracking-widest border-2 transition-all active:scale-95 ${getStatus(activeJob?.status||'draft').cls}`}>
-                      <Tag size={12}/> {getStatus(activeJob?.status||'draft').label}
+                    <button onClick={() => cycleStatus(activeJobId)} className={`px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all border ${getStatus(activeJob?.status||'draft').cls}`}>
+                      {getStatus(activeJob?.status||'draft').label}
                     </button>
-                    <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
+                    <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts?'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400':'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
                       <DollarSign size={12}/> Costs {activeJob.showCosts?'ON':'OFF'}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    <button onClick={startEditHeader} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors">
+                      <Pencil size={16}/> Edit
+                    </button>
+                    <button onClick={() => openAppointmentForJob(activeJobId)} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors">
+                      <CalendarPlus size={16}/> Schedule
+                    </button>
+                    <button onClick={() => setShowAIAssistModal(true)} className="bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 border border-purple-100 dark:border-purple-800 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-600 dark:text-purple-400 flex flex-col items-center gap-1 transition-colors">
+                      <Sparkles size={16}/> AI Assist
                     </button>
                   </div>
                 </div>
@@ -2004,10 +2003,10 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
 
             {/* Cost summary */}
             {activeJob?.showCosts && activeJob && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total > 0 && (
-              <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
+              <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-5 mb-5 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2"><DollarSign size={16} className="text-orange-500"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cost Summary</span></div>
-                  <button onClick={() => toggleGST(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.gstEnabled?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'}`}>
+                  <button onClick={() => toggleGST(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.gstEnabled?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'}`}>
                     <Receipt size={12}/> GST {activeJob.gstEnabled?'On':'Off'}
                   </button>
                 </div>
@@ -2015,25 +2014,25 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                   const qt = getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate);
                   return (
                     <>
-                      <div className="grid grid-cols-3 gap-3">
-                        <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-base">{fmtAUD(qt.labour)}</p></div>
-                        <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-base">{fmtAUD(qt.mats)}</p></div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-sm">{fmtAUD(qt.labour)}</p></div>
+                        <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-sm">{fmtAUD(qt.mats)}</p></div>
                         {activeJob.gstEnabled
-                          ? <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-base">{fmtAUD(qt.subtotal)}</p></div>
-                          : <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
+                          ? <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-sm">{fmtAUD(qt.subtotal)}</p></div>
+                          : <div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div>
                         }
                       </div>
                       {activeJob.gstEnabled && extraTaxRate === 0 && (
-                        <div className="grid grid-cols-2 gap-3 mt-3">
-                          <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base">{fmtAUD(qt.gst)}</p></div>
-                          <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div>
+                          <div className="bg-orange-500 rounded-xl p-3"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div>
                         </div>
                       )}
                       {extraTaxRate > 0 && (
-                        <div className={`grid mt-3 gap-3 ${activeJob.gstEnabled ? 'grid-cols-3' : 'grid-cols-2'}`}>
-                          {activeJob.gstEnabled && <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base">{fmtAUD(qt.gst)}</p></div>}
-                          <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Markup ({extraTaxRate}%)</p><p className="font-black text-purple-400 text-base">{fmtAUD(qt.extra)}</p></div>
-                          <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. Tax</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
+                        <div className={`grid mt-2 gap-2 ${activeJob.gstEnabled ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                          {activeJob.gstEnabled && <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div>}
+                          <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Markup ({extraTaxRate}%)</p><p className="font-black text-purple-400 text-sm">{fmtAUD(qt.extra)}</p></div>
+                          <div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. Tax</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div>
                         </div>
                       )}
                     </>
@@ -2043,37 +2042,37 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
             )}
 
             {/* Task cards */}
-            <div className="space-y-6 mb-6">
+            <div className="space-y-4 mb-6">
               {activeJob?.tasks.map((t, i) => {
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
                 const mats   = parseFloat(t.materialsCost)||0;
                 const subtotal = labour + mats;
                 const showCosts = activeJob.showCosts;
                 return (
-                  <div key={t.id} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-b dark:border-slate-700 flex justify-between items-center px-6">
+                  <div key={t.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 border-b dark:border-slate-700 flex justify-between items-center px-4">
                       <span className="font-black text-slate-400 dark:text-slate-500 text-[10px] tracking-widest uppercase">Entry #{i+1}</span>
                       <div className="flex gap-2">
-                        <button onClick={() => { setEditingTaskId(t.id); setTaskData({rate:'',materialsCost:'',images:[],...t}); setIsTaskFormOpen(true); }} className="p-2 text-slate-400 hover:text-blue-500"><Pencil size={18}/></button>
-                        <button onClick={() => showConfirm('Delete this log entry?', () => saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j)))} className="p-2 text-slate-400 hover:text-red-500"><Trash2 size={18}/></button>
+                        <button onClick={() => { setEditingTaskId(t.id); setTaskData({rate:'',materialsCost:'',images:[],...t}); setIsTaskFormOpen(true); }} className="p-1 text-slate-400 hover:text-blue-500"><Pencil size={16}/></button>
+                        <button onClick={() => showConfirm('Delete this log entry?', () => saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j)))} className="p-1 text-slate-400 hover:text-red-500"><Trash2 size={16}/></button>
                       </div>
                     </div>
-                    <div className="p-6">
+                    <div className="p-4 sm:p-5">
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-black text-xl text-slate-900 dark:text-white">{t.title}</h3>
-                        <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-black ml-2 flex-shrink-0">{t.time}</span>
+                        <h3 className="font-black text-lg text-slate-900 dark:text-white leading-tight">{t.title}</h3>
+                        <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-md text-[10px] font-black ml-2 flex-shrink-0">{t.time}</span>
                       </div>
                       <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3 whitespace-pre-wrap">{t.desc}</p>
                       {showCosts && subtotal > 0 && (
-                        <div className="flex gap-2 mb-3 flex-wrap">
-                          {labour>0 && <span className="text-[11px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-3 py-1 rounded-full">Labour {fmtAUD(labour)}</span>}
-                          {mats>0   && <span className="text-[11px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-3 py-1 rounded-full">Materials {fmtAUD(mats)}</span>}
-                          <span className="text-[11px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-3 py-1 rounded-full">Subtotal {fmtAUD(subtotal)}</span>
+                        <div className="flex gap-1.5 mb-3 flex-wrap">
+                          {labour>0 && <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md">Labour {fmtAUD(labour)}</span>}
+                          {mats>0   && <span className="text-[10px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-1 rounded-md">Mats {fmtAUD(mats)}</span>}
+                          <span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-2 py-1 rounded-md">Subtotal {fmtAUD(subtotal)}</span>
                         </div>
                       )}
                       {t.images?.length > 0 && (
-                        <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                          {t.images.map((img,idx) => <div key={idx} className="h-24 w-32 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}
+                        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                          {t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}
                         </div>
                       )}
                     </div>
@@ -2083,8 +2082,8 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
               {activeJob?.tasks.length===0 && <div className="text-center py-20 text-slate-300 dark:text-slate-700 font-black uppercase tracking-widest">No Log Entries Yet</div>}
             </div>
 
-            <button onClick={() => setIsTaskFormOpen(true)} className={`fixed right-6 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-[3px] border-white dark:border-slate-800 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`} style={{ bottom: 'calc(6rem + env(safe-area-inset-bottom))' }}>
-              <Plus size={32}/>
+            <button onClick={() => setIsTaskFormOpen(true)} className={`fixed right-5 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-[3px] border-white dark:border-slate-800 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`} style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
+              <Plus size={28}/>
             </button>
           </main>
         )}
@@ -2150,7 +2149,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
             onClose={() => setShowAIAssistModal(false)}
             onGenerate={handleGenerateDocument}
             isGenerating={isGenerating}
-            docType={activeJob.type === 'handover' ? 'Invoice' : 'Quotation'}
+            docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'}
             apiKey={apiKey}
           />
         )}
@@ -2158,15 +2157,15 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
         {/* Task Form */}
         {isTaskFormOpen && (
           <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-6 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[95vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
+            <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-5 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[95vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
               <div className="flex justify-between items-center mb-6 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
-                <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-                  {editingTaskId ? 'Edit' : 'New'} {activeJob?.type==='handover' ? 'Completion Entry' : 'Quote Entry'}
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                  {editingTaskId ? 'Edit' : 'New'} {activeJob?.type==='handover' ? 'Completion Entry' : 'Job Sheet Entry'}
                 </h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
               <div className="mb-4 relative">
-                <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl font-black text-sm border border-slate-100 dark:border-slate-700 hover:border-purple-400 transition-colors">
+                <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-black text-sm border border-slate-100 dark:border-slate-700 hover:border-purple-400 transition-colors">
                   <span className="flex items-center gap-2"><Sparkles size={16} className="text-purple-500"/>Templates</span>
                   <ChevronDown size={16} className={showTemplatePop?'rotate-180':''}/>
                 </button>
@@ -2176,39 +2175,39 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                     onClose={() => setShowTemplatePop(false)}/>
                 )}
               </div>
-              <div className="space-y-4">
-                <input placeholder="Task / Item Title" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold dark:text-white dark:placeholder-slate-500" value={taskData.title} onChange={e=>setTaskData(p=>({...p,title:e.target.value}))}/>
-                <div className="flex gap-3">
+              <div className="space-y-3">
+                <input placeholder="Task / Item Title" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.title} onChange={e=>setTaskData(p=>({...p,title:e.target.value}))}/>
+                <div className="flex gap-2">
                   <div className="flex-1 relative">
-                    <input placeholder="Time (e.g. 2h 30m)" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.time} onChange={e=>setTaskData(p=>({...p,time:e.target.value}))}/>
-                    {taskData.time && <div className="absolute -bottom-5 left-4 text-[9px] text-orange-500 font-black">= {fmtMins(parseTimeToMinutes(taskData.time))}</div>}
+                    <input placeholder="Time (e.g. 2h 30m)" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.time} onChange={e=>setTaskData(p=>({...p,time:e.target.value}))}/>
+                    {taskData.time && <div className="absolute -bottom-4 left-3 text-[9px] text-orange-500 font-black">= {fmtMins(parseTimeToMinutes(taskData.time))}</div>}
                   </div>
-                  <label className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 px-5 rounded-2xl cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 gap-2">
-                    <ImageIcon className="text-slate-600 dark:text-slate-400" size={18}/>
-                    <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase">Photos</span>
+                  <label className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 px-4 rounded-xl cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 gap-2">
+                    <ImageIcon className="text-slate-600 dark:text-slate-400" size={16}/>
+                    <span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase">Photos</span>
                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/>
                   </label>
                 </div>
                 {activeJob?.showCosts && (
-                  <div className="flex gap-3 mt-2">
+                  <div className="flex gap-2 mt-3">
                     <div className="flex-1 relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                      <input placeholder="Rate/hr" className={`w-full pl-7 pr-10 p-4 rounded-2xl outline-none font-black text-sm ${rateError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
+                      <input placeholder="Rate/hr" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${rateError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
                         value={taskData.rate}
                         onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,rate:v}));validateRate(v);}}
                         onBlur={e=>validateRate(e.target.value)}/>
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-black uppercase">/hr</span>
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-black uppercase">/hr</span>
                     </div>
                     <div className="flex-1 relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
                       <div className="flex items-center">
-                        <input placeholder="Materials $" className={`w-full pl-7 pr-10 p-4 rounded-2xl outline-none font-black text-sm ${matError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
+                        <input placeholder="Materials $" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${matError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
                           value={taskData.materialsCost}
                           onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,materialsCost:v}));validateMat(v);}}
                           onBlur={e=>validateMat(e.target.value)}/>
                         {userMaterials.length > 0 && (
                           <div className="relative ml-1">
-                            <button onClick={() => setShowMaterialPop(!showMaterialPop)} className="bg-slate-200 dark:bg-slate-700 p-3 rounded-xl text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600" title="Pick saved material"><Package size={16}/></button>
+                            <button onClick={() => setShowMaterialPop(!showMaterialPop)} className="bg-slate-200 dark:bg-slate-700 p-2.5 rounded-lg text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600" title="Pick saved material"><Package size={14}/></button>
                             {showMaterialPop && (
                               <div className="absolute right-0 top-full mt-1 z-50">
                                 <MaterialPicker materials={userMaterials} onSelect={(m)=>{setTaskData(p=>({...p,materials:m.name,materialsCost:m.price}));}} onClose={()=>setShowMaterialPop(false)}/>
@@ -2226,17 +2225,17 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                   const mats=parseFloat(taskData.materialsCost)||0;
                   const total=labour+mats;
                   return total>0 ? (
-                    <div className="bg-slate-900 dark:bg-slate-800 rounded-2xl px-5 py-3 flex justify-between items-center">
+                    <div className="bg-slate-900 dark:bg-slate-800 rounded-xl px-4 py-2 flex justify-between items-center">
                       <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                         {labour>0&&<span className="mr-3">Labour {fmtAUD(labour)}</span>}
                         {mats>0&&<span>Mats {fmtAUD(mats)}</span>}
                       </div>
-                      <div className="text-white font-black">{fmtAUD(total)}</div>
+                      <div className="text-white font-black text-sm">{fmtAUD(total)}</div>
                     </div>
                   ) : null;
                 })()}
                 {taskData.images.length > 0 && (
-                  <div className="mt-6 img-preview-grid">
+                  <div className="mt-4 img-preview-grid">
                     {taskData.images.map((img,i) => (
                       <div key={i} className="relative w-full aspect-[4/3] group cursor-pointer" onClick={() => setEditingImageIdx(i)}>
                         <img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-700 shadow-sm"/>
@@ -2247,24 +2246,24 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                     <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
                   </div>
                 )}
-                <input placeholder="Materials Used" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
-                <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
+                <input placeholder="Materials Used" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
+                <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
                 <div className="relative">
-                  <textarea placeholder="Full details…" className="w-full p-4 pr-12 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-28 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
-                  <button onClick={toggleVoice} type="button" className={`absolute right-3 bottom-4 p-2.5 rounded-full text-white shadow-md transition-all ${isListening?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Tap to dictate">
-                    <Mic size={16}/>
+                  <textarea placeholder="Full details…" className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
+                  <button onClick={toggleVoice} type="button" className={`absolute right-2 bottom-3 p-2 rounded-full text-white shadow-md transition-all ${isListening?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Tap to dictate">
+                    <Mic size={14}/>
                   </button>
                 </div>
-                <button onClick={handleAiSuggest} disabled={isAiSuggesting||!apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 ${apiKey?'bg-purple-600 hover:bg-purple-500 text-white':'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
-                  <Sparkles size={16}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}
+                <button onClick={handleAiSuggest} disabled={isAiSuggesting||!apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 ${apiKey?'bg-purple-600 hover:bg-purple-500 text-white':'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
+                  <Sparkles size={14}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}
                 </button>
-                <div className="flex gap-3">
-                  <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                    <Bookmark size={16}/> Save as Template
+                <div className="flex gap-2">
+                  <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors uppercase">
+                    <Bookmark size={14}/> Template
                   </button>
                   {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (
-                    <button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-2 p-3 rounded-2xl font-black text-sm bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-600 transition-colors">
-                      <Package size={16}/> Save Material
+                    <button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-600 transition-colors uppercase">
+                      <Package size={14}/> Material
                     </button>
                   )}
                 </div>
@@ -2278,8 +2277,8 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                     </div>
                   </div>
                 )}
-                <button onClick={handleSaveTask} className={`w-full text-white p-5 rounded-[2rem] font-black text-lg shadow-xl flex items-center justify-center gap-2 transition-all hover:scale-[1.02] ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800'}`}>
-                  <Save size={20}/> SAVE ENTRY
+                <button onClick={handleSaveTask} className={`w-full text-white p-4 rounded-xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] mt-2 ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800'}`}>
+                  <Save size={18}/> SAVE ENTRY
                 </button>
               </div>
             </div>
