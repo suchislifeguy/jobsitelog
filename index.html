@@ -118,7 +118,7 @@
     Pencil, Save, HardDrive, CheckCircle2, Clock, Moon, Sun, Edit3, Undo,
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag, Share2, Map,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt, Home, Info,
-    Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert,
+    Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert, Lock,
     Bookmark, Package, PlusCircle, Calendar, Building2, CalendarPlus
   } from 'lucide-react';
 
@@ -146,7 +146,7 @@
   const fmtDateShort = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'}) : '';
   const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('en-AU', {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}) : '';
 
-  const getQuoteTotals = (tasks, gstEnabled) => {
+  const getQuoteTotals = (tasks, gstEnabled, extraTaxRate = 0) => {
     let labour = 0, mats = 0;
     (tasks||[]).forEach(t => {
       labour += (parseTimeToMinutes(t.time)/60) * (parseFloat(t.rate)||0);
@@ -154,8 +154,9 @@
     });
     const subtotal = labour + mats;
     const gst      = gstEnabled ? subtotal * GST_RATE : 0;
-    const total    = subtotal + gst;
-    return { labour, mats, subtotal, gst, total };
+    const extra    = subtotal * (extraTaxRate / 100);
+    const total    = subtotal + gst + extra;
+    return { labour, mats, subtotal, gst, extra, total };
   };
 
   const compressImage = (file) => new Promise((res, rej) => {
@@ -199,27 +200,6 @@
       };
     };
   });
-
-  /* ─── Preset templates ───────────────────────────────────────── */
-  const TEMPLATES = {
-    quote: {
-      painting_interior: { title:"Interior Painting", materials:"Paint, Primer, Drop Sheets, Painter's Tape, Filler", tools:"Brushes, Rollers, Extension Poles, Sandpaper", desc:"Surface prep, fill holes, prime and 2 finish coats" },
-      painting_exterior: { title:"Exterior Painting", materials:"Exterior Paint, Primer, Weatherproof Filler, Drop Sheets", tools:"Pressure Washer, Scrapers, Brushes, Rollers, Ladders", desc:"Pressure wash, scrape, repair, prime and 2 coats" },
-      drywall_repair:    { title:"Drywall/Gyprock Repair", materials:"Plasterboard, Joint Compound, Mesh Tape, Sandpaper, Paint", tools:"Utility Knife, Trowels, Sanding Block, Drywall Saw", desc:"Cut damaged section, install new board, tape, compound, sand and paint" },
-      deck_build:        { title:"Deck Construction", materials:"Treated Pine/Hardwood Decking, Joists, Posts, Concrete, Screws", tools:"Circular Saw, Drill, Level, Post Hole Digger, String Line", desc:"Site prep, post installation, frame build, decking installation" },
-      laminate_flooring: { title:"Laminate/Vinyl Flooring", materials:"Laminate/Vinyl Planks, Underlay, Skirting Boards, Adhesive", tools:"Jigsaw, Spacers, Tapping Block, Pull Bar, Measuring Tape", desc:"Remove old flooring, level subfloor, install underlay and planks" },
-      fencing:           { title:"Fence Installation", materials:"Timber Palings/Colorbond, Steel/Timber Posts, Concrete, Rails, Screws", tools:"Post Hole Digger, Level, String Line, Power Drill, Saw", desc:"Mark line, dig holes, set posts in concrete, install rails and palings" },
-      pressure_washing:  { title:"Pressure Washing", materials:"Industrial Degreaser, Surface Cleaner Solution", tools:"Petrol Pressure Washer, Turbo Nozzle, Surface Cleaner", desc:"Deep clean driveways, paths, decks, exteriors, remove mould" },
-      general_repairs:   { title:"General Repairs", materials:"Various (depends on scope)", tools:"Basic Hand Tools, Power Tools as Required", desc:"Multiple small tasks - adjustments, hole filling, minor fixes" }
-    },
-    handover: {
-      painting_interior: { title:"Interior Painting", materials:"N/A", tools:"No delays", desc:"All surfaces painted to specification. Touch-up paint provided to client." },
-      deck_build:        { title:"Deck Construction", materials:"N/A", tools:"No delays", desc:"Deck construction complete. All safety checks passed. Client briefed on maintenance." },
-      pressure_washing:  { title:"Pressure Washing", materials:"N/A", tools:"No delays", desc:"All surfaces cleaned. Water run-off managed. Area left clean and dry." },
-      general_repairs:   { title:"General Repairs", materials:"N/A", tools:"No delays", desc:"All repair items completed as per quote. Work area cleaned." },
-      cleanup:           { title:"Site Cleanup", materials:"Cleaning supplies", tools:"Minor weather delay", desc:"Site cleaned of all debris. Surfaces wiped down. Client access restored." }
-    }
-  };
 
   const STATUSES = [
     { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
@@ -286,6 +266,44 @@
       </div>
     </div>
   );
+
+  /* ─── UpgradeModal ───────────────────────────────────────────── */
+  const UpgradeModal = ({ onClose, onUnlock, showToast }) => {
+    const [key, setKey] = useState('');
+    const handleUnlock = () => {
+      if (key.trim() === 'JOBLOG-DEMO-1234') {
+        onUnlock();
+        showToast('App Unlocked Forever!', 'success');
+        onClose();
+      } else {
+        showToast('Invalid Licence Key', 'error');
+      }
+    };
+
+    return (
+      <div className="fixed inset-0 z-[300] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800 animate-slide-up sm:animate-none pb-safe text-center">
+          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock size={32} className="text-orange-500"/>
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Limit Reached</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+            You've reached the limit of 3 free projects. Enter a valid licence key to unlock unlimited jobs forever.
+          </p>
+          <input 
+            className="w-full p-4 mb-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-mono text-center font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 uppercase" 
+            placeholder="ENTER LICENCE KEY" 
+            value={key} 
+            onChange={e => setKey(e.target.value.toUpperCase())}
+          />
+          <div className="flex gap-3">
+            <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-black">Cancel</button>
+            <button onClick={handleUnlock} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black">Unlock</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   /* ─── BusinessProfileEditor ──────────────────────────────────── */
   const BusinessProfileEditor = ({ profile, onSave, onClose, showToast }) => {
@@ -471,15 +489,16 @@
   };
 
   /* ─── SettingsModal ───────────────────────────────────────────── */
-  const SettingsModal = ({ apiKey, geminiModel, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize }) => {
+  const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
+    const [draftExtraTax, setDraftExtraTax] = useState(extraTaxRate);
     const [draftGoogleClientId, setDraftGoogleClientId] = useState(googleClientId);
     const [showTemplates, setShowTemplates] = useState(false);
     const [showMaterials, setShowMaterials] = useState(false);
     const [showBusiness, setShowBusiness] = useState(false);
     const save = () => {
-      onSave(draftKey, draftModel);
+      onSave(draftKey, draftModel, draftExtraTax);
       setGoogleClientId(draftGoogleClientId);
       onClose();
       showToast('Settings Saved', 'success');
@@ -514,6 +533,17 @@
                 <Pencil size={14} className="text-slate-400"/>
               </button>
             </div>
+            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+            
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Universal Tax / Markup</label>
+              <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border dark:border-slate-700">
+                <input type="range" min="0" max="50" step="0.5" value={draftExtraTax} onChange={e => setDraftExtraTax(e.target.value)} className="flex-1 accent-orange-500"/>
+                <span className="font-black text-slate-700 dark:text-slate-200 w-12 text-right">{draftExtraTax}%</span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-medium mt-2">Applies an extra percentage cost on top of the subtotal on all reports (works alongside standard GST toggle).</p>
+            </div>
+            
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar</label>
@@ -604,17 +634,14 @@
   };
 
   /* ─── TemplatePopover ────────────────────────────────────────── */
-  const TemplatePopover = ({ type, userTemplates, onSelect, onClose }) => {
-    const allTemplates = [
-      ...userTemplates.map(t => ({ ...t, isUser: true })),
-      ...Object.keys(TEMPLATES[type]||{}).map(key => ({ name: key.replace(/_/g, ' '), data: TEMPLATES[type][key], isUser: false }))
-    ];
+  const TemplatePopover = ({ userTemplates, onSelect, onClose }) => {
+    const allTemplates = userTemplates.map(t => ({ ...t, isUser: true }));
     return (
       <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-72 max-h-60 overflow-y-auto p-2">
         {allTemplates.length === 0 && <p className="text-sm text-slate-400 p-2">No templates yet. Create one in Settings.</p>}
         {allTemplates.map((t, i) => (
           <button key={i} onClick={() => { onSelect(t.data); onClose(); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 group">
-            {t.isUser ? <Bookmark size={14} className="text-emerald-500"/> : <Sparkles size={14} className="text-orange-500"/>}
+            <Bookmark size={14} className="text-emerald-500"/>
             <div className="min-w-0">
               <div className="font-bold text-sm truncate">{t.name}</div>
               {t.data.title && <div className="text-[10px] text-slate-400 truncate">{t.data.title}</div>}
@@ -763,7 +790,7 @@
   };
 
   /* ─── PrintPreview ───────────────────────────────────────────── */
-  const PrintPreview = ({ job, businessProfile = {}, onClose }) => {
+  const PrintPreview = ({ job, extraTaxRate, businessProfile = {}, onClose }) => {
     const [tasks, setTasks] = useState(job.tasks.map(t => ({...t})));
     const [header, setHeader] = useState({
       address: job.address,
@@ -780,7 +807,7 @@
       setTasks(updated);
     };
 
-    const totals = getQuoteTotals(tasks, job.gstEnabled);
+    const totals = getQuoteTotals(tasks, job.gstEnabled, extraTaxRate);
     const showCosts = job.type === 'handover' ? job.showCosts : true;
     const totalHours = tasks.reduce((a,t) => a + parseTimeToMinutes(t.time), 0);
     const biz = businessProfile;
@@ -883,15 +910,24 @@
                 <div>
                   <p className="font-black uppercase text-slate-500 text-sm">Labour: {fmtAUD(totals.labour)}</p>
                   <p className="font-black uppercase text-slate-500 text-sm">Materials: {fmtAUD(totals.mats)}</p>
+                  
+                  {(!job.gstEnabled && extraTaxRate > 0) && (
+                    <p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p>
+                  )}
                   {job.gstEnabled && (
                     <>
                       <p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p>
                       <p className="font-black uppercase text-slate-600 text-sm">GST (10%): {fmtAUD(totals.gst)}</p>
                     </>
                   )}
+                  {extraTaxRate > 0 && (
+                    <p className="font-black uppercase text-purple-600 text-sm">Tax/Markup ({extraTaxRate}%): {fmtAUD(totals.extra)}</p>
+                  )}
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{job.gstEnabled ? 'Total inc. GST' : 'Quote Total'}</p>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                    {job.gstEnabled ? 'Total inc. Tax/GST' : 'Quote Total'}
+                  </p>
                   <p className="text-4xl font-black text-slate-900">{fmtAUD(totals.total)}</p>
                   {job.gstEnabled && <p className="text-xs text-slate-400 font-bold mt-1">GST included: {fmtAUD(totals.gst)}</p>}
                 </div>
@@ -1161,6 +1197,10 @@
       try { return JSON.parse(localStorage.getItem(BIZA_KEY) || '{}'); } catch { return {}; }
     });
 
+    const [isUnlocked, setIsUnlocked] = useState(() => localStorage.getItem('joblog-unlocked') === 'true');
+    const [showUpgrade, setShowUpgrade] = useState(false);
+    const [extraTaxRate, setExtraTaxRate] = useState(() => Number(localStorage.getItem('joblog-extratax') || 0));
+
     // UI State
     const [viewMode, setViewMode] = useState('dashboard');
     const [activeJobId, setActiveJobId] = useState(null);
@@ -1262,7 +1302,7 @@
 
     const activeJob   = jobs.find(j => j.id === activeJobId);
     const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
-    const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled) : null;
+    const quoteTotals = activeJob?.type==='quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate) : null;
 
     const connectGoogleCalendar = (clientId) => {
       if (!clientId) return;
@@ -1323,6 +1363,19 @@
         notes: '',
         googleEventId: null
       });
+    };
+
+    const handleNewJobClick = (type) => {
+      if (!isUnlocked && jobs.length >= 3) {
+        setShowUpgrade(true);
+      } else {
+        setNewJobModal(type);
+      }
+    };
+
+    const handleUnlockSuccess = () => {
+      setIsUnlocked(true);
+      localStorage.setItem('joblog-unlocked', 'true');
     };
 
     // Voice
@@ -1515,7 +1568,7 @@
     // Share Detail View
     const handleShare = async () => {
       if (!activeJob) return;
-      const qt = activeJob.type === 'quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled) : null;
+      const qt = activeJob.type === 'quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate) : null;
       let text = `Project: ${activeJob.address}\nClient: ${activeJob.clientName || 'N/A'}\n`;
       if (qt && qt.total > 0) text += `Total Est: ${fmtAUD(qt.total)}\n`;
       text += `\nSummary of Works:\n` + activeJob.tasks.map(t => `- ${t.title} (${t.time})`).join('\n');
@@ -1701,10 +1754,10 @@
             {!selectionMode && (
               <div className="mb-5">
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setNewJobModal('quote')} className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white p-4 rounded-3xl text-xs font-black shadow-sm flex flex-col items-center gap-2 active:scale-95 transition-all uppercase hover:border-orange-500 dark:hover:border-orange-500">
+                  <button onClick={() => handleNewJobClick('quote')} className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white p-4 rounded-3xl text-xs font-black shadow-sm flex flex-col items-center gap-2 active:scale-95 transition-all uppercase hover:border-orange-500 dark:hover:border-orange-500">
                     <Plus size={24} className="text-orange-500"/> New Quote
                   </button>
-                  <button onClick={() => setNewJobModal('handover')} className="bg-slate-900 dark:bg-emerald-950 text-white p-4 rounded-3xl text-xs font-black shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all uppercase border-2 border-slate-900 dark:border-emerald-900 hover:border-emerald-400">
+                  <button onClick={() => handleNewJobClick('handover')} className="bg-slate-900 dark:bg-emerald-950 text-white p-4 rounded-3xl text-xs font-black shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-all uppercase border-2 border-slate-900 dark:border-emerald-900 hover:border-emerald-400">
                     <CheckCircle2 size={24} className="text-emerald-400"/> Completed Job
                   </button>
                 </div>
@@ -1738,8 +1791,8 @@
             <div className="grid gap-4">
               {filteredJobs.map(j => {
                 const status = getStatus(j.status||'draft');
-                const qt = j.type==='quote' ? getQuoteTotals(j.tasks, j.gstEnabled) : null;
-                const handoverQt = (j.type==='handover' && j.showCosts) ? getQuoteTotals(j.tasks, j.gstEnabled) : null;
+                const qt = j.type==='quote' ? getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate) : null;
+                const handoverQt = (j.type==='handover' && j.showCosts) ? getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate) : null;
                 const stopIdx = selectedJobs.indexOf(j.id);
                 const isSelected = stopIdx !== -1;
                 const canSelect = !atStopLimit || isSelected;
@@ -1875,7 +1928,7 @@
             </div>
 
             {/* Cost summary */}
-            {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && activeJob && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled).total > 0 && (
+            {((activeJob?.type==='quote') || (activeJob?.type==='handover' && activeJob.showCosts)) && activeJob && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total > 0 && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-6 mb-6 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2"><DollarSign size={16} className="text-orange-500"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cost Summary</span></div>
@@ -1884,7 +1937,7 @@
                   </button>
                 </div>
                 {(() => {
-                  const qt = getQuoteTotals(activeJob.tasks, activeJob.gstEnabled);
+                  const qt = getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate);
                   return (
                     <>
                       <div className="grid grid-cols-3 gap-3">
@@ -1895,10 +1948,19 @@
                           : <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
                         }
                       </div>
-                      {activeJob.gstEnabled && (
+                      
+                      {activeJob.gstEnabled && extraTaxRate === 0 && (
                         <div className="grid grid-cols-2 gap-3 mt-3">
                           <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base">{fmtAUD(qt.gst)}</p></div>
                           <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
+                        </div>
+                      )}
+                      
+                      {extraTaxRate > 0 && (
+                        <div className={`grid mt-3 gap-3 ${activeJob.gstEnabled ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                          {activeJob.gstEnabled && <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-base">{fmtAUD(qt.gst)}</p></div>}
+                          <div className="bg-slate-800 dark:bg-slate-900 rounded-2xl p-4"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Markup ({extraTaxRate}%)</p><p className="font-black text-purple-400 text-base">{fmtAUD(qt.extra)}</p></div>
+                          <div className="bg-orange-500 rounded-2xl p-4"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. Tax</p><p className="font-black text-white text-base">{fmtAUD(qt.total)}</p></div>
                         </div>
                       )}
                     </>
@@ -1986,7 +2048,7 @@
         {/* Settings, Modals, Forms */}
         {showSettings && (
           <SettingsModal
-            apiKey={apiKey} geminiModel={geminiModel}
+            apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate}
             isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)}
             exportData={exportData} importData={importData}
             userTemplates={userTemplates} saveUserTemplates={saveUserTemplates}
@@ -1995,11 +2057,23 @@
             googleClientId={googleClientId} setGoogleClientId={setGoogleClientId}
             isGoogleConnected={!!googleToken} googleToken={googleToken}
             connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar}
-            onSave={(k,m) => { setApiKey(k); setGeminiModel(m); localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); }}
+            onSave={(k,m,t) => { 
+              setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); 
+              localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); 
+            }}
             onClose={() => setShowSettings(false)}
             showToast={showToast} dbSize={dbSize}
           />
         )}
+        
+        {showUpgrade && (
+          <UpgradeModal 
+            onClose={() => setShowUpgrade(false)} 
+            onUnlock={handleUnlockSuccess}
+            showToast={showToast} 
+          />
+        )}
+        
         {newJobModal && (
           <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast}/>
         )}
@@ -2018,7 +2092,7 @@
                   <ChevronDown size={16} className={showTemplatePop?'rotate-180':''}/>
                 </button>
                 {showTemplatePop && (
-                  <TemplatePopover type={activeJob?.type||'quote'} userTemplates={userTemplates}
+                  <TemplatePopover userTemplates={userTemplates}
                     onSelect={(data) => setTaskData(prev=>({...prev,...data}))}
                     onClose={() => setShowTemplatePop(false)}/>
                 )}
@@ -2176,7 +2250,7 @@
 
         {/* Print preview */}
         {printPreviewJob && (
-          <PrintPreview job={printPreviewJob} businessProfile={businessProfile} onClose={() => setPrintPreviewJob(null)}/>
+          <PrintPreview job={printPreviewJob} extraTaxRate={extraTaxRate} businessProfile={businessProfile} onClose={() => setPrintPreviewJob(null)}/>
         )}
 
         {/* Appointment from job form */}
