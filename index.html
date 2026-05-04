@@ -63,9 +63,6 @@
         .print-card .p-6 { padding: 12px !important; }
         .print-card h3 { font-size: 16px !important; margin-bottom: 4px; }
         .print-card p { font-size: 12px !important; line-height: 1.4; margin-bottom: 6px; }
-        .print-biz-header { display: flex !important; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; }
-        .print-licence-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-        .print-licence-badge { font-size: 9px; font-weight: 800; padding: 2px 6px; border: 1px solid #94a3b8; border-radius: 4px; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; }
       }
       .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -132,28 +129,28 @@
 
   /* ─── Licence / Credential Types ────────────────────────────── */
   const LICENCE_TYPE_OPTIONS = [
-      'QBCC (QLD)',
-      'Fair Trading (NSW)',
-      'VBA (VIC)',
-      'Building Commission (WA)',
-      'CBS (SA)',
-      'OCBA (TAS)',
-      'ICBN (NT)',
-      'Access Canberra (ACT)',
-      'Builders Licence',
-      'Electrical Licence',
-      'Plumbing Licence',
-      'Gas Licence',
-      'White Card',
-      'Asbestos Removal',
-      'Demolition Licence',
-      'Rigging Licence',
-      'Scaffolding Licence',
-      'Crane Operator',
-      'Refrigeration Licence',
-      'Security Licence',
-      'Other'
-    ];
+    'QBCC (QLD)',
+    'Fair Trading (NSW)',
+    'VBA (VIC)',
+    'Building Commission (WA)',
+    'CBS (SA)',
+    'OCBA (TAS)',
+    'ICBN (NT)',
+    'Access Canberra (ACT)',
+    'Builders Licence',
+    'Electrical Licence',
+    'Plumbing Licence',
+    'Gas Licence',
+    'White Card',
+    'Asbestos Removal',
+    'Demolition Licence',
+    'Rigging Licence',
+    'Scaffolding Licence',
+    'Crane Operator',
+    'Refrigeration Licence',
+    'Security Licence',
+    'Other'
+  ];
 
   const BIZA_KEY         = 'joblog-business';
   const MAX_STOPS        = 12;
@@ -396,7 +393,7 @@
   ═══════════════════════════════════════════════════════════ */
   const LicenceEditor = ({ licences, onChange }) => {
     const [editing, setEditing] = useState(null); // null | index | 'new'
-    const blankLicence = { type: LICENCE_TYPE_OPTIONS[0].value, customType: '', number: '', expiry: '', state: '' };
+    const blankLicence = { type: LICENCE_TYPE_OPTIONS[0], customType: '', number: '', expiry: '', state: '' };
     const [draft, setDraft] = useState(blankLicence);
 
     const openNew = () => { setDraft(blankLicence); setEditing('new'); };
@@ -429,7 +426,7 @@
               onChange={e => setDraft(d => ({ ...d, type: e.target.value, customType: '' }))}
             >
               {LICENCE_TYPE_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.icon} {opt.value}</option>
+                <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
           </div>
@@ -469,11 +466,10 @@
         {licences.map((lic, i) => {
           const expired = isExpired(lic.expiry);
           const expiring = isExpiringSoon(lic.expiry);
-          const typeOpt = LICENCE_TYPE_OPTIONS.find(o => o.value === lic.type);
           return (
             <div key={i} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${expired ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : expiring ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'}`}>
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="text-base flex-shrink-0">{typeOpt?.icon || '📋'}</span>
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <BadgeCheck size={18} className={`${expired ? 'text-red-400' : expiring ? 'text-amber-400' : 'text-slate-400'} flex-shrink-0`} />
                 <div className="min-w-0">
                   <p className="font-black text-xs text-slate-800 dark:text-white truncate">{lic.type}</p>
                   <p className="font-mono text-[10px] text-slate-500 dark:text-slate-400">{lic.number}{lic.state ? ` · ${lic.state}` : ''}</p>
@@ -768,28 +764,7 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
           <div className="space-y-6">
-            {/* Pro Licence */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Pro Licence</label>
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-4 space-y-3">
-                {isPro ? (
-                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black text-sm"><CheckCircle2 size={16}/> Full version active – All Features Available</div>
-                ) : (
-                  <>
-                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Purchase a 1-year licence or enter your existing key.</p>
-                    <PayPalButton />
-                    <div className="flex items-center gap-2 my-2">
-                      <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
-                      <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase">OR</span>
-                      <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
-                    </div>
-                    <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 border border-amber-200 dark:border-amber-700/40 rounded-xl font-mono text-sm dark:text-white uppercase outline-none focus:ring-2 focus:ring-amber-400" placeholder="Licence key" value={licenceInput} onChange={e => setLicenceInput(e.target.value)}/>
-                    <button onClick={handleLicenceUnlock} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"><Lock size={16}/> Unlock Full Version</button>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+            
             {/* Business Profile */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Business</label>
@@ -815,6 +790,7 @@
               </button>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+            
             {/* Extra Tax */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Universal Tax / Markup</label>
@@ -825,6 +801,7 @@
               <p className="text-[10px] text-slate-400 font-medium mt-2">Applies an extra percentage on top of the subtotal on all reports.</p>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+            
             {/* Appearance */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
@@ -838,6 +815,7 @@
                 </div>
               </button>
             </div>
+            
             {/* Backup */}
             <div>
               <div className="flex justify-between items-center mb-2">
@@ -851,6 +829,7 @@
                 <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"><Upload size={16}/> Import<input type="file" accept=".json" className="hidden" onChange={importData}/></label>
               </div>
             </div>
+            
             {/* Library */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Your Library</label>
@@ -860,6 +839,7 @@
               </div>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+            
             {/* Gemini API */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
@@ -873,6 +853,7 @@
                 <input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
+            
             {/* Google Calendar */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar – Optional/Advanced</label>
@@ -886,7 +867,31 @@
                 <p className="text-[10px] text-slate-400 font-medium">Enter your OAuth 2.0 Client ID.</p>
               </div>
             </div>
+
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+
+            {/* Pro Licence */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Pro Licence</label>
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-4 space-y-3">
+                {isPro ? (
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black text-sm"><CheckCircle2 size={16}/> Full version active – All Features Available</div>
+                ) : (
+                  <>
+                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Purchase a 1-year licence or enter your existing key.</p>
+                    <PayPalButton />
+                    <div className="flex items-center gap-2 my-2">
+                      <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
+                      <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase">OR</span>
+                      <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
+                    </div>
+                    <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 border border-amber-200 dark:border-amber-700/40 rounded-xl font-mono text-sm dark:text-white uppercase outline-none focus:ring-2 focus:ring-amber-400" placeholder="Licence key" value={licenceInput} onChange={e => setLicenceInput(e.target.value)}/>
+                    <button onClick={handleLicenceUnlock} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"><Lock size={16}/> Unlock Full Version</button>
+                  </>
+                )}
+              </div>
+            </div>
+
             <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all mt-4"><Check size={16}/> Save & Close</button>
           </div>
           {showBusiness && <BusinessProfileEditor profile={businessProfile || {}} onSave={saveBusinessProfile} onClose={() => setShowBusiness(false)} showToast={showToast}/>}
@@ -1057,7 +1062,7 @@
             </div>
           </div>
           <div>
-{/* ─── Business Header ─── */}
+            {/* ─── Business Header ─── */}
             {biz.name && (
               <div className="pb-4 mb-4 border-b-2 border-slate-300">
                 <div className="flex justify-between items-start">
