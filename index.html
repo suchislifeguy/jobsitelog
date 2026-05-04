@@ -1275,8 +1275,30 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
               <div className="flex justify-between items-center text-xs font-black uppercase text-slate-500 mb-2">
                 <span>{docLabel}</span>
                 {/* Editable Date Input */}
-                <input type="date" className="bg-transparent border-b border-dashed border-slate-300 text-right outline-none text-slate-800 cursor-pointer focus:border-orange-400" value={header.date} onChange={e => setHeader({...header, date: e.target.value})}/>
-              </div>
+                <PrintEditableDiv 
+                  value={fmtDate(header.date)} 
+                  onChange={(val) => {
+                    // Try to parse common date formats
+                    let parsedDate = null;
+                    if (val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)) {
+                      const [_, day, month, year] = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+                      parsedDate = new Date(year, month - 1, day);
+                    } else if (val.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                      parsedDate = new Date(val);
+                    } else {
+                      parsedDate = new Date(val);
+                    }
+                    
+                    if (parsedDate && !isNaN(parsedDate.getTime())) {
+                      setHeader({...header, date: parsedDate.toISOString().slice(0, 10)});
+                    } else if (val === '') {
+                      setHeader({...header, date: new Date().toISOString().slice(0, 10)});
+                    }
+                    // Invalid dates are ignored - field stays as-is
+                  }}
+                  placeholder="DD/MM/YYYY"
+                  className="bg-transparent border-b border-dashed border-slate-300 text-right outline-none text-slate-800 cursor-text font-mono text-xs w-32 text-right"
+                />
               <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
               {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1 outline-none" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
               <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
