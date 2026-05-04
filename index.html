@@ -65,6 +65,20 @@
         .print-card .p-6 { padding: 12px !important; }
         .print-card h3 { font-size: 16px !important; margin-bottom: 4px; }
         .print-card p { font-size: 12px !important; line-height: 1.4; margin-bottom: 6px; }
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="date"]::-webkit-inner-spin-button,
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator { display: none !important; opacity: 0 !important; }
+      }
+      /* Hide calendar picker arrow inside PDF preview area at all times */
+      #pdf-content input[type="date"]::-webkit-calendar-picker-indicator,
+      #pdf-content input[type="date"]::-webkit-inner-spin-button {
+        display: none;
+        -webkit-appearance: none;
+        opacity: 0;
+      }
+      #pdf-content input[type="date"] {
+        -webkit-appearance: none;
+        appearance: none;
       }
       .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -114,7 +128,6 @@
     ShieldCheck, BadgeCheck, FileCheck, Camera
   } from 'lucide-react';
 
-  /* ─── Constants ─────────────────────────────────────────────── */
   const DB_KEY_JOBS      = 'jobsite-master-v4';
   const DB_KEY_TEMPL     = 'joblog-templates';
   const DB_KEY_MATS      = 'joblog-materials';
@@ -129,36 +142,18 @@
     { key: "JOBLOG-PRO-005",   expiry: null },
   ];
 
-  /* ─── Licence / Credential Types ────────────────────────────── */
   const LICENCE_TYPE_OPTIONS = [
-    'QBCC (QLD)',
-    'Fair Trading (NSW)',
-    'VBA (VIC)',
-    'Building Commission (WA)',
-    'CBS (SA)',
-    'OCBA (TAS)',
-    'ICBN (NT)',
-    'Access Canberra (ACT)',
-    'Builders Licence',
-    'Electrical Licence',
-    'Plumbing Licence',
-    'Gas Licence',
-    'White Card',
-    'Asbestos Removal',
-    'Demolition Licence',
-    'Rigging Licence',
-    'Scaffolding Licence',
-    'Crane Operator',
-    'Refrigeration Licence',
-    'Security Licence',
-    'Other'
+    'QBCC (QLD)','Fair Trading (NSW)','VBA (VIC)','Building Commission (WA)',
+    'CBS (SA)','OCBA (TAS)','ICBN (NT)','Access Canberra (ACT)',
+    'Builders Licence','Electrical Licence','Plumbing Licence','Gas Licence',
+    'White Card','Asbestos Removal','Demolition Licence','Rigging Licence',
+    'Scaffolding Licence','Crane Operator','Refrigeration Licence','Security Licence','Other'
   ];
 
-  const BIZA_KEY         = 'joblog-business';
-  const MAX_STOPS        = 12;
-  const GST_RATE         = 0.1;
+  const BIZA_KEY  = 'joblog-business';
+  const MAX_STOPS = 12;
+  const GST_RATE  = 0.1;
 
-  /* ─── Helpers ────────────────────────────────────────────────── */
   const parseTimeToMinutes = (str) => {
     if (!str) return 0;
     const s = str.toLowerCase().trim();
@@ -172,22 +167,9 @@
   const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU') : '';
   const fmtDateShort = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'}) : '';
   const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('en-AU', {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}) : '';
-  
-  const toLocalISO = (d) => {
-    if (!d) return '';
-    const date = new Date(d);
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  };
-
-  const isExpiringSoon = (expiryStr) => {
-    if (!expiryStr) return false;
-    const diff = new Date(expiryStr) - new Date();
-    return diff > 0 && diff < 60 * 24 * 60 * 60 * 1000; // 60 days
-  };
-  const isExpired = (expiryStr) => {
-    if (!expiryStr) return false;
-    return new Date(expiryStr) < new Date();
-  };
+  const toLocalISO = (d) => { if (!d) return ''; const date = new Date(d); return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
+  const isExpiringSoon = (expiryStr) => { if (!expiryStr) return false; const diff = new Date(expiryStr) - new Date(); return diff > 0 && diff < 60 * 24 * 60 * 60 * 1000; };
+  const isExpired = (expiryStr) => { if (!expiryStr) return false; return new Date(expiryStr) < new Date(); };
 
   const getQuoteTotals = (tasks, gstEnabled, extraTaxRate = 0) => {
     let labour = 0, mats = 0;
@@ -259,7 +241,6 @@
     return new Date(d.setDate(diff));
   };
 
-  /* ─── PrintEditableDiv ───────────────────────────────────────── */
   const PrintEditableDiv = ({ value, onChange, placeholder, className }) => (
     <div
       contentEditable suppressContentEditableWarning
@@ -275,11 +256,11 @@
     render() {
       if (this.state.hasError) return (
         <div className="min-h-screen flex items-center justify-center p-8 bg-slate-100 dark:bg-slate-950">
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 max-w-sm w-full text-center border dark:border-slate-800 shadow-xl">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-sm w-full text-center border dark:border-slate-800 shadow-xl">
             <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-2xl mb-4 inline-flex"><AlertTriangle size={32} className="text-red-500"/></div>
             <h2 className="text-xl font-black text-slate-900 dark:text-white mb-2">Something went wrong</h2>
             <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">{this.state.error?.message || 'Unexpected error'}</p>
-            <button onClick={() => window.location.reload()} className="bg-orange-500 hover:bg-orange-400 text-white font-black px-6 py-3 rounded-2xl w-full active:scale-95 transition-all">Reload App</button>
+            <button onClick={() => window.location.reload()} className="bg-orange-500 hover:bg-orange-400 text-white font-black px-6 py-3 rounded-xl w-full active:scale-95 transition-all">Reload App</button>
           </div>
         </div>
       );
@@ -287,7 +268,6 @@
     }
   }
 
-  /* ─── PayPalButton ───────────────────────────────────────────── */
   const PayPalButton = () => {
     const containerId = useRef(`paypal-${Math.random().toString(36).substr(2, 9)}`);
     useEffect(() => {
@@ -306,7 +286,6 @@
     );
   };
 
-  /* ─── Toast ──────────────────────────────────────────────────── */
   const ToastMessage = ({ message, type, onClose }) => {
     useEffect(() => { const timer = setTimeout(onClose, 3500); return () => clearTimeout(timer); }, [onClose]);
     const icons = { success: <CheckCircle2 size={18} className="text-emerald-500"/>, error: <AlertTriangle size={18} className="text-red-500"/>, info: <Info size={18} className="text-blue-500"/> };
@@ -320,10 +299,9 @@
     );
   };
 
-  /* ─── ConfirmDialog ──────────────────────────────────────────── */
   const ConfirmDialog = ({ message, confirmLabel = 'Delete', onConfirm, onCancel, danger = true }) => (
     <div className="fixed inset-0 z-[350] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 sm:p-8 w-full max-w-sm shadow-2xl border dark:border-slate-800 pb-safe animate-slide-up sm:animate-none">
+      <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 w-full max-w-sm shadow-2xl border dark:border-slate-800 pb-safe animate-slide-up sm:animate-none">
         <p className="font-bold text-slate-800 dark:text-white text-center mb-6 leading-relaxed text-lg">{message}</p>
         <div className="flex gap-3">
           <button onClick={onCancel} className="flex-1 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-black text-sm text-slate-600 dark:text-slate-300 active:scale-95 transition-all">Cancel</button>
@@ -333,7 +311,6 @@
     </div>
   );
 
-  /* ─── UpgradeModal ───────────────────────────────────────────── */
   const UpgradeModal = ({ onClose, onUnlock, showToast }) => {
     const [key, setKey] = useState('');
     const handleUnlock = () => {
@@ -345,11 +322,11 @@
     };
     return (
       <div className="fixed inset-0 z-[300] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl border dark:border-slate-800 animate-slide-up sm:animate-none pb-safe text-center my-auto">
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl border dark:border-slate-800 animate-slide-up sm:animate-none pb-safe text-center my-auto">
           <div className="flex justify-end mb-2"><button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600"><X size={18}/></button></div>
           <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center mx-auto mb-4"><Lock size={32} className="text-orange-500"/></div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Limit Reached</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">You've reached the 3‑job free limit. Purchase a licence or enter an existing key to unlock unlimited features.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">You've reached the 3-job free limit. Purchase a licence or enter an existing key to unlock unlimited features.</p>
           <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl mb-6 border border-slate-200 dark:border-slate-700 text-left">
             <h3 className="font-black text-sm mb-1 text-slate-800 dark:text-white">1. Buy a Licence</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 font-medium">Purchase a 1-year Pro Licence. Your unique unlock key will be emailed to you after checkout.</p>
@@ -367,12 +344,12 @@
     );
   };
 
-  /* ─── AIAssistModal ───────────────────────────────────────────── */
-  const AIAssistModal = ({ onClose, onGenerate, isGenerating, docType, apiKey }) => {
+  /* ── AI Assist Modal — with mic support ── */
+  const AIAssistModal = ({ onClose, onGenerate, isGenerating, docType, apiKey, toggleVoice, listeningField }) => {
     const [prompt, setPrompt] = useState('');
     return (
       <div className="fixed inset-0 z-[600] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 animate-slide-up sm:animate-none">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 pb-safe">
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 pb-safe">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-black text-lg flex items-center gap-2"><Sparkles className="text-purple-500" size={20}/> AI Assist</h3>
             <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full"><X size={20}/></button>
@@ -382,7 +359,23 @@
           ) : (
             <>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 font-medium leading-relaxed">Provide optional instructions to guide the AI when generating this {docType}.</p>
-              <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-32 resize-none dark:text-white dark:placeholder-slate-500 mb-4 focus:ring-2 focus:ring-purple-500 border border-slate-200 dark:border-slate-700" placeholder="Additional instructions (optional)..." value={prompt} onChange={e => setPrompt(e.target.value)}/>
+              <div className="relative mb-4">
+                <textarea
+                  className="w-full p-4 pr-12 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-32 resize-none dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-purple-500 border border-slate-200 dark:border-slate-700"
+                  placeholder="Additional instructions (optional)…"
+                  value={prompt}
+                  onChange={e => setPrompt(e.target.value)}
+                />
+                {toggleVoice && (
+                  <button
+                    type="button"
+                    onClick={() => toggleVoice('aiAssistPrompt', (val) => setPrompt(prev => typeof val === 'function' ? val(prev) : val))}
+                    className={`absolute right-3 bottom-3 p-2 rounded-full text-white shadow-md transition-all ${listeningField === 'aiAssistPrompt' ? 'bg-red-500 animate-pulse' : 'bg-slate-900 dark:bg-slate-700 hover:bg-purple-600'}`}
+                  >
+                    <Mic size={14}/>
+                  </button>
+                )}
+              </div>
               <div className="flex gap-3">
                 <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300 active:scale-95 transition-all">Cancel</button>
                 <button onClick={() => onGenerate(prompt)} disabled={isGenerating} className={`flex-1 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all active:scale-95 ${isGenerating ? 'bg-purple-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-500/20'}`}>
@@ -396,11 +389,9 @@
     );
   };
 
-  /* ═══════════════════════════════════════════════════════════
-     LICENCE EDITOR — inline sub-component used in BusinessProfileEditor
-  ═══════════════════════════════════════════════════════════ */
+  /* ── Licence Editor ── */
   const LicenceEditor = ({ licences, onChange }) => {
-    const [editing, setEditing] = useState(null); // null | index | 'new'
+    const [editing, setEditing] = useState(null);
     const blankLicence = { type: LICENCE_TYPE_OPTIONS[0], customType: '', number: '', expiry: '', state: '' };
     const [draft, setDraft] = useState(blankLicence);
 
@@ -428,14 +419,8 @@
           </div>
           <div>
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Licence / Credential Type</label>
-            <select
-              className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600"
-              value={draft.type}
-              onChange={e => setDraft(d => ({ ...d, type: e.target.value, customType: '' }))}
-            >
-              {LICENCE_TYPE_OPTIONS.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
+            <select className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" value={draft.type} onChange={e => setDraft(d => ({ ...d, type: e.target.value, customType: '' }))}>
+              {LICENCE_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
             </select>
           </div>
           {draft.type === 'Other' && (
@@ -468,9 +453,7 @@
 
     return (
       <div className="space-y-2">
-        {licences.length === 0 && (
-          <p className="text-xs text-slate-400 font-medium text-center py-2">No credentials added yet.</p>
-        )}
+        {licences.length === 0 && <p className="text-xs text-slate-400 font-medium text-center py-2">No credentials added yet.</p>}
         {licences.map((lic, i) => {
           const expired = isExpired(lic.expiry);
           const expiring = isExpiringSoon(lic.expiry);
@@ -481,11 +464,7 @@
                 <div className="min-w-0">
                   <p className="font-black text-xs text-slate-800 dark:text-white truncate">{lic.type}</p>
                   <p className="font-mono text-[10px] text-slate-500 dark:text-slate-400">{lic.number}{lic.state ? ` · ${lic.state}` : ''}</p>
-                  {lic.expiry && (
-                    <p className={`text-[9px] font-black uppercase mt-0.5 ${expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-slate-400'}`}>
-                      {expired ? 'EXPIRED: ' : expiring ? 'EXPIRES: ' : 'EXP: '}{fmtDate(lic.expiry)}
-                    </p>
-                  )}
+                  {lic.expiry && <p className={`text-[9px] font-black uppercase mt-0.5 ${expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-slate-400'}`}>{expired ? 'EXPIRED: ' : expiring ? 'EXPIRES: ' : 'EXP: '}{fmtDate(lic.expiry)}</p>}
                 </div>
               </div>
               <div className="flex gap-1 flex-shrink-0 ml-2">
@@ -502,20 +481,12 @@
     );
   };
 
-  /* ─── BusinessProfileEditor ──────────────────────────────────── */
   const BusinessProfileEditor = ({ profile, onSave, onClose, showToast }) => {
     const [form, setForm] = useState({
-      name:            profile.name            || '',
-      tradingName:     profile.tradingName     || '',
-      abn:             profile.abn             || '',
-      phone:           profile.phone           || '',
-      email:           profile.email           || '',
-      address:         profile.address         || '',
-      logo:            profile.logo            || '',
-      licences:        profile.licences        || [],
-      insurance:       profile.insurance       || '',
-      insurancePolicy: profile.insurancePolicy || '',
-      insuranceExpiry: profile.insuranceExpiry || '',
+      name: profile.name || '', tradingName: profile.tradingName || '', abn: profile.abn || '',
+      phone: profile.phone || '', email: profile.email || '', address: profile.address || '',
+      logo: profile.logo || '', licences: profile.licences || [], insurance: profile.insurance || '',
+      insurancePolicy: profile.insurancePolicy || '', insuranceExpiry: profile.insuranceExpiry || '',
     });
 
     const handleLogoUpload = async (e) => {
@@ -528,24 +499,18 @@
 
     return (
       <div className="fixed inset-0 z-[190] bg-slate-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[92vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
-          
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[92vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg flex items-center gap-2 text-slate-900 dark:text-white"><Building2 size={18} className="text-orange-500"/> Business Profile</h3>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={18}/></button>
           </div>
-
           <div className="overflow-y-auto flex-1 no-scrollbar pb-2 pr-1">
             {expiringLicences.length > 0 && (
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-3 mb-4 flex items-start gap-2">
                 <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
-                <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">
-                  {expiringLicences.length} credential{expiringLicences.length > 1 ? 's' : ''} {expiringLicences.some(l => isExpired(l.expiry)) ? 'expired or expiring soon' : 'expiring soon'} — update below.
-                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">{expiringLicences.length} credential{expiringLicences.length > 1 ? 's' : ''} {expiringLicences.some(l => isExpired(l.expiry)) ? 'expired or expiring soon' : 'expiring soon'} — update below.</p>
               </div>
             )}
-
-            {/* Logo & Business Name */}
             <div className="flex items-center gap-4 mb-5 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
               <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
                 {form.logo ? <img src={form.logo} className="w-full h-full object-contain p-1" alt="logo"/> : <ImageIcon size={26} className="text-slate-300 dark:text-slate-500"/>}
@@ -553,77 +518,37 @@
               <div>
                 <p className="font-black text-sm mb-0.5 dark:text-white">Business Logo</p>
                 <p className="text-[10px] text-slate-400 mb-2 font-medium">Appears on all printed reports</p>
-                <label className="inline-flex items-center gap-1.5 bg-slate-200 dark:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer text-[11px] font-black uppercase hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors dark:text-slate-200">
-                  <Upload size={11}/> Upload
-                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload}/>
-                </label>
+                <label className="inline-flex items-center gap-1.5 bg-slate-200 dark:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer text-[11px] font-black uppercase hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors dark:text-slate-200"><Upload size={11}/> Upload<input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload}/></label>
                 {form.logo && <button onClick={() => setForm(f=>({...f,logo:''}))} className="text-[10px] text-red-400 font-bold mt-1 ml-2 hover:text-red-600">Remove</button>}
               </div>
             </div>
-
-            {/* Business Details */}
             <div className="space-y-3 mb-5">
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="e.g. Smith Building Services" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/>
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="T/A name (if different)" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/>
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">ABN</label>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="e.g. 12 345 678 901" value={form.abn} onChange={e=>setForm(f=>({...f,abn:e.target.value}))}/>
-              </div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="e.g. Smith Building Services" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="T/A name (if different)" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">ABN</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="e.g. 12 345 678 901" value={form.abn} onChange={e=>setForm(f=>({...f,abn:e.target.value}))}/></div>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Phone</label>
-                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="04xx xxx xxx" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/>
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label>
-                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="you@example.com" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/>
-                </div>
+                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Phone</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="04xx xxx xxx" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div>
+                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="you@example.com" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div>
               </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Address</label>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="123 Example St, Sydney NSW 2000" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/>
-              </div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Address</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="123 Example St, Sydney NSW 2000" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/></div>
             </div>
-
-            {/* Licences & Credentials */}
             <div className="mb-5">
               <div className="flex items-center gap-2 mb-3">
                 <BadgeCheck size={15} className="text-emerald-500"/>
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Licences & Credentials</span>
-                {form.licences.length > 0 && (
-                  <span className="ml-auto bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase">
-                    {form.licences.length} saved
-                  </span>
-                )}
+                {form.licences.length > 0 && <span className="ml-auto bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase">{form.licences.length} saved</span>}
               </div>
-              <LicenceEditor
-                licences={form.licences}
-                onChange={(updated) => setForm(f => ({ ...f, licences: updated }))}
-              />
+              <LicenceEditor licences={form.licences} onChange={(updated) => setForm(f => ({ ...f, licences: updated }))}/>
             </div>
-
-            {/* Insurance */}
             <div className="mb-2">
               <div className="flex items-center gap-2 mb-3">
                 <ShieldCheck size={15} className="text-blue-500"/>
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Public Liability Insurance</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Insurer Name</label>
-                  <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. Allianz, QBE, CGU" value={form.insurance} onChange={e=>setForm(f=>({...f,insurance:e.target.value}))}/>
-                </div>
+                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Insurer Name</label><input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. Allianz, QBE, CGU" value={form.insurance} onChange={e=>setForm(f=>({...f,insurance:e.target.value}))}/></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Number</label>
-                    <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="POL-XXXXXXXX" value={form.insurancePolicy} onChange={e=>setForm(f=>({...f,insurancePolicy:e.target.value}))}/>
-                  </div>
+                  <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Number</label><input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="POL-XXXXXXXX" value={form.insurancePolicy} onChange={e=>setForm(f=>({...f,insurancePolicy:e.target.value}))}/></div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Expiry</label>
                     <input type="date" className={`w-full p-3 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border dark:border-slate-600 ${isExpired(form.insuranceExpiry) ? 'bg-red-50 dark:bg-red-900/20 border-red-300' : isExpiringSoon(form.insuranceExpiry) ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300' : 'bg-white dark:bg-slate-700 border-slate-200'}`} value={form.insuranceExpiry} onChange={e=>setForm(f=>({...f,insuranceExpiry:e.target.value}))}/>
@@ -634,7 +559,6 @@
               </div>
             </div>
           </div>
-
           <div className="flex gap-3 pt-4 mt-1 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
             <button onClick={() => { onSave(form); onClose(); showToast('Profile Saved', 'success'); }} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black active:scale-95 transition-all flex items-center justify-center gap-2"><Check size={16}/> Save</button>
@@ -644,42 +568,33 @@
     );
   };
 
-  /* ─── TemplateManager ────────────────────────────────────────── */
   const TemplateManager = ({ templates, onSave, onClose }) => {
     const [list, setList] = useState([...templates]);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' });
-    
     const addNew = () => { setEditing(-1); setForm({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' }); };
     const editTemplate = (index) => { setEditing(index); setForm({...list[index].data, name: list[index].name}); };
     const deleteTemplate = (index) => { const nl = list.filter((_,i)=>i!==index); setList(nl); onSave(nl); };
-    
     const saveForm = () => {
       if (!form.name.trim() || !form.title.trim()) return;
       const tpl = { name: form.name.trim(), type: 'quote', data: { title: form.title, time: form.time, rate: form.rate, materialsCost: form.materialsCost, materials: form.materials, tools: form.tools, desc: form.desc } };
       let updated = editing >= 0 ? list.map((t,i)=>i===editing?tpl:t) : [...list, tpl];
       setList(updated); onSave(updated); setEditing(null);
     };
-
     return (
       <div className="fixed inset-0 z-[200] bg-slate-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[85vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
-          
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[85vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">Task Templates</h3>
             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          
           <div className="overflow-y-auto flex-1 no-scrollbar mb-2">
             {editing === null ? (
               <>
                 {list.length === 0 && <p className="text-center text-sm text-slate-400 font-bold py-6">No templates saved yet.</p>}
                 {list.map((t, i) => (
                   <div key={i} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-2xl mb-2">
-                    <div className="min-w-0 pr-3">
-                      <span className="font-black text-sm text-slate-900 dark:text-white block truncate">{t.name}</span>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t.data.title}</p>
-                    </div>
+                    <div className="min-w-0 pr-3"><span className="font-black text-sm text-slate-900 dark:text-white block truncate">{t.name}</span><p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t.data.title}</p></div>
                     <div className="flex gap-1.5 flex-shrink-0">
                       <button onClick={() => editTemplate(i)} className="bg-blue-50 dark:bg-blue-900/30 text-blue-500 hover:text-blue-600 p-2 rounded-xl"><Pencil size={14}/></button>
                       <button onClick={() => deleteTemplate(i)} className="bg-red-50 dark:bg-red-900/30 text-red-400 hover:text-red-500 p-2 rounded-xl"><Trash2 size={14}/></button>
@@ -704,7 +619,6 @@
               </div>
             )}
           </div>
-          
           {editing === null ? (
             <div className="flex gap-3 flex-shrink-0 pt-3 border-t border-slate-100 dark:border-slate-800">
               <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-sm text-slate-600 dark:text-slate-300">Close</button>
@@ -721,32 +635,23 @@
     );
   };
 
-  /* ─── MaterialManager ────────────────────────────────────────── */
   const MaterialManager = ({ materials, onSave, onClose }) => {
     const [list, setList] = useState([...materials]);
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({ name: '', price: '' });
-
     const saveForm = () => {
       if (!form.name.trim() || !form.price.trim()) return;
       const updated = [...list, { name: form.name.trim(), price: form.price.trim() }];
       setList(updated); onSave(updated); setEditing(false);
     };
-
-    const deleteMaterial = (index) => {
-      const updated = list.filter((_, i) => i !== index);
-      setList(updated); onSave(updated);
-    };
-
+    const deleteMaterial = (index) => { const updated = list.filter((_, i) => i !== index); setList(updated); onSave(updated); };
     return (
       <div className="fixed inset-0 z-[200] bg-slate-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[85vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
-          
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[85vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">Saved Materials</h3>
             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          
           <div className="overflow-y-auto flex-1 no-scrollbar mb-2">
             {!editing ? (
               <>
@@ -768,7 +673,6 @@
               </div>
             )}
           </div>
-          
           {!editing ? (
             <div className="flex gap-3 flex-shrink-0 pt-3 border-t border-slate-100 dark:border-slate-800">
               <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-sm text-slate-600 dark:text-slate-300">Close</button>
@@ -785,7 +689,7 @@
     );
   };
 
-  /* ─── SettingsModal ───────────────────────────────────────────── */
+  /* ── Settings Modal — refined corners & spacing ── */
   const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
@@ -812,20 +716,20 @@
 
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[90vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
-          <div className="flex justify-between items-center mb-6 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-7 shadow-2xl border dark:border-slate-800 max-h-[90vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
+          <div className="flex justify-between items-center mb-5 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
             <div>
               <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Configuration</span>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-2">Settings</h2>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1.5">Settings</h2>
             </div>
-            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
+            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          <div className="space-y-6">
-            
+
+          <div className="space-y-5">
             {/* Business Profile */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Business</label>
-              <button onClick={() => setShowBusiness(true)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl active:scale-95 transition-all hover:border-orange-400 dark:hover:border-orange-500">
+              <button onClick={() => setShowBusiness(true)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl active:scale-95 transition-all hover:border-orange-400 dark:hover:border-orange-500">
                 <div className="flex items-center gap-3">
                   {businessProfile?.logo
                     ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-white dark:bg-slate-700 p-0.5" alt="logo"/>
@@ -834,9 +738,7 @@
                   <div className="text-left">
                     <div className="flex items-center gap-2">
                       <p className="font-black text-sm text-slate-800 dark:text-white">{hasBiz ? businessProfile.name : 'Set Up Business Profile'}</p>
-                      {expiringCount > 0 && (
-                        <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{expiringCount}</span>
-                      )}
+                      {expiringCount > 0 && <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{expiringCount}</span>}
                     </div>
                     {hasBiz && businessProfile.abn && <p className="text-[10px] text-slate-400 font-mono">ABN {businessProfile.abn}</p>}
                     {hasBiz && businessProfile.licences?.length > 0 && <p className="text-[10px] text-slate-400">{businessProfile.licences.length} credential{businessProfile.licences.length !== 1 ? 's' : ''} saved</p>}
@@ -847,75 +749,73 @@
               </button>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-            
+
             {/* Extra Tax */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Universal Tax / Markup</label>
-              <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border dark:border-slate-700">
+              <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
                 <input type="range" min="0" max="50" step="0.5" value={draftExtraTax} onChange={e => setDraftExtraTax(e.target.value)} className="flex-1 accent-orange-500"/>
                 <span className="font-black text-slate-700 dark:text-slate-200 w-12 text-right">{draftExtraTax}%</span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium mt-2">Applies an extra percentage on top of the subtotal on all reports.</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-1.5">Applies an extra percentage on top of the subtotal on all reports.</p>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-            
+
             {/* Appearance */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
-              <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700">
+              <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-200">
                   {isDarkMode ? <Moon size={18} className="text-indigo-400"/> : <Sun size={18} className="text-amber-500"/>}
                   {isDarkMode ? 'Dark Mode Active' : 'Light Mode Active'}
                 </div>
-                <div className={`w-12 h-6 rounded-full transition-all flex items-center px-1 ${isDarkMode ? 'bg-indigo-500 justify-end' : 'bg-slate-300 justify-start'}`}>
+                <div className={`w-11 h-6 rounded-full transition-all flex items-center px-1 ${isDarkMode ? 'bg-indigo-500 justify-end' : 'bg-slate-300 justify-start'}`}>
                   <div className="w-4 h-4 rounded-full bg-white shadow"/>
                 </div>
               </button>
             </div>
-            
+
             {/* Backup */}
             <div>
               <div className="flex justify-between items-center mb-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Backup & Restore</label>
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-red-900/20 border-red-900/40' : 'text-emerald-500 bg-emerald-900/10 border-emerald-900/30'}`}>
-                  <HardDrive size={10}/> {dbSize}
-                </div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Backup & Restore</label>
+                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-red-900/20 border-red-900/40' : 'text-emerald-500 bg-emerald-900/10 border-emerald-900/30'}`}><HardDrive size={10}/> {dbSize}</div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <button onClick={exportData} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"><Download size={16}/> Export</button>
-                <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"><Upload size={16}/> Import<input type="file" accept=".json" className="hidden" onChange={importData}/></label>
+                <button onClick={exportData} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"><Download size={16}/> Export</button>
+                <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"><Upload size={16}/> Import<input type="file" accept=".json" className="hidden" onChange={importData}/></label>
               </div>
             </div>
-            
+
             {/* Library */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Your Library</label>
               <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => { setShowTemplates(true); setShowMaterials(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"><Bookmark size={16}/> Templates ({userTemplates.length})</button>
-                <button onClick={() => { setShowMaterials(true); setShowTemplates(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"><Package size={16}/> Materials ({userMaterials.length})</button>
+                <button onClick={() => { setShowTemplates(true); setShowMaterials(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"><Bookmark size={16}/> Templates ({userTemplates.length})</button>
+                <button onClick={() => { setShowMaterials(true); setShowTemplates(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"><Package size={16}/> Materials ({userMaterials.length})</button>
               </div>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-            
+
             {/* Gemini API */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
-              <div className="flex items-start gap-3 p-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl">
+              <div className="flex items-start gap-3 p-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-xl">
                 <ShieldAlert size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
                 <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium leading-relaxed">Your API key is stored in this browser only. Do not use on shared devices.</p>
               </div>
-              <input type="password" className="w-full p-4 mb-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
+              <input type="password" className="w-full p-3.5 mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
               <div className="relative">
-                <Bot size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
+                <Bot size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
-            
+
             {/* Google Calendar */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar – Optional/Advanced</label>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border dark:border-slate-700 space-y-3">
-                <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Google Client ID" value={draftGoogleClientId} onChange={e => setDraftGoogleClientId(e.target.value)}/>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
+                <input type="text" className="w-full p-3.5 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="Google Client ID" value={draftGoogleClientId} onChange={e => setDraftGoogleClientId(e.target.value)}/>
                 {isGoogleConnected ? (
                   <button onClick={() => {disconnectGoogleCalendar(); showToast('Calendar Disconnected','info');}} className="w-full bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2"><X size={16}/> Disconnect Calendar</button>
                 ) : (
@@ -924,7 +824,6 @@
                 <p className="text-[10px] text-slate-400 font-medium">Enter your OAuth 2.0 Client ID.</p>
               </div>
             </div>
-
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
 
             {/* Pro Licence */}
@@ -937,11 +836,7 @@
                   <>
                     <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Purchase a 1-year licence or enter your existing key.</p>
                     <PayPalButton />
-                    <div className="flex items-center gap-2 my-2">
-                      <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
-                      <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase">OR</span>
-                      <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
-                    </div>
+                    <div className="flex items-center gap-2 my-2"><div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div><span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase">OR</span><div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div></div>
                     <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 border border-amber-200 dark:border-amber-700/40 rounded-xl font-mono text-sm dark:text-white uppercase outline-none focus:ring-2 focus:ring-amber-400" placeholder="Licence key" value={licenceInput} onChange={e => setLicenceInput(e.target.value)}/>
                     <button onClick={handleLicenceUnlock} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"><Lock size={16}/> Unlock Full Version</button>
                   </>
@@ -949,7 +844,7 @@
               </div>
             </div>
 
-            <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all mt-4"><Check size={16}/> Save & Close</button>
+            <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"><Check size={16}/> Save & Close</button>
           </div>
           {showBusiness && <BusinessProfileEditor profile={businessProfile || {}} onSave={saveBusinessProfile} onClose={() => setShowBusiness(false)} showToast={showToast}/>}
           {showTemplates && <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)}/>}
@@ -959,20 +854,16 @@
     );
   };
 
-  /* ─── Signature Pad Component ────────────────────────────────── */
   const SignaturePad = ({ onSave, initialData }) => {
     const canvasRef = useRef(null);
     const isDrawing = useRef(false);
-
     useEffect(() => {
       if (initialData && canvasRef.current) {
         const ctx = canvasRef.current.getContext('2d');
-        const img = new Image();
-        img.src = initialData;
+        const img = new Image(); img.src = initialData;
         img.onload = () => ctx.drawImage(img, 0, 0);
       }
     }, [initialData]);
-
     const getPos = (e) => {
       if(!canvasRef.current) return {x:0,y:0};
       const rect = canvasRef.current.getBoundingClientRect();
@@ -982,55 +873,19 @@
       const scaleY = canvasRef.current.height / rect.height;
       return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
     };
-
-    const start = (e) => {
-      e.preventDefault();
-      isDrawing.current = true;
-      const pos = getPos(e);
-      const ctx = canvasRef.current.getContext('2d');
-      ctx.lineWidth = 3;
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = '#0f172a';
-      ctx.beginPath();
-      ctx.moveTo(pos.x, pos.y);
-    };
-
-    const draw = (e) => {
-      if (!isDrawing.current) return;
-      e.preventDefault();
-      const pos = getPos(e);
-      const ctx = canvasRef.current.getContext('2d');
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-    };
-
-    const end = () => {
-      if (!isDrawing.current) return;
-      isDrawing.current = false;
-      onSave(canvasRef.current.toDataURL());
-    };
-
-    const clear = () => {
-      if(!canvasRef.current) return;
-      const cvs = canvasRef.current;
-      cvs.getContext('2d').clearRect(0, 0, cvs.width, cvs.height);
-      onSave(null);
-    };
-
+    const start = (e) => { e.preventDefault(); isDrawing.current = true; const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
+    const draw = (e) => { if (!isDrawing.current) return; e.preventDefault(); const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
+    const end = () => { if (!isDrawing.current) return; isDrawing.current = false; onSave(canvasRef.current.toDataURL()); };
+    const clear = () => { if(!canvasRef.current) return; const cvs = canvasRef.current; cvs.getContext('2d').clearRect(0, 0, cvs.width, cvs.height); onSave(null); };
     return (
       <div className="relative border-2 border-slate-300 border-dashed rounded-xl overflow-hidden bg-slate-50 no-print-border inline-block max-w-full touch-none">
-        <canvas 
-          ref={canvasRef} width={600} height={200} 
-          className="w-full max-w-[600px] h-auto cursor-crosshair" 
-          onMouseDown={start} onMouseMove={draw} onMouseUp={end} onMouseOut={end} 
-          onTouchStart={start} onTouchMove={draw} onTouchEnd={end}
-        />
+        <canvas ref={canvasRef} width={600} height={200} className="w-full max-w-[600px] h-auto cursor-crosshair" onMouseDown={start} onMouseMove={draw} onMouseUp={end} onMouseOut={end} onTouchStart={start} onTouchMove={draw} onTouchEnd={end}/>
         <button onClick={clear} className="absolute top-2 right-2 bg-slate-200 hover:bg-slate-300 text-slate-600 text-[10px] font-black uppercase px-2 py-1 rounded shadow no-print transition-colors">Clear</button>
       </div>
     );
   };
 
-  /* ─── NewJobModal ────────────────────────────────────────────── */
+  /* ── New Job Modal — fixed centering ── */
   const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast, toggleVoice, listeningField }) => {
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
@@ -1055,25 +910,8 @@
             fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
           }
         }
-        
-        const textPrompt = `You are a data extraction AI. Extract the job details from the attached files (if any) AND the following source text. If it is dictated text, figure out the address, client, and items automatically.
-        
-Source Text:
-"""
-${additionalText || 'No additional text provided.'}
-"""
-
-Combine the data intelligently. Return ONLY a valid JSON object with keys: "address", "clientName", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
-
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { 
-          method:'POST', 
-          headers:{'Content-Type':'application/json'}, 
-          body: JSON.stringify({ 
-            contents:[{parts:[{text:textPrompt},...fileParts]}], 
-            generationConfig:{temperature:0,response_mime_type:'application/json'} 
-          }) 
-        });
-        
+        const textPrompt = `You are a data extraction AI. Extract job details from the attached files (if any) AND the following source text.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:textPrompt},...fileParts]}], generationConfig:{temperature:0,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error(`API error ${res.status}`);
         const data = await res.json();
         const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -1090,57 +928,100 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
 
     return (
       <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 relative overflow-hidden animate-slide-up sm:animate-none pb-safe">
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-2xl border dark:border-slate-800 relative overflow-hidden animate-slide-up sm:animate-none pb-safe">
           {isImporting && (
-            <div className="absolute inset-0 bg-slate-900/80 rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+            <div className="absolute inset-0 bg-slate-900/80 rounded-t-3xl sm:rounded-3xl flex flex-col items-center justify-center z-10 backdrop-blur-sm">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
               <p className="text-white font-black text-sm uppercase">Processing with AI…</p>
             </div>
           )}
-          <div className="flex justify-between items-center mb-5">
+
+          {/* Header */}
+          <div className="flex justify-between items-start px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div>
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{isHandover ? 'Completion Report' : 'Job Sheet'}</span>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1">New Project</h2>
+              <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest mb-1.5 ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{isHandover ? 'Completion Report' : 'Job Sheet'}</span>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white">New Project</h2>
             </div>
-            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
+            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white mt-1"><X size={18}/></button>
           </div>
-          <div className="space-y-3 max-h-[70vh] overflow-y-auto no-scrollbar pb-4 pr-1">
-            <div className="relative">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Job Address *</label>
-              <input autoFocus className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-transparent dark:border-slate-700" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
-              <button type="button" onClick={() => toggleVoice('newJobAddr', setAddr)} className={`absolute right-2 bottom-2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobAddr'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={16}/></button>
-            </div>
-            <div className="relative">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Client Name</label>
-              <input className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-transparent dark:border-slate-700" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
-              <button type="button" onClick={() => toggleVoice('newJobClient', setClient)} className={`absolute right-2 bottom-2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobClient'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={16}/></button>
-            </div>
+
+          {/* Body */}
+          <div className="px-5 py-4 space-y-3 max-h-[65vh] overflow-y-auto no-scrollbar">
+            {/* Address */}
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date (optional)</label>
-              <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-transparent dark:border-slate-700" value={dueDate} onChange={e => setDueDate(e.target.value)}/>
-            </div>
-            <div className="flex items-center gap-3 py-1">
-              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or use AI</span><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
-              <div className="mb-2">
-                <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Attach documents or dictate what you did.</p>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Job Address *</label>
+              <div className="relative">
+                <input
+                  autoFocus
+                  className="w-full px-4 py-3 pr-11 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm"
+                  placeholder="e.g. 42 Acacia Ave, Sydney NSW"
+                  value={addr}
+                  onChange={e => setAddr(e.target.value)}
+                />
+                <button type="button" onClick={() => toggleVoice('newJobAddr', setAddr)} className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobAddr'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={15}/></button>
               </div>
-              <label className="flex items-center gap-2 mb-2 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors text-xs font-black uppercase"><Upload size={14}/> Add Documents<input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/></label>
+            </div>
+
+            {/* Client */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Client Name</label>
+              <div className="relative">
+                <input
+                  className="w-full px-4 py-3 pr-11 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm"
+                  placeholder="e.g. John Smith"
+                  value={client}
+                  onChange={e => setClient(e.target.value)}
+                />
+                <button type="button" onClick={() => toggleVoice('newJobClient', setClient)} className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobClient'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={15}/></button>
+              </div>
+            </div>
+
+            {/* Due Date */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Due Date (optional)</label>
+              <input
+                type="date"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm"
+                value={dueDate}
+                onChange={e => setDueDate(e.target.value)}
+              />
+            </div>
+
+            {/* AI divider */}
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or use AI</span>
+              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
+            </div>
+
+            {/* AI box */}
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+              <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5 mb-0.5"><Sparkles size={12} className="text-orange-500"/> AI Auto-Fill</p>
+              <p className="text-[10px] text-slate-400 mb-3">Attach documents or dictate what you did.</p>
+              <label className="flex items-center gap-2 mb-3 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-xs font-black uppercase w-fit"><Upload size={13}/> Add Documents<input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/></label>
               {files.length > 0 && (
-                <div className="mb-2">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1 shadow-sm"><span className="text-[11px] font-medium truncate flex-1 dark:text-white">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400"><X size={14}/></button></div>))}</div>
+                <div className="mb-3 space-y-1">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 px-3 py-2 rounded-lg shadow-sm"><span className="text-[11px] font-medium truncate flex-1 dark:text-white">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400 flex-shrink-0"><X size={13}/></button></div>))}</div>
               )}
               <div className="relative">
-                <textarea className="w-full p-3 pr-10 bg-white dark:bg-slate-700 rounded-lg outline-none text-xs font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400 shadow-sm" placeholder="Paste text or tap mic: 'I went to 123 Main st and installed 2 power points...'" value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
-                <button type="button" onClick={() => toggleVoice('newJobAI', setAdditionalText)} className={`absolute right-2 bottom-2 p-2 rounded-full text-white shadow-md transition-all ${listeningField==='newJobAI'?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-800 hover:bg-orange-500'}`}><Mic size={14}/></button>
+                <textarea
+                  className="w-full px-4 py-3 pr-11 bg-white dark:bg-slate-700 rounded-lg outline-none text-xs font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400 shadow-sm border border-slate-200 dark:border-slate-600"
+                  placeholder="Paste text or tap mic: 'I went to 123 Main st and installed 2 power points...'"
+                  value={additionalText}
+                  onChange={e => setAdditionalText(e.target.value)}
+                />
+                <button type="button" onClick={() => toggleVoice('newJobAI', setAdditionalText)} className={`absolute right-2.5 bottom-2.5 p-2 rounded-full text-white shadow-md transition-all ${listeningField==='newJobAI'?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-800 hover:bg-orange-500'}`}><Mic size={13}/></button>
               </div>
             </div>
           </div>
-          <div className="flex gap-3 mt-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <button onClick={createManual} className={`flex-1 py-3 rounded-xl font-black text-sm shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>Create</button>
+
+          {/* Footer */}
+          <div className="flex gap-3 px-5 py-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              onClick={createManual}
+              className={`flex-1 py-3.5 rounded-xl font-black text-sm shadow-sm transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+            >Create</button>
             {canUseAI && (
-              <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95"><Sparkles size={16}/> Auto-Fill</button>
+              <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-black text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"><Sparkles size={15}/> Auto-Fill</button>
             )}
           </div>
         </div>
@@ -1148,7 +1029,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     );
   };
 
-  /* ─── PrintPreview ───────────────────────────────────────────── */
+  /* ── Print Preview — both dates editable, calendar icon hidden ── */
   const PrintPreview = ({ job, extraTaxRate, businessProfile = {}, onClose, onUpdateJob, showToast }) => {
     const [tasks, setTasks] = useState(job.tasks.map(t => ({...t})));
     const [header, setHeader] = useState({
@@ -1160,32 +1041,20 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       projectNotes: job.projectNotes || '',
       projectPhotos: job.projectPhotos || [],
     });
-    
     const [signatureEnabled, setSignatureEnabled] = useState(job.showSignature || false);
     const [signatureData, setSignatureData] = useState(job.signature || null);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-    // Auto-sync changes back to main DB
     useEffect(() => {
-      onUpdateJob({
-        ...job,
-        tasks,
-        date: new Date(header.date).toISOString(),
-        showSignature: signatureEnabled,
-        signature: signatureData
-      });
-    }, [header.date, signatureEnabled, signatureData, tasks]);
+      onUpdateJob({ ...job, tasks, date: new Date(header.date).toISOString(), showSignature: signatureEnabled, signature: signatureData });
+    }, [header.date, header.dueDate, signatureEnabled, signatureData, tasks]);
 
-    const updateTask = (index, field, value) => {
-      const updated = [...tasks]; updated[index] = { ...updated[index], [field]: value }; setTasks(updated);
-    };
-
+    const updateTask = (index, field, value) => { const updated = [...tasks]; updated[index] = { ...updated[index], [field]: value }; setTasks(updated); };
     const totals = getQuoteTotals(tasks, job.gstEnabled, extraTaxRate);
     const showCosts = job.showCosts;
     const totalHours = tasks.reduce((a,t) => a + parseTimeToMinutes(t.time), 0);
     const biz = businessProfile;
     const docLabel = job.type === 'handover' ? 'Completion Report' : 'Quotation';
-
     const printLicences = (biz.licences || []);
     const hasInsurance = biz.insurance && biz.insurancePolicy;
 
@@ -1196,42 +1065,38 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
         const opt = { margin: 10, filename: `${job.clientName || 'Job'}-${fmtDateShort(header.date)}.pdf`, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
         const pdfBlob = await window.html2pdf().set(opt).from(element).output('blob');
         const file = new File([pdfBlob], `${job.clientName || 'Job_Report'}.pdf`, { type: 'application/pdf' });
-        
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ files: [file], title: `${docLabel} - ${biz.name || 'JobLog'}` });
         } else {
-          // Fallback to auto-download if sharing is unsupported
           window.html2pdf().set(opt).from(element).save();
           showToast('Downloaded PDF (Sharing unsupported on this device)', 'success');
         }
-      } catch (err) {
-        showToast('Error generating PDF', 'error');
-        console.error(err);
-      } finally {
-        setIsGeneratingPDF(false);
-      }
+      } catch (err) { showToast('Error generating PDF', 'error'); console.error(err); }
+      finally { setIsGeneratingPDF(false); }
     };
 
     return createPortal(
       <div id="print-container" className="print-preview-overlay fixed inset-0 z-[500] bg-slate-100 dark:bg-slate-900 p-4 sm:p-8 overflow-y-auto pb-safe">
         <div className="max-w-3xl mx-auto">
-          <div className="flex flex-wrap justify-between items-center mb-6 no-print gap-4">
+          {/* Toolbar */}
+          <div className="flex flex-wrap justify-between items-center mb-6 no-print gap-3">
             <h2 className="text-xl font-black text-slate-800 dark:text-white">Review Document</h2>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <button onClick={() => setSignatureEnabled(!signatureEnabled)} className={`px-4 py-2 rounded-xl font-black flex items-center gap-2 text-sm transition-colors border ${signatureEnabled ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
-                <Edit3 size={16}/> Signature
+                <Edit3 size={15}/> Signature
               </button>
-              <button onClick={() => window.print()} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-sm border dark:border-slate-700"><Printer size={16}/> Print</button>
-              <button onClick={handleSharePDF} disabled={isGeneratingPDF} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-sm">
-                {isGeneratingPDF ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/> : <Share2 size={16}/>} Share PDF
+              <button onClick={() => window.print()} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-sm border dark:border-slate-700 text-sm"><Printer size={15}/> Print</button>
+              <button onClick={handleSharePDF} disabled={isGeneratingPDF} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-sm text-sm">
+                {isGeneratingPDF ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/> : <Share2 size={15}/>} Share PDF
               </button>
-              <button onClick={onClose} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-black">Close</button>
+              <button onClick={onClose} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-black text-sm">Close</button>
             </div>
           </div>
-          
-          {/* PDF CONTENT WRAPPER */}
+
+          {/* PDF content */}
           <div id="pdf-content" className="bg-white text-black p-6 sm:p-10 shadow-2xl rounded-sm">
-            {/* ─── Business Header ─── */}
+
+            {/* Business Header */}
             {biz.name && (
               <div className="pb-4 mb-4 border-b-2 border-slate-300">
                 <div className="flex justify-between items-start">
@@ -1243,14 +1108,10 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
                       {biz.abn && <p className="text-xs font-bold text-slate-600 mt-0.5 font-mono">ABN {biz.abn}</p>}
                     </div>
                   </div>
-                  
-                  {/* Right-aligned Contact & Credential Details */}
                   <div className="text-right text-sm text-slate-600 space-y-0.5 flex flex-col items-end">
                     {biz.phone && <p className="font-bold">{biz.phone}</p>}
                     {biz.email && <p>{biz.email}</p>}
                     {biz.address && <p className="text-slate-400 text-xs mb-2">{biz.address}</p>}
-
-                    {/* Licences stacked cleanly under contact info */}
                     {(printLicences.length > 0 || hasInsurance) && (
                       <div className="mt-1 pt-2 border-t border-slate-200 inline-block text-right min-w-[150px]">
                         {printLicences.map((lic, i) => (
@@ -1270,28 +1131,54 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
               </div>
             )}
 
-            {/* ─── Document Header ─── */}
+            {/* Document Header */}
             <div className="border-b-2 border-slate-300 pb-3 mb-4">
-              <div className="flex justify-between items-center text-xs font-black uppercase text-slate-500 mb-2">
-                <span>{docLabel}</span>
-                {/* Editable Date Input */}
-                <input type="date" className="bg-transparent border-b border-dashed border-slate-300 text-right outline-none text-slate-800 cursor-pointer focus:border-orange-400" value={header.date} onChange={e => setHeader({...header, date: e.target.value})}/>
+              {/* Doc type label + BOTH dates editable */}
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-black uppercase text-slate-500 tracking-widest">{docLabel}</span>
+                <div className="flex items-center gap-3">
+                  {/* Document date */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-black text-slate-400 uppercase">Date:</span>
+                    <input
+                      type="date"
+                      className="bg-transparent border-b border-dashed border-slate-400 text-right outline-none text-slate-800 text-xs font-bold cursor-pointer focus:border-orange-400 focus:outline-none"
+                      style={{ WebkitAppearance: 'none', appearance: 'none' }}
+                      value={header.date}
+                      onChange={e => setHeader({...header, date: e.target.value})}
+                    />
+                  </div>
+                </div>
               </div>
+
               <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
               {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1 outline-none" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
               <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
-              {header.dueDate && <div className="text-sm font-bold text-amber-600 mb-2">Due: {fmtDate(header.dueDate)}</div>}
+
+              {/* Due date — always shown, always editable */}
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Due Date:</span>
+                <input
+                  type="date"
+                  className="bg-transparent border-b border-dashed border-amber-400 outline-none text-amber-600 font-bold text-sm cursor-pointer focus:border-orange-500"
+                  style={{ WebkitAppearance: 'none', appearance: 'none' }}
+                  value={header.dueDate}
+                  onChange={e => setHeader({...header, dueDate: e.target.value})}
+                />
+                {!header.dueDate && <span className="text-[10px] text-slate-400 italic">optional</span>}
+              </div>
+
               <PrintEditableDiv value={header.projectNotes} onChange={v => setHeader({...header, projectNotes: v})} placeholder="Project notes / Document Summary" className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1"/>
               {header.projectPhotos?.length > 0 && (
                 <div className="flex gap-2 mt-2 overflow-x-auto">{header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>
               )}
-              <div className="flex gap-4 mt-2 text-sm font-medium">
+              <div className="flex gap-4 mt-2 text-sm font-medium text-slate-600">
                 <span>TOTAL TIME: {fmtMins(totalHours)}</span>
                 {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
               </div>
             </div>
 
-            {/* ─── Tasks ─── */}
+            {/* Tasks */}
             {tasks.map((t, idx) => {
               const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
               const mats   = parseFloat(t.materialsCost)||0;
@@ -1337,7 +1224,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
               );
             })}
 
-            {/* ─── Totals ─── */}
+            {/* Totals */}
             {showCosts && totals.total > 0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
@@ -1354,14 +1241,13 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
               </div>
             )}
 
-            {/* ─── Signature Box ─── */}
+            {/* Signature */}
             {signatureEnabled && (
               <div className="mt-8 pt-6 border-t-2 border-slate-200 break-inside-avoid">
                 <p className="text-sm font-black text-slate-800 uppercase tracking-widest mb-3">Client Approval / Signature</p>
                 <SignaturePad onSave={(data) => setSignatureData(data)} initialData={signatureData} />
               </div>
             )}
-            
           </div>
         </div>
       </div>,
@@ -1369,78 +1255,33 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     );
   };
 
-/* ═══════════════════════════════════════════════════════════
-     APPOINTMENT MODALS & SCHEDULE VIEW
-  ═══════════════════════════════════════════════════════════ */
   const AppointmentFormModal = ({ appointment, jobs, googleToken, onSave, onDelete, onClose, showToast }) => {
     const editing = !!appointment.id;
-    const [form, setForm] = useState({ 
-      title: appointment.title || '', 
-      jobId: appointment.jobId || '', 
-      start: appointment.start ? toLocalISO(appointment.start) : '', 
-      end: appointment.end ? toLocalISO(appointment.end) : '', 
-      notes: appointment.notes || '' 
-    });
-
+    const [form, setForm] = useState({ title: appointment.title || '', jobId: appointment.jobId || '', start: appointment.start ? toLocalISO(appointment.start) : '', end: appointment.end ? toLocalISO(appointment.end) : '', notes: appointment.notes || '' });
     const save = () => {
       if (!form.title.trim() || !form.start || !form.end) return showToast('Title, start, and end are required.', 'error');
-      const startDate = new Date(form.start);
-      const endDate = new Date(form.end);
+      const startDate = new Date(form.start); const endDate = new Date(form.end);
       if (endDate <= startDate) return showToast('End must be after start.', 'error');
-      
-      onSave({ 
-        id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()), 
-        ...form, 
-        start: startDate.toISOString(), 
-        end: endDate.toISOString(), 
-        googleEventId: appointment.googleEventId || null 
-      });
+      onSave({ id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()), ...form, start: startDate.toISOString(), end: endDate.toISOString(), googleEventId: appointment.googleEventId || null });
     };
-
     return (
       <div className="fixed inset-0 z-[500] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-        <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 flex flex-col my-auto animate-slide-up sm:animate-none">
-          
+        <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 flex flex-col my-auto animate-slide-up sm:animate-none">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">{editing ? 'Edit Appointment' : 'New Appointment'}</h3>
             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          
           <div className="overflow-y-auto flex-1 no-scrollbar space-y-4 pb-2 pr-1">
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Title *</label>
-              <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="e.g. Site Visit" value={form.title} onChange={e => setForm({...form, title: e.target.value})}/>
-            </div>
-            
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Link to Project</label>
-              <select className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-medium text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}>
-                <option value="">No linked job</option>
-                {jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}
-              </select>
-            </div>
-            
+            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Title *</label><input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="e.g. Site Visit" value={form.title} onChange={e => setForm({...form, title: e.target.value})}/></div>
+            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Link to Project</label><select className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-medium text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}><option value="">No linked job</option>{jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}</select></div>
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start *</label>
-                <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.start} onChange={e => setForm({...form, start: e.target.value})}/>
-              </div>
-              <div>
-                <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End *</label>
-                <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.end} onChange={e => setForm({...form, end: e.target.value})}/>
-              </div>
+              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start *</label><input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.start} onChange={e => setForm({...form, start: e.target.value})}/></div>
+              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End *</label><input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.end} onChange={e => setForm({...form, end: e.target.value})}/></div>
             </div>
-            
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label>
-              <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-medium h-24 resize-none dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="Additional details..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/>
-            </div>
+            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label><textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-medium h-24 resize-none dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="Additional details..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/></div>
           </div>
-          
           <div className="flex gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
-            {editing && !appointment.isGoogle && (
-              <button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-4 rounded-2xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={20}/></button>
-            )}
+            {editing && !appointment.isGoogle && (<button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-4 rounded-2xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={20}/></button>)}
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
             <button onClick={save} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black shadow-lg shadow-orange-500/30 flex justify-center items-center gap-2"><Check size={18}/> Save</button>
           </div>
@@ -1449,7 +1290,6 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     );
   };
 
-  /* ─── Schedule View ────────────────────────────────────────── */
   const ScheduleView = ({ appointments, jobs, googleToken, onSaveAppointment, onDeleteAppointment, isGoogleConnected, showConfirm, onScheduleFromJob, showToast }) => {
     const [weekOffset, setWeekOffset] = useState(0);
     const [apptModal, setApptModal] = useState(null);
@@ -1462,7 +1302,6 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const days = Array.from({length:7}, (_,i) => { const d = new Date(startOfWeek); d.setDate(d.getDate()+i); return d; });
     const hours = Array.from({length:15}, (_,i) => i+6);
-    
     useEffect(() => {
       if (!googleToken || !isGoogleConnected) return;
       const fetchEvents = async () => {
@@ -1479,26 +1318,13 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       };
       fetchEvents();
     }, [googleToken, weekOffset, isGoogleConnected]);
-
     const localEvents = appointments.map(a => ({ ...a, isLocal: true, start: new Date(a.start), end: new Date(a.end) }));
     const localGoogleIds = new Set(appointments.filter(a => a.googleEventId).map(a => a.googleEventId));
     const externalGoogleEvents = googleEvents.filter(ev => !localGoogleIds.has(ev.id)).map(ev => ({ id: ev.id, title: ev.summary || '(No title)', start: new Date(ev.start.dateTime || ev.start.date), end: new Date(ev.end.dateTime || ev.end.date), isGoogle: true, notes: ev.description || '' }));
     const allEvents = [...localEvents, ...externalGoogleEvents];
-    
-    const getEventsForSlot = (day, hour) => {
-      const slotStart = new Date(day); slotStart.setHours(hour,0,0,0);
-      const slotEnd = new Date(slotStart); slotEnd.setHours(hour+1,0,0,0);
-      return allEvents.filter(ev => ev.start < slotEnd && ev.end > slotStart);
-    };
-    
-    const handleSlotClick = (day, hour) => {
-      const defStart = new Date(day); defStart.setHours(hour,0,0,0);
-      const defEnd = new Date(defStart); defEnd.setHours(hour+1,0,0,0);
-      setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString(), end: defEnd.toISOString(), notes: '' } });
-    };
-    
+    const getEventsForSlot = (day, hour) => { const slotStart = new Date(day); slotStart.setHours(hour,0,0,0); const slotEnd = new Date(slotStart); slotEnd.setHours(hour+1,0,0,0); return allEvents.filter(ev => ev.start < slotEnd && ev.end > slotStart); };
+    const handleSlotClick = (day, hour) => { const defStart = new Date(day); defStart.setHours(hour,0,0,0); const defEnd = new Date(defStart); defEnd.setHours(hour+1,0,0,0); setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString(), end: defEnd.toISOString(), notes: '' } }); };
     const handleEventClick = (event) => { if (event.isGoogle) return; setApptModal({ appointment: event }); };
-    
     const handleSave = async (data) => {
       if (googleToken && isGoogleConnected && !data.googleEventId) {
         try {
@@ -1511,17 +1337,13 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       } else { showToast('Appointment Saved', 'success'); }
       onSaveAppointment(data); setApptModal(null);
     };
-    
     const handleDeleteAppointment = (id) => {
       showConfirm('Delete this appointment?', () => {
         const appt = appointments.find(a => a.id === id);
         if (appt?.googleEventId && googleToken) { fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${googleToken.access_token}` } }).catch(e => console.error('Failed to delete Google event', e)); }
-        onDeleteAppointment(id); 
-        setApptModal(null);
-        showToast('Appointment Deleted', 'info');
+        onDeleteAppointment(id); setApptModal(null); showToast('Appointment Deleted', 'info');
       });
     };
-
     return (
       <div className="max-w-6xl mx-auto p-4 animate-slide-up pb-24">
         <div className="flex justify-between items-center mb-4">
@@ -1531,9 +1353,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
         </div>
         <div className="calendar-grid shadow-sm">
           <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center">Time</div>
-          {days.map((d,i) => (
-            <div key={i} className={`bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center py-2 ${d.toDateString()===today.toDateString()?'text-orange-500':''}`}>{dayNames[i]}<br/>{d.getDate()}</div>
-          ))}
+          {days.map((d,i) => (<div key={i} className={`bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center py-2 ${d.toDateString()===today.toDateString()?'text-orange-500':''}`}>{dayNames[i]}<br/>{d.getDate()}</div>))}
           {hours.map(hour => (
             <React.Fragment key={hour}>
               <div className="calendar-hour">{hour}:00</div>
@@ -1564,24 +1384,14 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
           ))}
           {allEvents.length===0 && <p className="text-sm text-slate-400">No upcoming appointments.</p>}
         </div>
-        {apptModal && (
-          <AppointmentFormModal 
-            appointment={apptModal.appointment} 
-            jobs={jobs} 
-            googleToken={googleToken} 
-            onSave={handleSave} 
-            onDelete={() => handleDeleteAppointment(apptModal.appointment.id)}
-            onClose={() => setApptModal(null)} 
-            showToast={showToast}
-          />
-        )}
+        {apptModal && (<AppointmentFormModal appointment={apptModal.appointment} jobs={jobs} googleToken={googleToken} onSave={handleSave} onDelete={() => handleDeleteAppointment(apptModal.appointment.id)} onClose={() => setApptModal(null)} showToast={showToast}/>)}
       </div>
     );
   };
-      
-  /* ═══════════════════════════════════════════════════════════
+
+  /* ════════════════════════════════════════════
      APP
-  ═══════════════════════════════════════════════════════════ */
+  ════════════════════════════════════════════ */
   const App = () => {
     const [jobs, setJobs] = useState([]);
     const [userTemplates, setUserTemplates] = useState([]);
@@ -1611,11 +1421,8 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const [isEditingHeader, setIsEditingHeader] = useState(false);
     const [headerDraft, setHeaderDraft] = useState({ address:'', clientName:'', clientRef:'', dueDate:'', projectNotes:'', projectPhotos:[] });
     const [isLoading, setIsLoading] = useState(true);
-    
-    // Voice Dictation States
     const [listeningField, setListeningField] = useState(null);
     const recognitionRef = useRef(null);
-    
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
     const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-2.5-flash');
     const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('googleClientId') || '');
@@ -1654,11 +1461,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const [showMaterialPop, setShowMaterialPop] = useState(false);
     const showToast = (message, type = 'info') => setToast({ message, type });
 
-    const loadJobs = async () => {
-      const d = await get(DB_KEY_JOBS) || [];
-      const migrated = d.map(j => { const mj = { ...j }; if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false; if (mj.type === 'quote' && mj.showCosts === undefined) mj.showCosts = true; if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now(); return mj; });
-      setJobs(migrated); updMetric(migrated); setIsLoading(false);
-    };
+    const loadJobs = async () => { const d = await get(DB_KEY_JOBS) || []; const migrated = d.map(j => { const mj = { ...j }; if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false; if (mj.type === 'quote' && mj.showCosts === undefined) mj.showCosts = true; if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now(); return mj; }); setJobs(migrated); updMetric(migrated); setIsLoading(false); };
     const loadTemplates = async () => setUserTemplates(await get(DB_KEY_TEMPL) || []);
     const loadMaterials = async () => setUserMaterials(await get(DB_KEY_MATS) || []);
     const loadAppointments = async () => setAppointments(await get(DB_KEY_APPOINTMENTS) || []);
@@ -1669,12 +1472,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const saveUserMaterials = async (arr) => { setUserMaterials(arr); await set(DB_KEY_MATS, arr); };
     const saveAppointments = async (arr) => { setAppointments(arr); await set(DB_KEY_APPOINTMENTS, arr); };
     const saveBusinessProfile = (profile) => { setBusinessProfile(profile); localStorage.setItem(BIZA_KEY, JSON.stringify(profile)); };
-    
-    useEffect(() => {
-      const root = document.documentElement;
-      if (isDarkMode) { root.classList.add('dark'); document.getElementById('theme-color-meta').setAttribute('content','#020617'); localStorage.setItem('theme','dark'); }
-      else { root.classList.remove('dark'); document.getElementById('theme-color-meta').setAttribute('content','#ffffff'); localStorage.setItem('theme','light'); }
-    }, [isDarkMode]);
+    useEffect(() => { const root = document.documentElement; if (isDarkMode) { root.classList.add('dark'); document.getElementById('theme-color-meta').setAttribute('content','#020617'); localStorage.setItem('theme','dark'); } else { root.classList.remove('dark'); document.getElementById('theme-color-meta').setAttribute('content','#ffffff'); localStorage.setItem('theme','light'); } }, [isDarkMode]);
 
     const activeJob = jobs.find(j => j.id === activeJobId);
     const getTotals = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
@@ -1687,19 +1485,14 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const disconnectGoogleCalendar = () => { setGoogleToken(null); localStorage.removeItem('googleToken'); };
     useEffect(() => { const savedToken = localStorage.getItem('googleToken'); if (savedToken) { try { const parsed = JSON.parse(savedToken); if (parsed && parsed.access_token) setGoogleToken(parsed); } catch {} } }, []);
 
-    const handleSaveAppointment = (appt) => {
-      let updated = appointments.find(a => a.id === appt.id) ? appointments.map(a => a.id === appt.id ? appt : a) : [...appointments, appt];
-      saveAppointments(updated); setAppointmentFromJob(null);
-    };
+    const handleSaveAppointment = (appt) => { let updated = appointments.find(a => a.id === appt.id) ? appointments.map(a => a.id === appt.id ? appt : a) : [...appointments, appt]; saveAppointments(updated); setAppointmentFromJob(null); };
     const handleDeleteAppointment = (id) => saveAppointments(appointments.filter(a => a.id !== id));
     const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => setConfirmDialog({ message, onConfirm, confirmLabel, danger });
     const dismissConfirm = () => setConfirmDialog(null);
-    const openAppointmentForJob = (jobId) => {
-      const job = jobs.find(j => j.id === jobId); if (!job) return;
-      setAppointmentFromJob({ id: null, title: `Work: ${job.address}`, jobId, start: new Date().toISOString(), end: new Date(Date.now()+2*3600*1000).toISOString(), notes: '', googleEventId: null });
-    };
+    const openAppointmentForJob = (jobId) => { const job = jobs.find(j => j.id === jobId); if (!job) return; setAppointmentFromJob({ id: null, title: `Work: ${job.address}`, jobId, start: new Date().toISOString(), end: new Date(Date.now()+2*3600*1000).toISOString(), notes: '', googleEventId: null }); };
     const handleNewJobClick = (type) => { if (!isUnlocked && jobs.length >= 3) { setShowUpgrade(true); } else { setNewJobModal(type); } };
     const handleUnlockSuccess = (keyData) => { setIsUnlocked(true); localStorage.setItem('joblog-unlocked', 'true'); if (keyData) localStorage.setItem('joblog-licence', JSON.stringify(keyData)); };
+
     const callGemini = async (prompt) => {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, response_mime_type: 'application/json' } }) });
       if (!res.ok) throw new Error(`API error ${res.status}`);
@@ -1707,6 +1500,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
       return JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
     };
+
     const handleGenerateDocument = async (customPrompt) => {
       if (!apiKey) { showToast('Please add your Gemini API key in Settings.', 'error'); return; }
       setIsGenerating(true);
@@ -1723,32 +1517,18 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       } catch (err) { showToast('Failed to generate document: ' + err.message, 'error'); }
       finally { setIsGenerating(false); }
     };
-    
-    // Universal Voice Toggle Function
+
     const toggleVoice = (fieldKey, setter) => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) return showToast('Voice dictation not supported in this browser.', 'error');
-      
-      if (listeningField === fieldKey) {
-        recognitionRef.current?.stop();
-        setListeningField(null);
-        return;
-      }
-      
-      if (listeningField) {
-        recognitionRef.current?.stop();
-      }
-      
+      if (listeningField === fieldKey) { recognitionRef.current?.stop(); setListeningField(null); return; }
+      if (listeningField) { recognitionRef.current?.stop(); }
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
       recognition.continuous = false;
       recognition.interimResults = false;
-      
       recognition.onstart = () => setListeningField(fieldKey);
-      recognition.onresult = (e) => {
-        const t = e.results[0][0].transcript;
-        setter(prev => prev ? prev + ' ' + t : t);
-      };
+      recognition.onresult = (e) => { const t = e.results[0][0].transcript; setter(prev => prev ? prev + ' ' + t : t); };
       recognition.onerror = () => setListeningField(null);
       recognition.onend = () => setListeningField(null);
       recognition.start();
@@ -1771,45 +1551,23 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       } catch (err) { showToast(`AI suggest failed: ${err.message}`, 'error'); }
       finally { setIsAiSuggesting(false); }
     };
-    
+
     const handleScanReceipt = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const file = e.target.files[0]; if (!file) return;
       if (!apiKey) { showToast('Add Gemini API key in Settings to use receipt scanner.', 'error'); return; }
-      
       setIsScanningReceipt(true);
       try {
         const base64Data = await compressImage(file);
         const textPrompt = `Analyze this receipt. Extract the materials/items purchased and the TOTAL cost. Return ONLY valid JSON: {"cost": "numeric total", "items": "comma separated list of item names"}`;
-        
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { 
-          method:'POST', 
-          headers:{'Content-Type':'application/json'}, 
-          body: JSON.stringify({ 
-            contents:[{parts:[
-              {text: textPrompt},
-              {inlineData: {mimeType: 'image/webp', data: base64Data.split(',')[1]}}
-            ]}], 
-            generationConfig:{temperature:0, response_mime_type:'application/json'} 
-          }) 
-        });
-        
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text: textPrompt},{inlineData: {mimeType: 'image/webp', data: base64Data.split(',')[1]}}]}], generationConfig:{temperature:0, response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error(`API error ${res.status}`);
         const data = await res.json();
         const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-        
-        setTaskData(prev => ({ 
-          ...prev, 
-          materialsCost: json.cost ? String(json.cost) : prev.materialsCost, 
-          materials: prev.materials ? prev.materials + (json.items ? ', ' + json.items : '') : (json.items || '')
-        }));
+        setTaskData(prev => ({ ...prev, materialsCost: json.cost ? String(json.cost) : prev.materialsCost, materials: prev.materials ? prev.materials + (json.items ? ', ' + json.items : '') : (json.items || '') }));
         showToast('Receipt scanned successfully!', 'success');
-      } catch (err) {
-        showToast(`Receipt scan failed: ${err.message}`, 'error');
-      } finally {
-        setIsScanningReceipt(false);
-      }
+      } catch (err) { showToast(`Receipt scan failed: ${err.message}`, 'error'); }
+      finally { setIsScanningReceipt(false); }
       e.target.value = '';
     };
 
@@ -1827,11 +1585,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       if (userMaterials.find(m => String(m.name)===matName && String(m.price)===matCost)) return;
       saveUserMaterials([...userMaterials, { name: matName, price: matCost }]); showToast('Material Saved!', 'success');
     };
-    const exportData = () => {
-      const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob); const a = document.createElement('a');
-      a.href = url; a.download = `joblog-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
-    };
+    const exportData = () => { const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `joblog-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url); };
     const importData = (e) => {
       const file = e.target.files[0]; if (!file) return; e.target.value = '';
       const reader = new FileReader();
@@ -1839,10 +1593,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
         try {
           const imported = JSON.parse(ev.target.result);
           if (!Array.isArray(imported)) throw new Error('Invalid format');
-          showConfirm(`Found ${imported.length} project(s). This will replace ALL current data. Are you sure?`, async () => {
-            const migrated = imported.map(j => { const mj={...j}; if (mj.type==='handover' && mj.showCosts===undefined) mj.showCosts=false; if (mj.type==='quote' && mj.showCosts===undefined) mj.showCosts=true; if (!mj.createdAt) mj.createdAt = mj.date?new Date(mj.date).getTime():Date.now(); return mj; });
-            await saveToDB(migrated); window.location.reload();
-          }, 'Replace All');
+          showConfirm(`Found ${imported.length} project(s). This will replace ALL current data. Are you sure?`, async () => { const migrated = imported.map(j => { const mj={...j}; if (mj.type==='handover' && mj.showCosts===undefined) mj.showCosts=false; if (mj.type==='quote' && mj.showCosts===undefined) mj.showCosts=true; if (!mj.createdAt) mj.createdAt = mj.date?new Date(mj.date).getTime():Date.now(); return mj; }); await saveToDB(migrated); window.location.reload(); }, 'Replace All');
         } catch { showToast('Invalid backup file.', 'error'); }
       };
       reader.readAsText(file);
@@ -1858,12 +1609,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const startEditHeader = () => { setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] }); setIsEditingHeader(true); };
     const saveHeaderEdit = () => { if (!headerDraft.address.trim()) return; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, dueDate:headerDraft.dueDate, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j)); setIsEditingHeader(false); showToast('Details Updated', 'success'); };
     const handleProjectPhotoUpload = async (e) => { try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setHeaderDraft(d => ({...d,projectPhotos:[...d.projectPhotos,...c]})); } catch { showToast('One or more images could not be processed.', 'error'); } };
-    const handleSaveTask = () => {
-      if (!taskData.title) return showToast('Task title is required.', 'error');
-      if (!activeJob) return;
-      const updated = editingTaskId ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t) : [...activeJob.tasks, { ...taskData, id: Date.now() }];
-      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j)); closeModal(); showToast('Entry Saved', 'success');
-    };
+    const handleSaveTask = () => { if (!taskData.title) return showToast('Task title is required.', 'error'); if (!activeJob) return; const updated = editingTaskId ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t) : [...activeJob.tasks, { ...taskData, id: Date.now() }]; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j)); closeModal(); showToast('Entry Saved', 'success'); };
     const closeModal = () => { recognitionRef.current?.stop(); recognitionRef.current = null; setListeningField(null); setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); setRateError(false); setMatError(false); setIsNamingTemplate(false); };
     const handleImageUpload = async (e) => { try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); } catch { showToast('One or more images could not be processed.', 'error'); } };
     const validateRate = (val) => { const n = parseFloat(val); setRateError(val !== '' && isNaN(n)); };
@@ -1871,11 +1617,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const toggleJobSelection = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
     const clearSelection = () => setSelectedJobs([]);
     const selectAllVisible = () => setSelectedJobs(prev => { const e=new Set(prev); return [...prev,...filteredJobs.map(j=>j.id).filter(id=>!e.has(id))].slice(0,MAX_STOPS); });
-    const getMyLocation = () => {
-      if (!navigator.geolocation) { setLocStatus('denied'); return; }
-      setLocStatus('loading');
-      navigator.geolocation.getCurrentPosition((pos) => { setCurrentCoords({lat:pos.coords.latitude,lng:pos.coords.longitude}); setLocStatus('ok'); }, () => { setLocStatus('denied'); setUseMyLocation(false); });
-    };
+    const getMyLocation = () => { if (!navigator.geolocation) { setLocStatus('denied'); return; } setLocStatus('loading'); navigator.geolocation.getCurrentPosition((pos) => { setCurrentCoords({lat:pos.coords.latitude,lng:pos.coords.longitude}); setLocStatus('ok'); }, () => { setLocStatus('denied'); setUseMyLocation(false); }); };
     const handleLocToggle = () => { const next=!useMyLocation; setUseMyLocation(next); if (next && locStatus==='idle') getMyLocation(); };
     const openGoogleMaps = () => {
       const ordered = selectedJobs.map(id=>jobs.find(j=>j.id===id)).filter(Boolean);
@@ -1901,6 +1643,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
         if (sortBy === 'az') return String(a.address || '').localeCompare(String(b.address || ''));
         return 0;
       });
+
     const handleShare = async () => {
       if (!activeJob) return;
       const qt = activeJob.type === 'quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate) : null;
@@ -1910,13 +1653,11 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       if (navigator.share) { try { await navigator.share({ title: 'Job Summary', text }); } catch(e) {} }
       else { navigator.clipboard.writeText(text); showToast('Summary copied to clipboard!', 'success'); }
     };
-    
-    // **FIX**: Handler for updates from the PrintPreview modal
+
     const handleUpdateJobFromPreview = (updatedJob) => {
-        const updatedJobs = jobs.map(j => (j.id === updatedJob.id ? updatedJob : j));
-        saveToDB(updatedJobs);
-        // Keep the preview in sync with the latest changes
-        setPrintPreviewJob(updatedJob);
+      const updatedJobs = jobs.map(j => (j.id === updatedJob.id ? updatedJob : j));
+      saveToDB(updatedJobs);
+      setPrintPreviewJob(updatedJob);
     };
 
     // Canvas helpers
@@ -1945,7 +1686,6 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const onMMove = (e) => { if (modeRef.current==='draw') doDraw(e); else if (modeRef.current==='pan' && panStartRef.current) { const np={x:panStartRef.current.panX+(e.clientX-panStartRef.current.clientX),y:panStartRef.current.panY+(e.clientY-panStartRef.current.clientY)}; setCanvasPan(np); panRef.current=np; } };
     const onMUp = () => { panStartRef.current=null; stopDraw(); };
 
-    // Credential expiry warning banner
     const expiringLicences = (businessProfile?.licences || []).filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry));
     const insuranceExpiring = businessProfile?.insuranceExpiry && (isExpiringSoon(businessProfile.insuranceExpiry) || isExpired(businessProfile.insuranceExpiry));
 
@@ -1965,7 +1705,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
         {toast && <ToastMessage message={toast.message} type={toast.type} onClose={() => setToast(null)}/>}
         {confirmDialog && <ConfirmDialog message={confirmDialog.message} confirmLabel={confirmDialog.confirmLabel} danger={confirmDialog.danger} onConfirm={() => { confirmDialog.onConfirm(); dismissConfirm(); }} onCancel={dismissConfirm}/>}
 
-        {/* ── Top Header ── */}
+        {/* Top Header */}
         <header className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md text-slate-900 dark:text-white px-4 py-3 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
             {businessProfile?.logo ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5" alt=""/> : <div className="bg-orange-500 p-1.5 rounded-xl"><Hammer size={20} className="text-white"/></div>}
@@ -1985,16 +1725,14 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
         {(expiringLicences.length > 0 || insuranceExpiring) && viewMode === 'dashboard' && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700/40 px-4 py-2 flex items-center gap-2 no-print cursor-pointer" onClick={() => setShowSettings(true)}>
             <AlertTriangle size={14} className="text-amber-500 flex-shrink-0"/>
-            <p className="text-xs text-amber-700 dark:text-amber-400 font-bold flex-1">
-              {[...expiringLicences.map(l => l.type), ...(insuranceExpiring ? ['Insurance'] : [])].join(', ')} — credential{expiringLicences.length + (insuranceExpiring?1:0) > 1 ? 's' : ''} expiring or expired. Tap to update.
-            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-bold flex-1">{[...expiringLicences.map(l => l.type), ...(insuranceExpiring ? ['Insurance'] : [])].join(', ')} — credential{expiringLicences.length + (insuranceExpiring?1:0) > 1 ? 's' : ''} expiring or expired. Tap to update.</p>
           </div>
         )}
 
-        {/* SCHEDULE VIEW */}
+        {/* Schedule View */}
         {viewMode==='schedule' && <ScheduleView appointments={appointments} jobs={jobs} googleToken={googleToken} isGoogleConnected={!!googleToken} onSaveAppointment={handleSaveAppointment} onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm} onScheduleFromJob={openAppointmentForJob} showToast={showToast}/>}
 
-        {/* DASHBOARD */}
+        {/* Dashboard */}
         {viewMode==='dashboard' && (
           <main className="p-4 max-w-2xl mx-auto animate-slide-down">
             {selectionMode && (
@@ -2008,9 +1746,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
                     <LocateFixed size={15} className={locStatus==='ok'?'text-emerald-400':locStatus==='denied'?'text-red-400':'text-blue-400'}/>
                     <span className="text-white font-black text-xs uppercase tracking-widest">{locStatus==='loading'?'Getting location…':locStatus==='denied'?'Location denied':locStatus==='ok'?'Location acquired':'Start from my location'}</span>
                   </div>
-                  <button onClick={handleLocToggle} className={`w-12 h-6 rounded-full transition-all flex items-center px-1 ${useMyLocation&&locStatus==='ok'?'bg-emerald-500 justify-end':useMyLocation&&locStatus==='loading'?'bg-blue-500 justify-end':'bg-slate-700 justify-start'}`}>
-                    <div className="w-4 h-4 rounded-full bg-white shadow"/>
-                  </button>
+                  <button onClick={handleLocToggle} className={`w-12 h-6 rounded-full transition-all flex items-center px-1 ${useMyLocation&&locStatus==='ok'?'bg-emerald-500 justify-end':useMyLocation&&locStatus==='loading'?'bg-blue-500 justify-end':'bg-slate-700 justify-start'}`}><div className="w-4 h-4 rounded-full bg-white shadow"/></button>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -2091,7 +1827,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
           </main>
         )}
 
-        {/* DETAIL VIEW */}
+        {/* Detail View */}
         {viewMode==='detail' && activeJob && (
           <main className="p-4 max-w-2xl mx-auto no-print animate-slide-up">
             <div className="flex justify-between items-center mb-4">
@@ -2184,13 +1920,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
                         <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-md text-[10px] font-black ml-2 flex-shrink-0">{t.time}</span>
                       </div>
                       <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3 whitespace-pre-wrap">{t.desc}</p>
-                      {showCosts && subtotal > 0 && (
-                        <div className="flex gap-1.5 mb-3 flex-wrap">
-                          {labour>0 && <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md">Labour {fmtAUD(labour)}</span>}
-                          {mats>0 && <span className="text-[10px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-1 rounded-md">Mats {fmtAUD(mats)}</span>}
-                          <span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-2 py-1 rounded-md">Subtotal {fmtAUD(subtotal)}</span>
-                        </div>
-                      )}
+                      {showCosts && subtotal > 0 && (<div className="flex gap-1.5 mb-3 flex-wrap">{labour>0 && <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md">Labour {fmtAUD(labour)}</span>}{mats>0 && <span className="text-[10px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-1 rounded-md">Mats {fmtAUD(mats)}</span>}<span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-2 py-1 rounded-md">Subtotal {fmtAUD(subtotal)}</span></div>)}
                       {t.images?.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">{t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}</div>)}
                     </div>
                   </div>
@@ -2202,7 +1932,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
           </main>
         )}
 
-        {/* Route planning bottom bar */}
+        {/* Route planning bar */}
         {selectionMode && (
           <div className="fixed left-0 right-0 z-[45] bg-slate-950/95 backdrop-blur-md border-t border-slate-800 p-4 no-print flex justify-between items-center" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
             <span className="text-white font-black text-sm">{selectedJobs.length} Stops Selected</span>
@@ -2210,20 +1940,11 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
           </div>
         )}
 
-        {/* BOTTOM NAVIGATION BAR */}
+        {/* Bottom Nav */}
         <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 flex justify-around items-center px-2 pt-2 bottom-nav-safe z-50 no-print">
-          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='dashboard' && !selectionMode ? 'text-orange-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
-            <Home size={22} className={viewMode==='dashboard' && !selectionMode ? 'fill-orange-100 dark:fill-orange-900/40' : ''}/>
-            <span className="text-[10px] font-bold mt-1">Home</span>
-          </button>
-          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(!selectionMode); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${selectionMode ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
-            <Map size={22} className={selectionMode ? 'fill-blue-100 dark:fill-blue-900/40' : ''}/>
-            <span className="text-[10px] font-bold mt-1">{selectionMode ? 'Done' : 'Route'}</span>
-          </button>
-          <button onClick={() => setViewMode('schedule')} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='schedule' ? 'text-purple-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}>
-            <Calendar size={22} className={viewMode==='schedule' ? 'fill-purple-100 dark:fill-purple-900/40' : ''}/>
-            <span className="text-[10px] font-bold mt-1">Schedule</span>
-          </button>
+          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='dashboard' && !selectionMode ? 'text-orange-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Home size={22} className={viewMode==='dashboard' && !selectionMode ? 'fill-orange-100 dark:fill-orange-900/40' : ''}/><span className="text-[10px] font-bold mt-1">Home</span></button>
+          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(!selectionMode); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${selectionMode ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Map size={22} className={selectionMode ? 'fill-blue-100 dark:fill-blue-900/40' : ''}/><span className="text-[10px] font-bold mt-1">{selectionMode ? 'Done' : 'Route'}</span></button>
+          <button onClick={() => setViewMode('schedule')} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='schedule' ? 'text-purple-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Calendar size={22} className={viewMode==='schedule' ? 'fill-purple-100 dark:fill-purple-900/40' : ''}/><span className="text-[10px] font-bold mt-1">Schedule</span></button>
           <button onClick={() => setShowSettings(true)} className="flex flex-col items-center p-2 w-16 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors relative">
             <Settings size={22}/>
             {(!apiKey || expiringLicences.length > 0 || insuranceExpiring) && <span className="absolute top-2 right-4 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-900"/>}
@@ -2235,7 +1956,9 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
         {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} googleClientId={googleClientId} setGoogleClientId={setGoogleClientId} isGoogleConnected={!!googleToken} googleToken={googleToken} connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar} onSave={(k,m,t) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
         {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUnlock={handleUnlockSuccess} showToast={showToast}/>}
         {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast} toggleVoice={toggleVoice} listeningField={listeningField}/>}
-        {showAIAssistModal && activeJob && <AIAssistModal onClose={() => setShowAIAssistModal(false)} onGenerate={handleGenerateDocument} isGenerating={isGenerating} docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'} apiKey={apiKey}/>}
+
+        {/* AI Assist — now receives toggleVoice and listeningField */}
+        {showAIAssistModal && activeJob && <AIAssistModal onClose={() => setShowAIAssistModal(false)} onGenerate={handleGenerateDocument} isGenerating={isGenerating} docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'} apiKey={apiKey} toggleVoice={toggleVoice} listeningField={listeningField}/>}
 
         {/* Task Form */}
         {isTaskFormOpen && (
