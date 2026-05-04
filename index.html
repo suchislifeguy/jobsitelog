@@ -1228,43 +1228,71 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     );
   };
 
-  /* ═══════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════
      APPOINTMENT MODALS & SCHEDULE VIEW
   ═══════════════════════════════════════════════════════════ */
-  const AppointmentFormModal = ({ appointment, jobs, googleToken, onSave, onClose, showToast }) => {
+  const AppointmentFormModal = ({ appointment, jobs, googleToken, onSave, onDelete, onClose, showToast }) => {
     const editing = !!appointment.id;
-    const [form, setForm] = useState({ title: appointment.title || '', jobId: appointment.jobId || '', start: appointment.start ? new Date(appointment.start).toISOString().slice(0,16) : '', end: appointment.end ? new Date(appointment.end).toISOString().slice(0,16) : '', notes: appointment.notes || '' });
+    const [form, setForm] = useState({ 
+      title: appointment.title || '', 
+      jobId: appointment.jobId || '', 
+      start: appointment.start ? new Date(appointment.start).toISOString().slice(0,16) : '', 
+      end: appointment.end ? new Date(appointment.end).toISOString().slice(0,16) : '', 
+      notes: appointment.notes || '' 
+    });
+
     const save = () => {
       if (!form.title.trim() || !form.start || !form.end) return showToast('Title, start, and end are required.', 'error');
       if (new Date(form.end) <= new Date(form.start)) return showToast('End must be after start.', 'error');
       onSave({ id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()), ...form, googleEventId: appointment.googleEventId || null });
     };
+
     return (
-      <div className="fixed inset-0 z-[220] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 animate-slide-up sm:animate-none pb-safe">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-black text-lg">{editing ? 'Edit Appointment' : 'New Appointment'}</h3>
-            <button onClick={onClose}><X size={20}/></button>
+      <div className="fixed inset-0 z-[220] bg-slate-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[90vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
+          
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+            <h3 className="font-black text-lg text-slate-900 dark:text-white">{editing ? 'Edit Appointment' : 'New Appointment'}</h3>
+            <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          <div className="space-y-4">
-            <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white" placeholder="Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})}/>
-            <select className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-medium text-sm dark:text-white" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}>
-              <option value="">No linked job</option>
-              {jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}
-            </select>
+          
+          <div className="overflow-y-auto flex-1 no-scrollbar space-y-4 pb-2 pr-1">
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start</label>
-              <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white" value={form.start} onChange={e => setForm({...form, start: e.target.value})}/>
+              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Title *</label>
+              <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="e.g. Site Visit" value={form.title} onChange={e => setForm({...form, title: e.target.value})}/>
             </div>
+            
             <div>
-              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End</label>
-              <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white" value={form.end} onChange={e => setForm({...form, end: e.target.value})}/>
+              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Link to Project</label>
+              <select className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-medium text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}>
+                <option value="">No linked job</option>
+                {jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}
+              </select>
             </div>
-            <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-medium h-20 resize-none dark:text-white" placeholder="Notes" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/>
-            <div className="flex gap-3 mt-4">
-              <button onClick={save} className="flex-1 bg-orange-500 text-white py-4 rounded-2xl font-black">Save</button>
-              <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start *</label>
+                <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.start} onChange={e => setForm({...form, start: e.target.value})}/>
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End *</label>
+                <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.end} onChange={e => setForm({...form, end: e.target.value})}/>
+              </div>
             </div>
+            
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label>
+              <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-medium h-24 resize-none dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="Additional details..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
+            {editing && !appointment.isGoogle && (
+              <button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-4 rounded-2xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={20}/></button>
+            )}
+            <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
+            <button onClick={save} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black shadow-lg shadow-orange-500/30 flex justify-center items-center gap-2"><Check size={18}/> Save</button>
           </div>
         </div>
       </div>
@@ -1284,6 +1312,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const days = Array.from({length:7}, (_,i) => { const d = new Date(startOfWeek); d.setDate(d.getDate()+i); return d; });
     const hours = Array.from({length:15}, (_,i) => i+6);
+    
     useEffect(() => {
       if (!googleToken || !isGoogleConnected) return;
       const fetchEvents = async () => {
@@ -1305,17 +1334,21 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const localGoogleIds = new Set(appointments.filter(a => a.googleEventId).map(a => a.googleEventId));
     const externalGoogleEvents = googleEvents.filter(ev => !localGoogleIds.has(ev.id)).map(ev => ({ id: ev.id, title: ev.summary || '(No title)', start: new Date(ev.start.dateTime || ev.start.date), end: new Date(ev.end.dateTime || ev.end.date), isGoogle: true, notes: ev.description || '' }));
     const allEvents = [...localEvents, ...externalGoogleEvents];
+    
     const getEventsForSlot = (day, hour) => {
       const slotStart = new Date(day); slotStart.setHours(hour,0,0,0);
       const slotEnd = new Date(slotStart); slotEnd.setHours(hour+1,0,0,0);
       return allEvents.filter(ev => ev.start < slotEnd && ev.end > slotStart);
     };
+    
     const handleSlotClick = (day, hour) => {
       const defStart = new Date(day); defStart.setHours(hour,0,0,0);
       const defEnd = new Date(defStart); defEnd.setHours(hour+1,0,0,0);
       setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString().slice(0,16), end: defEnd.toISOString().slice(0,16), notes: '' } });
     };
+    
     const handleEventClick = (event) => { if (event.isGoogle) return; setApptModal({ appointment: event }); };
+    
     const handleSave = async (data) => {
       if (googleToken && isGoogleConnected && !data.googleEventId) {
         try {
@@ -1328,13 +1361,17 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       } else { showToast('Appointment Saved', 'success'); }
       onSaveAppointment(data); setApptModal(null);
     };
+    
     const handleDeleteAppointment = (id) => {
       showConfirm('Delete this appointment?', () => {
         const appt = appointments.find(a => a.id === id);
         if (appt?.googleEventId && googleToken) { fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${googleToken.access_token}` } }).catch(e => console.error('Failed to delete Google event', e)); }
-        onDeleteAppointment(id); showToast('Appointment Deleted', 'info');
+        onDeleteAppointment(id); 
+        setApptModal(null);
+        showToast('Appointment Deleted', 'info');
       });
     };
+
     return (
       <div className="max-w-6xl mx-auto p-4 animate-slide-up pb-24">
         <div className="flex justify-between items-center mb-4">
@@ -1377,11 +1414,21 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
           ))}
           {allEvents.length===0 && <p className="text-sm text-slate-400">No upcoming appointments.</p>}
         </div>
-        {apptModal && <AppointmentFormModal appointment={apptModal.appointment} jobs={jobs} googleToken={googleToken} onSave={handleSave} onClose={() => setApptModal(null)} showToast={showToast}/>}
+        {apptModal && (
+          <AppointmentFormModal 
+            appointment={apptModal.appointment} 
+            jobs={jobs} 
+            googleToken={googleToken} 
+            onSave={handleSave} 
+            onDelete={() => handleDeleteAppointment(apptModal.appointment.id)}
+            onClose={() => setApptModal(null)} 
+            showToast={showToast}
+          />
+        )}
       </div>
     );
   };
-
+      
   /* ═══════════════════════════════════════════════════════════
      APP
   ═══════════════════════════════════════════════════════════ */
