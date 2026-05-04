@@ -170,6 +170,13 @@
   const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU') : '';
   const fmtDateShort = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'}) : '';
   const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('en-AU', {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}) : '';
+  
+  // Converts standard UTC/local ISO to correctly offset local string for <input type="datetime-local">
+  const toLocalISO = (d) => {
+    if (!d) return '';
+    const date = new Date(d);
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
 
   const isExpiringSoon = (expiryStr) => {
     if (!expiryStr) return false;
@@ -1236,20 +1243,29 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const [form, setForm] = useState({ 
       title: appointment.title || '', 
       jobId: appointment.jobId || '', 
-      start: appointment.start ? new Date(appointment.start).toISOString().slice(0,16) : '', 
-      end: appointment.end ? new Date(appointment.end).toISOString().slice(0,16) : '', 
+      start: appointment.start ? toLocalISO(appointment.start) : '', 
+      end: appointment.end ? toLocalISO(appointment.end) : '', 
       notes: appointment.notes || '' 
     });
 
     const save = () => {
       if (!form.title.trim() || !form.start || !form.end) return showToast('Title, start, and end are required.', 'error');
-      if (new Date(form.end) <= new Date(form.start)) return showToast('End must be after start.', 'error');
-      onSave({ id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()), ...form, googleEventId: appointment.googleEventId || null });
+      const startDate = new Date(form.start);
+      const endDate = new Date(form.end);
+      if (endDate <= startDate) return showToast('End must be after start.', 'error');
+      
+      onSave({ 
+        id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()), 
+        ...form, 
+        start: startDate.toISOString(), 
+        end: endDate.toISOString(), 
+        googleEventId: appointment.googleEventId || null 
+      });
     };
 
     return (
-      <div className="fixed inset-0 z-[220] bg-slate-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[90vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
+      <div className="fixed inset-0 z-[500] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+        <div className="bg-white dark:bg-slate-900 rounded-[2rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 flex flex-col my-auto animate-slide-up sm:animate-none">
           
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">{editing ? 'Edit Appointment' : 'New Appointment'}</h3>
@@ -1344,7 +1360,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const handleSlotClick = (day, hour) => {
       const defStart = new Date(day); defStart.setHours(hour,0,0,0);
       const defEnd = new Date(defStart); defEnd.setHours(hour+1,0,0,0);
-      setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString().slice(0,16), end: defEnd.toISOString().slice(0,16), notes: '' } });
+      setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString(), end: defEnd.toISOString(), notes: '' } });
     };
     
     const handleEventClick = (event) => { if (event.isGoogle) return; setApptModal({ appointment: event }); };
@@ -1540,7 +1556,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
     const dismissConfirm = () => setConfirmDialog(null);
     const openAppointmentForJob = (jobId) => {
       const job = jobs.find(j => j.id === jobId); if (!job) return;
-      setAppointmentFromJob({ id: null, title: `Work: ${job.address}`, jobId, start: new Date().toISOString().slice(0,16), end: new Date(Date.now()+2*3600*1000).toISOString().slice(0,16), notes: '', googleEventId: null });
+      setAppointmentFromJob({ id: null, title: `Work: ${job.address}`, jobId, start: new Date().toISOString(), end: new Date(Date.now()+2*3600*1000).toISOString(), notes: '', googleEventId: null });
     };
     const handleNewJobClick = (type) => { if (!isUnlocked && jobs.length >= 3) { setShowUpgrade(true); } else { setNewJobModal(type); } };
     const handleUnlockSuccess = (keyData) => { setIsUnlocked(true); localStorage.setItem('joblog-unlocked', 'true'); if (keyData) localStorage.setItem('joblog-licence', JSON.stringify(keyData)); };
