@@ -388,7 +388,7 @@
     );
   };
 
-/* ═══════════════════════════════════════════════════════════
+  /* ═══════════════════════════════════════════════════════════
      LICENCE EDITOR — inline sub-component used in BusinessProfileEditor
   ═══════════════════════════════════════════════════════════ */
   const LicenceEditor = ({ licences, onChange }) => {
@@ -641,49 +641,71 @@
     const [list, setList] = useState([...templates]);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' });
+    
     const addNew = () => { setEditing(-1); setForm({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' }); };
     const editTemplate = (index) => { setEditing(index); setForm({...list[index].data, name: list[index].name}); };
     const deleteTemplate = (index) => { const nl = list.filter((_,i)=>i!==index); setList(nl); onSave(nl); };
+    
     const saveForm = () => {
       if (!form.name.trim() || !form.title.trim()) return;
       const tpl = { name: form.name.trim(), type: 'quote', data: { title: form.title, time: form.time, rate: form.rate, materialsCost: form.materialsCost, materials: form.materials, tools: form.tools, desc: form.desc } };
       let updated = editing >= 0 ? list.map((t,i)=>i===editing?tpl:t) : [...list, tpl];
       setList(updated); onSave(updated); setEditing(null);
     };
+
     return (
-      <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
-          <div className="flex justify-between items-center mb-4 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
-            <h3 className="font-black text-lg">Task Templates</h3>
-            <button onClick={onClose} className="p-1"><X size={20}/></button>
+      <div className="fixed inset-0 z-[200] bg-slate-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[85vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
+          
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+            <h3 className="font-black text-lg text-slate-900 dark:text-white">Task Templates</h3>
+            <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          {editing === null ? (
-            <>
-              <button onClick={addNew} className="w-full bg-orange-500 text-white py-3 rounded-2xl font-black text-sm mb-4 flex items-center justify-center gap-2"><PlusCircle size={16}/> New Template</button>
-              {list.map((t, i) => (
-                <div key={i} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 p-3 rounded-2xl mb-2">
-                  <div><span className="font-black text-sm">{t.name}</span><p className="text-[10px] text-slate-400">{t.data.title}</p></div>
-                  <div className="flex gap-2">
-                    <button onClick={() => editTemplate(i)} className="text-blue-500 p-2"><Pencil size={16}/></button>
-                    <button onClick={() => deleteTemplate(i)} className="text-red-500 p-2"><Trash2 size={16}/></button>
+          
+          <div className="overflow-y-auto flex-1 no-scrollbar mb-2">
+            {editing === null ? (
+              <>
+                {list.length === 0 && <p className="text-center text-sm text-slate-400 font-bold py-6">No templates saved yet.</p>}
+                {list.map((t, i) => (
+                  <div key={i} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-2xl mb-2">
+                    <div className="min-w-0 pr-3">
+                      <span className="font-black text-sm text-slate-900 dark:text-white block truncate">{t.name}</span>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{t.data.title}</p>
+                    </div>
+                    <div className="flex gap-1.5 flex-shrink-0">
+                      <button onClick={() => editTemplate(i)} className="bg-blue-50 dark:bg-blue-900/30 text-blue-500 hover:text-blue-600 p-2 rounded-xl"><Pencil size={14}/></button>
+                      <button onClick={() => deleteTemplate(i)} className="bg-red-50 dark:bg-red-900/30 text-red-400 hover:text-red-500 p-2 rounded-xl"><Trash2 size={14}/></button>
+                    </div>
                   </div>
+                ))}
+              </>
+            ) : (
+              <div className="space-y-3 pb-2">
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Template Name *" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Task Title *" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/>
+                <div className="grid grid-cols-2 gap-3">
+                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Time (e.g. 2h)" value={form.time} onChange={e=>setForm({...form,time:e.target.value})}/>
+                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Rate/hr $" value={form.rate} onChange={e=>setForm({...form,rate:e.target.value})}/>
                 </div>
-              ))}
-            </>
-          ) : (
-            <div className="space-y-3">
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold" placeholder="Template Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Task Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Time (e.g. 2h)" value={form.time} onChange={e=>setForm({...form,time:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Rate/hr" value={form.rate} onChange={e=>setForm({...form,rate:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Materials $" value={form.materialsCost} onChange={e=>setForm({...form,materialsCost:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Materials list" value={form.materials} onChange={e=>setForm({...form,materials:e.target.value})}/>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl" placeholder="Tools" value={form.tools} onChange={e=>setForm({...form,tools:e.target.value})}/>
-              <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl h-24 resize-none" placeholder="Description" value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})}/>
-              <div className="flex gap-3 mt-4">
-                <button onClick={saveForm} className="flex-1 bg-orange-500 text-white py-4 rounded-2xl font-black">Save Template</button>
-                <button onClick={() => setEditing(null)} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black">Cancel</button>
+                <div className="grid grid-cols-2 gap-3">
+                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Materials $" value={form.materialsCost} onChange={e=>setForm({...form,materialsCost:e.target.value})}/>
+                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Materials list" value={form.materials} onChange={e=>setForm({...form,materials:e.target.value})}/>
+                </div>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Tools" value={form.tools} onChange={e=>setForm({...form,tools:e.target.value})}/>
+                <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl h-24 resize-none text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Description" value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})}/>
               </div>
+            )}
+          </div>
+          
+          {editing === null ? (
+            <div className="flex gap-3 flex-shrink-0 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-sm text-slate-600 dark:text-slate-300">Close</button>
+              <button onClick={addNew} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"><PlusCircle size={16}/> New Template</button>
+            </div>
+          ) : (
+            <div className="flex gap-3 flex-shrink-0 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button onClick={() => setEditing(null)} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-sm text-slate-600 dark:text-slate-300">Cancel</button>
+              <button onClick={saveForm} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2"><Check size={16}/> Save</button>
             </div>
           )}
         </div>
@@ -694,37 +716,62 @@
   /* ─── MaterialManager ────────────────────────────────────────── */
   const MaterialManager = ({ materials, onSave, onClose }) => {
     const [list, setList] = useState([...materials]);
-    const [newName, setNewName] = useState('');
-    const [newPrice, setNewPrice] = useState('');
-    const addMaterial = () => {
-      if (!newName.trim() || !newPrice.trim()) return;
-      const updated = [...list, { name: newName.trim(), price: newPrice.trim() }];
-      setList(updated); onSave(updated); setNewName(''); setNewPrice('');
+    const [editing, setEditing] = useState(false);
+    const [form, setForm] = useState({ name: '', price: '' });
+
+    const saveForm = () => {
+      if (!form.name.trim() || !form.price.trim()) return;
+      const updated = [...list, { name: form.name.trim(), price: form.price.trim() }];
+      setList(updated); onSave(updated); setEditing(false);
     };
-    const deleteMaterial = (index) => { const updated = list.filter((_,i)=>i!==index); setList(updated); onSave(updated); };
+
+    const deleteMaterial = (index) => {
+      const updated = list.filter((_, i) => i !== index);
+      setList(updated); onSave(updated);
+    };
+
     return (
-      <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
-          <div className="flex justify-between items-center mb-4 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
-            <h3 className="font-black text-lg">Saved Materials</h3>
-            <button onClick={onClose} className="p-1"><X size={20}/></button>
+      <div className="fixed inset-0 z-[200] bg-slate-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[85vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
+          
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+            <h3 className="font-black text-lg text-slate-900 dark:text-white">Saved Materials</h3>
+            <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          <div className="flex gap-2 mb-6">
-            <input className="flex-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-medium" placeholder="Material name" value={newName} onChange={e=>setNewName(e.target.value)}/>
-            <input className="w-24 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-medium" placeholder="Price" value={newPrice} onChange={e=>setNewPrice(e.target.value)}/>
-            <button onClick={addMaterial} className="bg-orange-500 text-white px-4 rounded-xl font-black text-sm">Add</button>
-          </div>
-          <div className="space-y-2">
-            {list.map((m, i) => (
-              <div key={i} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl">
-                <span className="text-sm font-medium">{m.name}</span>
-                <div className="flex items-center gap-3">
-                  <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{fmtAUD(parseFloat(m.price))}</span>
-                  <button onClick={() => deleteMaterial(i)} className="text-red-400 p-1"><Trash2 size={16}/></button>
-                </div>
+          
+          <div className="overflow-y-auto flex-1 no-scrollbar mb-2">
+            {!editing ? (
+              <>
+                {list.length === 0 && <p className="text-center text-sm text-slate-400 font-bold py-6">No materials saved yet.</p>}
+                {list.map((m, i) => (
+                  <div key={i} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 rounded-2xl mb-2">
+                    <span className="font-black text-sm text-slate-900 dark:text-white truncate pr-2">{m.name}</span>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className="font-black text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-lg">{fmtAUD(parseFloat(m.price))}</span>
+                      <button onClick={() => deleteMaterial(i)} className="bg-red-50 dark:bg-red-900/30 text-red-400 hover:text-red-500 p-2 rounded-xl"><Trash2 size={14}/></button>
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div className="space-y-3 pb-2">
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Material Name *" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Price $ *" type="number" step="0.01" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/>
               </div>
-            ))}
+            )}
           </div>
+          
+          {!editing ? (
+            <div className="flex gap-3 flex-shrink-0 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-sm text-slate-600 dark:text-slate-300">Close</button>
+              <button onClick={() => { setForm({name:'', price:''}); setEditing(true); }} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"><PlusCircle size={16}/> New Material</button>
+            </div>
+          ) : (
+            <div className="flex gap-3 flex-shrink-0 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button onClick={() => setEditing(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-sm text-slate-600 dark:text-slate-300">Cancel</button>
+              <button onClick={saveForm} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2"><Check size={16}/> Save</button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -752,7 +799,6 @@
       onUnlockPro(found); setLicenceInput(''); showToast('Full version unlocked!', 'success');
     };
 
-    // Count expiring credentials for settings badge
     const expiringCount = (businessProfile?.licences || []).filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry)).length
       + (isExpiringSoon(businessProfile?.insuranceExpiry) || isExpired(businessProfile?.insuranceExpiry) ? 1 : 0);
 
@@ -905,150 +951,118 @@
     );
   };
 
-  /* ─── TemplatePopover ────────────────────────────────────────── */
-  const TemplatePopover = ({ userTemplates, onSelect, onClose }) => {
-    const allTemplates = userTemplates.map(t => ({ ...t, isUser: true }));
+  /* ─── NewJobModal ────────────────────────────────────────────── */
+  const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast }) => {
+    const [addr, setAddr] = useState('');
+    const [client, setClient] = useState('');
+    const [additionalText, setAdditionalText] = useState('');
+    const [dueDate, setDueDate] = useState('');
+    const [files, setFiles] = useState([]);
+    const [isImporting, setIsImporting] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const handleFiles = (e) => { setFiles(prev => [...prev, ...Array.from(e.target.files)]); e.target.value = ''; };
+    const removeFile = (index) => setFiles(prev => prev.filter((_,i) => i!==index));
+    const createManual = () => { if (!addr.trim()) return showToast('Address is required', 'error'); onSave(addr.trim(), client.trim(), [], dueDate); };
+
+    const createWithAI = async () => {
+      if (!apiKey) { showToast('Please save a Gemini API key in Settings first.', 'error'); return; }
+      setIsImporting(true);
+      try {
+        const fileParts = [];
+        for (const file of files) {
+          if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
+            const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
+            fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
+          }
+        }
+        
+        const textPrompt = `You are a data extraction AI. Extract the job details from the attached files (if any) AND the following source text.
+        
+Source Text:
+"""
+${additionalText || 'No additional text provided.'}
+"""
+
+Combine the data intelligently. Return ONLY a valid JSON object with keys: "address", "clientName", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { 
+          method:'POST', 
+          headers:{'Content-Type':'application/json'}, 
+          body: JSON.stringify({ 
+            contents:[{parts:[{text:textPrompt},...fileParts]}], 
+            generationConfig:{temperature:0,response_mime_type:'application/json'} 
+          }) 
+        });
+        
+        if (!res.ok) throw new Error(`API error ${res.status}`);
+        const data = await res.json();
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
+        const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
+        onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
+        showToast('Successfully imported via AI!', 'success');
+      } catch (err) { showToast(`AI import failed: ${err.message}`, 'error'); }
+      finally { setIsImporting(false); }
+    };
+
+    const isHandover = type === 'handover';
+    const canUseAI = apiKey && (files.length > 0 || additionalText.trim().length > 0);
+
     return (
-      <div className="absolute top-full left-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-72 max-h-60 overflow-y-auto p-2">
-        {allTemplates.length === 0 && <p className="text-sm text-slate-400 p-2">No templates yet. Create one in Settings.</p>}
-        {allTemplates.map((t, i) => (
-          <button key={i} onClick={() => { onSelect(t.data); onClose(); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 group">
-            <Bookmark size={14} className="text-emerald-500"/>
-            <div className="min-w-0"><div className="font-bold text-sm truncate">{t.name}</div>{t.data.title && <div className="text-[10px] text-slate-400 truncate">{t.data.title}</div>}</div>
-          </button>
-        ))}
+      <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 relative overflow-hidden animate-slide-up sm:animate-none pb-safe">
+          {isImporting && (
+            <div className="absolute inset-0 bg-slate-900/80 rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
+              <p className="text-white font-black text-sm uppercase">Processing with AI…</p>
+            </div>
+          )}
+          <div className="flex justify-between items-center mb-5">
+            <div>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{isHandover ? 'Completion Report' : 'Job Sheet'}</span>
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1">New Project</h2>
+            </div>
+            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
+          </div>
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto no-scrollbar pb-4">
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Job Address *</label>
+              <input autoFocus className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Client Name</label>
+              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date (optional)</label>
+              <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" value={dueDate} onChange={e => setDueDate(e.target.value)}/>
+            </div>
+            <div className="flex items-center gap-3 py-1">
+              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or use AI</span><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+              <div className="mb-2">
+                <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Attach PDF/image files or paste raw text below.</p>
+              </div>
+              <label className="flex items-center gap-2 mb-2 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors text-xs font-black uppercase"><Upload size={14}/> Add Documents<input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/></label>
+              {files.length > 0 && (
+                <div className="mb-2">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1 shadow-sm"><span className="text-[11px] font-medium truncate flex-1">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400"><X size={14}/></button></div>))}</div>
+              )}
+              <textarea className="w-full p-3 bg-white dark:bg-slate-700 rounded-lg outline-none text-xs font-medium resize-none h-16 dark:text-white dark:placeholder-slate-400 shadow-sm" placeholder="Paste .docx text or additional details here..." value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
+            </div>
+          </div>
+          <div className="flex gap-3 mt-4">
+            <button onClick={createManual} className={`flex-1 py-3 rounded-xl font-black text-sm shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>Create</button>
+            {canUseAI && (
+              <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95"><Sparkles size={16}/> Auto-Fill</button>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
-
-  /* ─── MaterialPicker ─────────────────────────────────────────── */
-  const MaterialPicker = ({ materials, onSelect, onClose }) => (
-    <div className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 w-64 max-h-48 overflow-y-auto p-2">
-      {materials.length === 0 && <p className="text-sm text-slate-400 p-2">No saved materials.</p>}
-      {materials.map((m, i) => (
-        <button key={i} onClick={() => { onSelect(m); onClose(); }} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left">
-          <span className="font-medium text-sm">{m.name}</span>
-          <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{fmtAUD(parseFloat(m.price))}</span>
-        </button>
-      ))}
-    </div>
-  );
-
-  /* ─── NewJobModal ────────────────────────────────────────────── */
-    const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast }) => {
-      const [addr, setAddr] = useState('');
-      const [client, setClient] = useState('');
-      const [additionalText, setAdditionalText] = useState('');
-      const [dueDate, setDueDate] = useState('');
-      const [files, setFiles] = useState([]);
-      const [isImporting, setIsImporting] = useState(false);
-      const fileInputRef = useRef(null);
-  
-      const handleFiles = (e) => { setFiles(prev => [...prev, ...Array.from(e.target.files)]); e.target.value = ''; };
-      const removeFile = (index) => setFiles(prev => prev.filter((_,i) => i!==index));
-      const createManual = () => { if (!addr.trim()) return showToast('Address is required', 'error'); onSave(addr.trim(), client.trim(), [], dueDate); };
-  
-      const createWithAI = async () => {
-        if (!apiKey) { showToast('Please save a Gemini API key in Settings first.', 'error'); return; }
-        setIsImporting(true);
-        try {
-          const fileParts = [];
-          for (const file of files) {
-            if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
-              const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
-              fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
-            }
-          }
-          
-          // Updated prompt to heavily weight pasted text alongside any files
-          const textPrompt = `You are a data extraction AI. Extract the job details from the attached files (if any) AND the following source text.
-          
-  Source Text:
-  """
-  ${additionalText || 'No additional text provided.'}
-  """
-  
-  Combine the data intelligently. Return ONLY a valid JSON object with keys: "address", "clientName", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
-  
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { 
-            method:'POST', 
-            headers:{'Content-Type':'application/json'}, 
-            body: JSON.stringify({ 
-              contents:[{parts:[{text:textPrompt},...fileParts]}], 
-              generationConfig:{temperature:0,response_mime_type:'application/json'} 
-            }) 
-          });
-          
-          if (!res.ok) throw new Error(`API error ${res.status}`);
-          const data = await res.json();
-          const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-          const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
-          onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
-          showToast('Successfully imported via AI!', 'success');
-        } catch (err) { showToast(`AI import failed: ${err.message}`, 'error'); }
-        finally { setIsImporting(false); }
-      };
-  
-      const isHandover = type === 'handover';
-      
-      // The Auto-Fill button is now active if there are files OR pasted text
-      const canUseAI = apiKey && (files.length > 0 || additionalText.trim().length > 0);
-  
-      return (
-        <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 relative overflow-hidden animate-slide-up sm:animate-none pb-safe">
-            {isImporting && (
-              <div className="absolute inset-0 bg-slate-900/80 rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
-                <p className="text-white font-black text-sm uppercase">Processing with AI…</p>
-              </div>
-            )}
-            <div className="flex justify-between items-center mb-5">
-              <div>
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{isHandover ? 'Completion Report' : 'Job Sheet'}</span>
-                <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1">New Project</h2>
-              </div>
-              <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
-            </div>
-            <div className="space-y-3 max-h-[70vh] overflow-y-auto no-scrollbar pb-4">
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Job Address *</label>
-                <input autoFocus className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Client Name</label>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
-              </div>
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date (optional)</label>
-                <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" value={dueDate} onChange={e => setDueDate(e.target.value)}/>
-              </div>
-              <div className="flex items-center gap-3 py-1">
-                <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or use AI</span><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
-                <div className="mb-2">
-                  <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Attach PDF/image files or paste raw text below.</p>
-                </div>
-                <label className="flex items-center gap-2 mb-2 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors text-xs font-black uppercase"><Upload size={14}/> Add Documents<input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/></label>
-                {files.length > 0 && (
-                  <div className="mb-2">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1 shadow-sm"><span className="text-[11px] font-medium truncate flex-1">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400"><X size={14}/></button></div>))}</div>
-                )}
-                <textarea className="w-full p-3 bg-white dark:bg-slate-700 rounded-lg outline-none text-xs font-medium resize-none h-16 dark:text-white dark:placeholder-slate-400 shadow-sm" placeholder="Paste .docx text or additional details here..." value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
-              </div>
-            </div>
-            <div className="flex gap-3 mt-4">
-              <button onClick={createManual} className={`flex-1 py-3 rounded-xl font-black text-sm shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>Create</button>
-              {canUseAI && (
-                <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95"><Sparkles size={16}/> Auto-Fill</button>
-              )}
-            </div>
-          </div>
-        </div>
-      );
-    };
 
   /* ─── PrintPreview ───────────────────────────────────────────── */
   const PrintPreview = ({ job, extraTaxRate, businessProfile = {}, onClose }) => {
@@ -1072,7 +1086,6 @@
     const biz = businessProfile;
     const docLabel = job.type === 'handover' ? 'Completion Report' : 'Quotation';
 
-    // Filter non-expired licences for print
     const printLicences = (biz.licences || []);
     const hasInsurance = biz.insurance && biz.insurancePolicy;
 
@@ -1955,69 +1968,115 @@
         {/* Task Form */}
         {isTaskFormOpen && (
           <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-5 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[95vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
-              <div className="flex justify-between items-center mb-6 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
+            <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-5 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[95vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
+              <div className="flex justify-between items-center mb-6 pb-2 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
                 <h2 className="text-xl font-black text-slate-900 dark:text-white">{editingTaskId ? 'Edit' : 'New'} {activeJob?.type==='handover' ? 'Completion Entry' : 'Job Sheet Entry'}</h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
-              <div className="mb-4 relative">
-                <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-black text-sm border border-slate-100 dark:border-slate-700 hover:border-purple-400 transition-colors">
-                  <span className="flex items-center gap-2"><Sparkles size={16} className="text-purple-500"/>Templates</span>
-                  <ChevronDown size={16} className={showTemplatePop?'rotate-180':''}/>
-                </button>
-                {showTemplatePop && <TemplatePopover userTemplates={userTemplates} onSelect={(data) => setTaskData(prev=>({...prev,...data}))} onClose={() => setShowTemplatePop(false)}/>}
-              </div>
-              <div className="space-y-3">
-                <input placeholder="Task / Item Title" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.title} onChange={e=>setTaskData(p=>({...p,title:e.target.value}))}/>
-                <div className="flex gap-2">
-                  <div className="flex-1 relative">
-                    <input placeholder="Time (e.g. 2h 30m)" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.time} onChange={e=>setTaskData(p=>({...p,time:e.target.value}))}/>
-                    {taskData.time && <div className="absolute -bottom-4 left-3 text-[9px] text-orange-500 font-black">= {fmtMins(parseTimeToMinutes(taskData.time))}</div>}
-                  </div>
-                  <label className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 px-4 rounded-xl cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 gap-2"><ImageIcon className="text-slate-600 dark:text-slate-400" size={16}/><span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase">Photos</span><input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/></label>
-                </div>
-                {activeJob?.showCosts && (
-                  <div className="flex gap-2 mt-3">
-                    <div className="flex-1 relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                      <input placeholder="Rate/hr" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${rateError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.rate} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,rate:v}));validateRate(v);}} onBlur={e=>validateRate(e.target.value)}/>
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-black uppercase">/hr</span>
+              
+              <div className="overflow-y-auto flex-1 no-scrollbar pb-4 pr-1">
+                {/* Template Selection Accordion */}
+                <div className="mb-4">
+                  <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-black text-sm border border-slate-200 dark:border-slate-700 hover:border-purple-400 dark:text-white transition-colors">
+                    <span className="flex items-center gap-2"><Sparkles size={16} className="text-purple-500"/>Use a Template</span>
+                    <ChevronDown size={16} className={`transition-transform ${showTemplatePop?'rotate-180':''}`}/>
+                  </button>
+                  {showTemplatePop && (
+                    <div className="mt-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl max-h-48 overflow-y-auto p-2 w-full">
+                      {userTemplates.length === 0 && <p className="text-sm text-slate-400 p-2 text-center font-medium">No templates yet. Create one in Settings.</p>}
+                      {userTemplates.map((t, i) => (
+                        <button key={i} onClick={() => { setTaskData(prev=>({...prev,...t.data})); setShowTemplatePop(false); }} className="w-full text-left p-3 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-3">
+                          <Bookmark size={16} className="text-purple-500 flex-shrink-0"/>
+                          <div className="min-w-0"><div className="font-bold text-sm truncate dark:text-white">{t.name}</div>{t.data.title && <div className="text-[10px] text-slate-400 truncate">{t.data.title}</div>}</div>
+                        </button>
+                      ))}
                     </div>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <input placeholder="Task / Item Title" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.title} onChange={e=>setTaskData(p=>({...p,title:e.target.value}))}/>
+                  <div className="flex gap-2">
                     <div className="flex-1 relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                      <div className="flex items-center">
-                        <input placeholder="Materials $" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${matError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.materialsCost} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,materialsCost:v}));validateMat(v);}} onBlur={e=>validateMat(e.target.value)}/>
-                        {userMaterials.length > 0 && (<div className="relative ml-1"><button onClick={() => setShowMaterialPop(!showMaterialPop)} className="bg-slate-200 dark:bg-slate-700 p-2.5 rounded-lg text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600"><Package size={14}/></button>{showMaterialPop && (<div className="absolute right-0 top-full mt-1 z-50"><MaterialPicker materials={userMaterials} onSelect={(m)=>{setTaskData(p=>({...p,materials:m.name,materialsCost:m.price}));}} onClose={()=>setShowMaterialPop(false)}/></div>)}</div>)}
+                      <input placeholder="Time (e.g. 2h 30m)" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.time} onChange={e=>setTaskData(p=>({...p,time:e.target.value}))}/>
+                      {taskData.time && <div className="absolute -bottom-4 left-3 text-[9px] text-orange-500 font-black">= {fmtMins(parseTimeToMinutes(taskData.time))}</div>}
+                    </div>
+                    <label className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 px-4 rounded-xl cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 gap-2"><ImageIcon className="text-slate-600 dark:text-slate-400" size={16}/><span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase">Photos</span><input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/></label>
+                  </div>
+                  
+                  {activeJob?.showCosts && (
+                    <div className="flex flex-col gap-2 mt-3">
+                      <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
+                          <input placeholder="Rate/hr" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${rateError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.rate} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,rate:v}));validateRate(v);}} onBlur={e=>validateRate(e.target.value)}/>
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-black uppercase">/hr</span>
+                        </div>
+                        <div className="flex-1 relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
+                          <div className="flex items-center">
+                            <input placeholder="Materials $" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${matError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.materialsCost} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,materialsCost:v}));validateMat(v);}} onBlur={e=>validateMat(e.target.value)}/>
+                            {userMaterials.length > 0 && (
+                              <button onClick={() => setShowMaterialPop(!showMaterialPop)} className={`ml-1 p-2.5 rounded-lg transition-colors ${showMaterialPop ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40' : 'bg-slate-200 dark:bg-slate-700 text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600'}`}><Package size={14}/></button>
+                            )}
+                          </div>
+                        </div>
                       </div>
+                      {showMaterialPop && userMaterials.length > 0 && (
+                        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl max-h-48 overflow-y-auto p-2 w-full">
+                          {userMaterials.map((m, i) => (
+                            <button key={i} onClick={() => { setTaskData(p=>({...p,materials:m.name,materialsCost:m.price})); setShowMaterialPop(false); }} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-left">
+                              <span className="font-medium text-sm dark:text-white">{m.name}</span>
+                              <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{fmtAUD(parseFloat(m.price))}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
+                  )}
+
+                  {activeJob?.showCosts && (() => { const hrs=parseTimeToMinutes(taskData.time)/60; const labour=hrs*(parseFloat(taskData.rate)||0); const mats=parseFloat(taskData.materialsCost)||0; const total=labour+mats; return total>0 ? (<div className="bg-slate-900 dark:bg-slate-800 rounded-xl px-4 py-2 flex justify-between items-center"><div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{labour>0&&<span className="mr-3">Labour {fmtAUD(labour)}</span>}{mats>0&&<span>Mats {fmtAUD(mats)}</span>}</div><div className="text-white font-black text-sm">{fmtAUD(total)}</div></div>) : null; })()}
+                  
+                  {taskData.images.length > 0 && (
+                    <div className="mt-4 img-preview-grid">
+                      {taskData.images.map((img,i) => (<div key={i} className="relative w-full aspect-[4/3] group cursor-pointer" onClick={() => setEditingImageIdx(i)}><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-700 shadow-sm"/><div className="absolute inset-0 bg-slate-900/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white drop-shadow-md" size={24}/></div><button onClick={e=>{e.stopPropagation();setTaskData(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}));}} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md z-10"><X size={12}/></button></div>))}
+                      <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
+                    </div>
+                  )}
+                  
+                  <input placeholder="Materials Used" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
+                  <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
+                  
+                  <div className="relative">
+                    <textarea placeholder="Full details…" className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
+                    <button onClick={toggleVoice} type="button" className={`absolute right-2 bottom-3 p-2 rounded-full text-white shadow-md transition-all ${isListening?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`}><Mic size={14}/></button>
                   </div>
-                )}
-                {activeJob?.showCosts && (() => { const hrs=parseTimeToMinutes(taskData.time)/60; const labour=hrs*(parseFloat(taskData.rate)||0); const mats=parseFloat(taskData.materialsCost)||0; const total=labour+mats; return total>0 ? (<div className="bg-slate-900 dark:bg-slate-800 rounded-xl px-4 py-2 flex justify-between items-center"><div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{labour>0&&<span className="mr-3">Labour {fmtAUD(labour)}</span>}{mats>0&&<span>Mats {fmtAUD(mats)}</span>}</div><div className="text-white font-black text-sm">{fmtAUD(total)}</div></div>) : null; })()}
-                {taskData.images.length > 0 && (
-                  <div className="mt-4 img-preview-grid">
-                    {taskData.images.map((img,i) => (<div key={i} className="relative w-full aspect-[4/3] group cursor-pointer" onClick={() => setEditingImageIdx(i)}><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-700 shadow-sm"/><div className="absolute inset-0 bg-slate-900/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white drop-shadow-md" size={24}/></div><button onClick={e=>{e.stopPropagation();setTaskData(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}));}} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md z-10"><X size={12}/></button></div>))}
-                    <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
+                  
+                  <button onClick={handleAiSuggest} disabled={isAiSuggesting||!apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 ${apiKey?'bg-purple-600 hover:bg-purple-500 text-white':'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}><Sparkles size={14}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}</button>
+                  
+                  <div className="flex gap-2 pb-2">
+                    <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors uppercase"><Bookmark size={14}/> Template</button>
+                    {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (<button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-600 transition-colors uppercase"><Package size={14}/> Material</button>)}
                   </div>
-                )}
-                <input placeholder="Materials Used" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
-                <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
-                <div className="relative">
-                  <textarea placeholder="Full details…" className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
-                  <button onClick={toggleVoice} type="button" className={`absolute right-2 bottom-3 p-2 rounded-full text-white shadow-md transition-all ${isListening?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`}><Mic size={14}/></button>
                 </div>
-                <button onClick={handleAiSuggest} disabled={isAiSuggesting||!apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 ${apiKey?'bg-purple-600 hover:bg-purple-500 text-white':'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}><Sparkles size={14}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}</button>
-                <div className="flex gap-2">
-                  <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors uppercase"><Bookmark size={14}/> Template</button>
-                  {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (<button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-600 transition-colors uppercase"><Package size={14}/> Material</button>)}
-                </div>
-                {isNamingTemplate && (
-                  <div className="absolute inset-0 bg-slate-900/80 rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm p-6">
-                    <h3 className="text-white font-black text-xl mb-4">Template Name</h3>
-                    <input autoFocus className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl outline-none font-bold mb-3 dark:text-white" placeholder="e.g. Bathroom Patch" value={saveTemplateName} onChange={e=>setSaveTemplateName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&confirmSaveTemplate()}/>
-                    <div className="flex gap-3 w-full"><button onClick={confirmSaveTemplate} className="flex-1 bg-emerald-600 text-white py-3 rounded-2xl font-black">Save</button><button onClick={() => setIsNamingTemplate(false)} className="flex-1 bg-slate-700 text-white py-3 rounded-2xl font-black">Cancel</button></div>
-                  </div>
-                )}
-                <button onClick={handleSaveTask} className={`w-full text-white p-4 rounded-xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] mt-2 ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800'}`}><Save size={18}/> SAVE ENTRY</button>
+              </div>
+              
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
+                <button onClick={handleSaveTask} className={`w-full text-white p-4 rounded-xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800'}`}><Save size={18}/> SAVE ENTRY</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Naming Template Modal */}
+        {isNamingTemplate && (
+          <div className="fixed inset-0 z-[250] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-sm p-6 shadow-2xl border border-slate-800 animate-slide-up sm:animate-none text-center">
+              <h3 className="text-slate-900 dark:text-white font-black text-xl mb-4">Name your Template</h3>
+              <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold mb-4 dark:text-white border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-purple-400" placeholder="e.g. Bathroom Patch" value={saveTemplateName} onChange={e=>setSaveTemplateName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&confirmSaveTemplate()}/>
+              <div className="flex gap-3 w-full">
+                <button onClick={() => setIsNamingTemplate(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-2xl font-black">Cancel</button>
+                <button onClick={confirmSaveTemplate} className="flex-1 bg-purple-600 text-white py-3 rounded-2xl font-black shadow-lg shadow-purple-500/30">Save</button>
               </div>
             </div>
           </div>
