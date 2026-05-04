@@ -131,29 +131,29 @@
   ];
 
   /* ─── Licence / Credential Types ────────────────────────────── */
-  const LICENCE_TYPE_OPTIONS = [
-    { value: 'QBCC (QLD)',               icon: '🏗️' },
-    { value: 'Fair Trading (NSW)',        icon: '🔨' },
-    { value: 'VBA (VIC)',                icon: '🏛️' },
-    { value: 'Building Commission (WA)', icon: '⚒️' },
-    { value: 'CBS (SA)',                 icon: '🏠' },
-    { value: 'OCBA (TAS)',               icon: '🌿' },
-    { value: 'ICBN (NT)',                icon: '🌏' },
-    { value: 'Access Canberra (ACT)',    icon: '🏢' },
-    { value: 'Builders Licence',         icon: '🔧' },
-    { value: 'Electrical Licence',       icon: '⚡' },
-    { value: 'Plumbing Licence',         icon: '🔩' },
-    { value: 'Gas Licence',             icon: '🔥' },
-    { value: 'White Card',              icon: '🪪' },
-    { value: 'Asbestos Removal',        icon: '⚠️' },
-    { value: 'Demolition Licence',      icon: '🏚️' },
-    { value: 'Rigging Licence',         icon: '🏗️' },
-    { value: 'Scaffolding Licence',     icon: '🧱' },
-    { value: 'Crane Operator',          icon: '🏗️' },
-    { value: 'Refrigeration Licence',   icon: '❄️' },
-    { value: 'Security Licence',        icon: '🔐' },
-    { value: 'Other',                   icon: '📋' },
-  ];
+    const LICENCE_TYPE_OPTIONS = [
+        'QBCC (QLD)',
+        'Fair Trading (NSW)',
+        'VBA (VIC)',
+        'Building Commission (WA)',
+        'CBS (SA)',
+        'OCBA (TAS)',
+        'ICBN (NT)',
+        'Access Canberra (ACT)',
+        'Builders Licence',
+        'Electrical Licence',
+        'Plumbing Licence',
+        'Gas Licence',
+        'White Card',
+        'Asbestos Removal',
+        'Demolition Licence',
+        'Rigging Licence',
+        'Scaffolding Licence',
+        'Crane Operator',
+        'Refrigeration Licence',
+        'Security Licence',
+        'Other'
+      ];
 
   const BIZA_KEY         = 'joblog-business';
   const MAX_STOPS        = 12;
@@ -429,7 +429,7 @@
               onChange={e => setDraft(d => ({ ...d, type: e.target.value, customType: '' }))}
             >
               {LICENCE_TYPE_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.icon} {opt.value}</option>
+                <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
           </div>
@@ -587,9 +587,10 @@
 
           {/* Licences & Credentials */}
           <div className="mb-5">
-            <div className="flex items-center gap-2 mb-3">
-              <BadgeCheck size={15} className="text-emerald-500"/>
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Licences & Credentials</span>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+                <BadgeCheck size={16} className="text-slate-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-black text-xs text-slate-800 dark:text-white truncate">{lic.type}</p>
               {form.licences.length > 0 && (
                 <span className="ml-auto bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase">
                   {form.licences.length} saved
@@ -1060,7 +1061,7 @@
             {/* ─── Business Header ─── */}
             {biz.name && (
               <div className="pb-4 mb-4 border-b-2 border-slate-300">
-                <div className="flex justify-between items-start mb-3">
+                <div className="flex justify-between items-start">
                   <div className="flex items-center gap-4">
                     {biz.logo && <img src={biz.logo} className="h-16 w-auto object-contain rounded-lg" alt={biz.name}/>}
                     <div>
@@ -1069,12 +1070,32 @@
                       {biz.abn && <p className="text-xs font-bold text-slate-600 mt-0.5 font-mono">ABN {biz.abn}</p>}
                     </div>
                   </div>
-                  <div className="text-right text-sm text-slate-600 space-y-0.5">
+                  
+                  {/* Right-aligned Contact & Credential Details */}
+                  <div className="text-right text-sm text-slate-600 space-y-0.5 flex flex-col items-end">
                     {biz.phone && <p className="font-bold">{biz.phone}</p>}
                     {biz.email && <p>{biz.email}</p>}
-                    {biz.address && <p className="text-slate-400 text-xs">{biz.address}</p>}
+                    {biz.address && <p className="text-slate-400 text-xs mb-2">{biz.address}</p>}
+
+                    {/* Licences stacked cleanly under contact info */}
+                    {(printLicences.length > 0 || hasInsurance) && (
+                      <div className="mt-1 pt-2 border-t border-slate-200 inline-block text-right min-w-[150px]">
+                        {printLicences.map((lic, i) => (
+                          <p key={i} className="text-[10px] text-slate-500 font-medium uppercase tracking-wide leading-tight mb-0.5">
+                            {lic.type}: <span className="font-bold text-slate-800 font-mono">{lic.number}</span>
+                          </p>
+                        ))}
+                        {hasInsurance && (
+                          <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide leading-tight">
+                            PLI ({biz.insurance}): <span className="font-bold text-slate-800 font-mono">{biz.insurancePolicy}</span>
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
+              </div>
+            )}
 
                 {/* Licences & Insurance row */}
                 {(printLicences.length > 0 || hasInsurance) && (
