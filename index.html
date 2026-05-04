@@ -5,15 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#0f172a" id="theme-color-meta" />
     <title>JobLog</title>
-
-    <!-- PWA REQUIREMENTS -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="JobLog">
     <link rel="apple-touch-icon" href="icon-192.png">
-
-    <!-- SERVICE WORKER REGISTRATION -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -23,10 +19,7 @@
         });
       }
     </script>
-
-    <!-- PAYPAL SDK -->
     <script src="https://www.paypal.com/sdk/js?client-id=BAA4zpTO_3zmcoQkk-UyKIdJDt6e4PWFwCQVVtXihsQe9I-l188FNq4S8O2I08YmE3FG5uo2iEO46w8SGo&components=hosted-buttons&disable-funding=venmo&currency=AUD"></script>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -49,29 +42,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-
     <style>
       html, body { max-width: 100vw; overflow-x: hidden; }
       body { -webkit-tap-highlight-color: transparent; transition: background-color 0.3s; }
-
       @supports (padding-bottom: env(safe-area-inset-bottom)) {
         .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
         .bottom-nav-safe { padding-bottom: env(safe-area-inset-bottom); }
         .nav-spacing { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
       }
-
       @media print {
         @page { margin: 12mm; size: A4; }
         html, body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         body > *:not(#print-container) { display: none !important; }
-        #print-container {
-          position: static !important;
-          display: block !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          background: white !important;
-          overflow: visible !important;
-        }
+        #print-container { position: static !important; display: block !important; padding: 0 !important; margin: 0 !important; background: white !important; overflow: visible !important; }
         .no-print { display: none !important; }
         .print-card { break-inside: avoid; page-break-inside: avoid; border: 2px solid #cbd5e1 !important; margin-bottom: 12px; border-radius: 8px; overflow: hidden; background: white !important; }
         .print-img-container { break-inside: avoid; page-break-inside: avoid; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
@@ -81,53 +64,18 @@
         .print-card h3 { font-size: 16px !important; margin-bottom: 4px; }
         .print-card p { font-size: 12px !important; line-height: 1.4; margin-bottom: 6px; }
         .print-biz-header { display: flex !important; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; }
+        .print-licence-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .print-licence-badge { font-size: 9px; font-weight: 800; padding: 2px 6px; border: 1px solid #94a3b8; border-radius: 4px; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; }
       }
       .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       .canvas-editor-area { touch-action: none; }
-
-      /* Global overflow fixes */
-      * {
-        max-width: 100%;
-        box-sizing: border-box;
-      }
-      
-      /* Fix all containers */
-      .container, [class*="max-w-"], [class*="w-"] {
-        overflow-x: hidden;
-      }
-      
-      /* Ensure text wraps properly */
-      p, h1, h2, h3, h4, span, div {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-      }
-      
-      /* Fix for the main content area */
-      .max-w-2xl {
-        width: 100%;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      
-      /* Mobile-specific fixes */
-      @media (max-width: 640px) {
-        .p-4 {
-          padding: 0.75rem;
-        }
-        
-        .gap-3 {
-          gap: 0.5rem;
-        }
-        
-        .text-lg {
-          font-size: 1rem;
-        }
-      }
-
+      * { max-width: 100%; box-sizing: border-box; }
+      .container, [class*="max-w-"], [class*="w-"] { overflow-x: hidden; }
+      p, h1, h2, h3, h4, span, div { word-wrap: break-word; overflow-wrap: break-word; }
+      .max-w-2xl { width: 100%; padding-left: 1rem; padding-right: 1rem; margin-left: auto; margin-right: auto; }
+      @media (max-width: 640px) { .p-4 { padding: 0.75rem; } .gap-3 { gap: 0.5rem; } .text-lg { font-size: 1rem; } }
       .calendar-grid { display: grid; grid-template-columns: 60px repeat(7, 1fr); background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1.5rem; overflow: hidden; }
       .dark .calendar-grid { background-color: #1e293b; border-color: #334155; }
       .calendar-hour { border-top: 1px solid #e2e8f0; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #64748b; display: flex; align-items: center; justify-content: center; height: 60px; }
@@ -163,7 +111,8 @@
     RefreshCcw, Move, ZoomIn, Check, Search, DollarSign, Tag, Share2, Map,
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt, Home, Info,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert, Lock,
-    Bookmark, Package, PlusCircle, Calendar, Building2, CalendarPlus
+    Bookmark, Package, PlusCircle, Calendar, Building2, CalendarPlus, Award,
+    ShieldCheck, BadgeCheck
   } from 'lucide-react';
 
   /* ─── Constants ─────────────────────────────────────────────── */
@@ -172,15 +121,38 @@
   const DB_KEY_MATS      = 'joblog-materials';
   const DB_KEY_APPOINTMENTS = 'joblog-appointments';
 
-  /* ─── Embedded Licence Keys ─── */
   const LICENCE_KEYS = [
     { key: "JOBLOG-DEMO-1234", expiry: null },
     { key: "JOBLOG-PRO-001",   expiry: "2027-01-01" },
     { key: "JOBLOG-PRO-002",   expiry: null },
-    // Pre-generate a few below for your convenience
     { key: "JOBLOG-PRO-003",   expiry: null },
     { key: "JOBLOG-PRO-004",   expiry: null },
     { key: "JOBLOG-PRO-005",   expiry: null },
+  ];
+
+  /* ─── Licence / Credential Types ────────────────────────────── */
+  const LICENCE_TYPE_OPTIONS = [
+    { value: 'QBCC (QLD)',               icon: '🏗️' },
+    { value: 'Fair Trading (NSW)',        icon: '🔨' },
+    { value: 'VBA (VIC)',                icon: '🏛️' },
+    { value: 'Building Commission (WA)', icon: '⚒️' },
+    { value: 'CBS (SA)',                 icon: '🏠' },
+    { value: 'OCBA (TAS)',               icon: '🌿' },
+    { value: 'ICBN (NT)',                icon: '🌏' },
+    { value: 'Access Canberra (ACT)',    icon: '🏢' },
+    { value: 'Builders Licence',         icon: '🔧' },
+    { value: 'Electrical Licence',       icon: '⚡' },
+    { value: 'Plumbing Licence',         icon: '🔩' },
+    { value: 'Gas Licence',             icon: '🔥' },
+    { value: 'White Card',              icon: '🪪' },
+    { value: 'Asbestos Removal',        icon: '⚠️' },
+    { value: 'Demolition Licence',      icon: '🏚️' },
+    { value: 'Rigging Licence',         icon: '🏗️' },
+    { value: 'Scaffolding Licence',     icon: '🧱' },
+    { value: 'Crane Operator',          icon: '🏗️' },
+    { value: 'Refrigeration Licence',   icon: '❄️' },
+    { value: 'Security Licence',        icon: '🔐' },
+    { value: 'Other',                   icon: '📋' },
   ];
 
   const BIZA_KEY         = 'joblog-business';
@@ -201,6 +173,16 @@
   const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU') : '';
   const fmtDateShort = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'}) : '';
   const fmtDateTime = (iso) => iso ? new Date(iso).toLocaleString('en-AU', {day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}) : '';
+
+  const isExpiringSoon = (expiryStr) => {
+    if (!expiryStr) return false;
+    const diff = new Date(expiryStr) - new Date();
+    return diff > 0 && diff < 60 * 24 * 60 * 60 * 1000; // 60 days
+  };
+  const isExpired = (expiryStr) => {
+    if (!expiryStr) return false;
+    return new Date(expiryStr) < new Date();
+  };
 
   const getQuoteTotals = (tasks, gstEnabled, extraTaxRate = 0) => {
     let labour = 0, mats = 0;
@@ -272,22 +254,15 @@
     return new Date(d.setDate(diff));
   };
 
-  /* ─── Components ─────────────────────────────────────────────── */
-
-  // PrintEditableDiv wrapper
-  const PrintEditableDiv = ({ value, onChange, placeholder, className }) => {
-    return (
-      <div
-        contentEditable
-        suppressContentEditableWarning
-        onBlur={e => onChange(e.currentTarget.innerText)}
-        className={`empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 whitespace-pre-wrap outline-none ${className}`}
-        data-placeholder={placeholder}
-      >
-        {value}
-      </div>
-    );
-  };
+  /* ─── PrintEditableDiv ───────────────────────────────────────── */
+  const PrintEditableDiv = ({ value, onChange, placeholder, className }) => (
+    <div
+      contentEditable suppressContentEditableWarning
+      onBlur={e => onChange(e.currentTarget.innerText)}
+      className={`empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 whitespace-pre-wrap outline-none ${className}`}
+      data-placeholder={placeholder}
+    >{value}</div>
+  );
 
   class ErrorBoundary extends Component {
     constructor(props) { super(props); this.state = { hasError: false, error: null }; }
@@ -307,49 +282,33 @@
     }
   }
 
-  /* ─── PayPal Button Component ────────────────────────────────── */
+  /* ─── PayPalButton ───────────────────────────────────────────── */
   const PayPalButton = () => {
     const containerId = useRef(`paypal-${Math.random().toString(36).substr(2, 9)}`);
-    
     useEffect(() => {
       if (window.paypal) {
         const el = document.getElementById(containerId.current);
         if (el && el.children.length === 0) {
-          try {
-            window.paypal.HostedButtons({
-              hostedButtonId: "KQQ6Q5YFX758G",
-            }).render(`#${containerId.current}`);
-          } catch (err) {
-            console.error("PayPal render error", err);
-          }
+          try { window.paypal.HostedButtons({ hostedButtonId: "KQQ6Q5YFX758G" }).render(`#${containerId.current}`); }
+          catch (err) { console.error("PayPal render error", err); }
         }
       }
     }, []);
-  
     return (
       <div className="flex justify-center overflow-x-auto" style={{ isolation: 'isolate' }}>
-        <div 
-          id={containerId.current} 
-          className="paypal-isolate"
-          style={{ minWidth: '220px', width: 'auto', display: 'inline-block' }}
-        />
+        <div id={containerId.current} className="paypal-isolate" style={{ minWidth: '220px', width: 'auto', display: 'inline-block' }}/>
       </div>
     );
   };
 
-  /* ─── Toast System ───────────────────────────────────────────── */
+  /* ─── Toast ──────────────────────────────────────────────────── */
   const ToastMessage = ({ message, type, onClose }) => {
     useEffect(() => { const timer = setTimeout(onClose, 3500); return () => clearTimeout(timer); }, [onClose]);
-    const icons = {
-      success: <CheckCircle2 size={18} className="text-emerald-500"/>,
-      error: <AlertTriangle size={18} className="text-red-500"/>,
-      info: <Info size={18} className="text-blue-500"/>
-    };
+    const icons = { success: <CheckCircle2 size={18} className="text-emerald-500"/>, error: <AlertTriangle size={18} className="text-red-500"/>, info: <Info size={18} className="text-blue-500"/> };
     return (
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-sm animate-slide-down">
         <div className="bg-slate-900 dark:bg-slate-800 text-white rounded-2xl shadow-2xl p-4 flex items-center gap-3 border border-slate-700">
-          {icons[type]}
-          <p className="text-sm font-bold flex-1">{message}</p>
+          {icons[type]}<p className="text-sm font-bold flex-1">{message}</p>
           <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={16}/></button>
         </div>
       </div>
@@ -372,48 +331,29 @@
   /* ─── UpgradeModal ───────────────────────────────────────────── */
   const UpgradeModal = ({ onClose, onUnlock, showToast }) => {
     const [key, setKey] = useState('');
-
     const handleUnlock = () => {
       const input = key.trim().toUpperCase();
       const found = LICENCE_KEYS.find(k => k.key === input);
       if (!found) { showToast('Invalid licence key', 'error'); return; }
       if (found.expiry && new Date(found.expiry) < new Date()) { showToast('This key has expired', 'error'); return; }
-      onUnlock(found);
-      showToast('Full version unlocked!', 'success');
-      onClose();
+      onUnlock(found); showToast('Full version unlocked!', 'success'); onClose();
     };
-
     return (
       <div className="fixed inset-0 z-[300] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto">
         <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl border dark:border-slate-800 animate-slide-up sm:animate-none pb-safe text-center my-auto">
-          <div className="flex justify-end mb-2">
-             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600"><X size={18}/></button>
-          </div>
-          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock size={32} className="text-orange-500"/>
-          </div>
+          <div className="flex justify-end mb-2"><button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600"><X size={18}/></button></div>
+          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center mx-auto mb-4"><Lock size={32} className="text-orange-500"/></div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Limit Reached</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-            You've reached the 3‑job free limit. Purchase a licence or enter an existing key to unlock unlimited features.
-          </p>
-
-          {/* Checkout Section */}
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">You've reached the 3‑job free limit. Purchase a licence or enter an existing key to unlock unlimited features.</p>
           <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl mb-6 border border-slate-200 dark:border-slate-700 text-left">
             <h3 className="font-black text-sm mb-1 text-slate-800 dark:text-white">1. Buy a Licence</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 font-medium">Purchase a 1-year Pro Licence. Your unique unlock key will be emailed to you after checkout.</p>
             <PayPalButton />
           </div>
-
-          {/* Key Input Section */}
           <div className="text-left mb-6">
             <h3 className="font-black text-sm mb-2 text-slate-800 dark:text-white">2. Enter your Key</h3>
             <div className="flex gap-2">
-              <input
-                className="flex-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-mono font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 uppercase text-sm border border-slate-200 dark:border-slate-700"
-                placeholder="ENTER LICENCE KEY"
-                value={key}
-                onChange={e => setKey(e.target.value.toUpperCase())}
-              />
+              <input className="flex-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-mono font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 uppercase text-sm border border-slate-200 dark:border-slate-700" placeholder="ENTER LICENCE KEY" value={key} onChange={e => setKey(e.target.value.toUpperCase())}/>
               <button onClick={handleUnlock} className="bg-orange-500 hover:bg-orange-400 text-white px-5 rounded-xl font-black text-sm">Unlock</button>
             </div>
           </div>
@@ -425,7 +365,6 @@
   /* ─── AIAssistModal ───────────────────────────────────────────── */
   const AIAssistModal = ({ onClose, onGenerate, isGenerating, docType, apiKey }) => {
     const [prompt, setPrompt] = useState('');
-
     return (
       <div className="fixed inset-0 z-[600] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 animate-slide-up sm:animate-none">
         <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 pb-safe">
@@ -434,20 +373,11 @@
             <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full"><X size={20}/></button>
           </div>
           {!apiKey ? (
-             <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-bold mb-4">
-               Please add your Gemini API Key in Settings to use AI Assist features.
-             </div>
+            <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-bold mb-4">Please add your Gemini API Key in Settings to use AI Assist features.</div>
           ) : (
             <>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 font-medium leading-relaxed">
-                Provide optional instructions to guide the AI when generating this {docType}. For example: <span className="italic text-slate-600 dark:text-slate-300">"Include a 10% discount", "Focus on the high quality of materials used"</span>.
-              </p>
-              <textarea
-                className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-32 resize-none dark:text-white dark:placeholder-slate-500 mb-4 focus:ring-2 focus:ring-purple-500 border border-slate-200 dark:border-slate-700"
-                placeholder="Additional instructions (optional)..."
-                value={prompt}
-                onChange={e => setPrompt(e.target.value)}
-              />
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 font-medium leading-relaxed">Provide optional instructions to guide the AI when generating this {docType}.</p>
+              <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none text-sm font-medium h-32 resize-none dark:text-white dark:placeholder-slate-500 mb-4 focus:ring-2 focus:ring-purple-500 border border-slate-200 dark:border-slate-700" placeholder="Additional instructions (optional)..." value={prompt} onChange={e => setPrompt(e.target.value)}/>
               <div className="flex gap-3">
                 <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300 active:scale-95 transition-all">Cancel</button>
                 <button onClick={() => onGenerate(prompt)} disabled={isGenerating} className={`flex-1 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 transition-all active:scale-95 ${isGenerating ? 'bg-purple-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-500/20'}`}>
@@ -461,32 +391,155 @@
     );
   };
 
+  /* ═══════════════════════════════════════════════════════════
+     LICENCE EDITOR — inline sub-component used in BusinessProfileEditor
+  ═══════════════════════════════════════════════════════════ */
+  const LicenceEditor = ({ licences, onChange }) => {
+    const [editing, setEditing] = useState(null); // null | index | 'new'
+    const blankLicence = { type: LICENCE_TYPE_OPTIONS[0].value, customType: '', number: '', expiry: '', state: '' };
+    const [draft, setDraft] = useState(blankLicence);
+
+    const openNew = () => { setDraft(blankLicence); setEditing('new'); };
+    const openEdit = (i) => { setDraft({ ...licences[i] }); setEditing(i); };
+
+    const save = () => {
+      if (!draft.number.trim()) return;
+      const entry = { ...draft, type: draft.type === 'Other' && draft.customType ? draft.customType : draft.type };
+      let updated;
+      if (editing === 'new') { updated = [...licences, entry]; }
+      else { updated = licences.map((l, i) => i === editing ? entry : l); }
+      onChange(updated);
+      setEditing(null);
+    };
+
+    const remove = (i) => onChange(licences.filter((_, idx) => idx !== i));
+
+    if (editing !== null) {
+      return (
+        <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{editing === 'new' ? 'Add Credential' : 'Edit Credential'}</span>
+            <button onClick={() => setEditing(null)} className="text-slate-400 hover:text-slate-600"><X size={16}/></button>
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Licence / Credential Type</label>
+            <select
+              className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600"
+              value={draft.type}
+              onChange={e => setDraft(d => ({ ...d, type: e.target.value, customType: '' }))}
+            >
+              {LICENCE_TYPE_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.icon} {opt.value}</option>
+              ))}
+            </select>
+          </div>
+          {draft.type === 'Other' && (
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Custom Label</label>
+              <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. Pest Control Licence" value={draft.customType} onChange={e => setDraft(d => ({ ...d, customType: e.target.value }))}/>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Licence Number *</label>
+              <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. 1234567" value={draft.number} onChange={e => setDraft(d => ({ ...d, number: e.target.value }))}/>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">State / Jurisdiction</label>
+              <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. QLD" value={draft.state} onChange={e => setDraft(d => ({ ...d, state: e.target.value }))}/>
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Expiry Date (optional)</label>
+            <input type="date" className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" value={draft.expiry} onChange={e => setDraft(d => ({ ...d, expiry: e.target.value }))}/>
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button onClick={save} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-2.5 rounded-xl font-black text-sm flex items-center justify-center gap-1.5"><Check size={14}/> Save</button>
+            <button onClick={() => setEditing(null)} className="flex-1 bg-slate-200 dark:bg-slate-700 py-2.5 rounded-xl font-black text-sm text-slate-600 dark:text-slate-300">Cancel</button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {licences.length === 0 && (
+          <p className="text-xs text-slate-400 font-medium text-center py-2">No credentials added yet.</p>
+        )}
+        {licences.map((lic, i) => {
+          const expired = isExpired(lic.expiry);
+          const expiring = isExpiringSoon(lic.expiry);
+          const typeOpt = LICENCE_TYPE_OPTIONS.find(o => o.value === lic.type);
+          return (
+            <div key={i} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${expired ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : expiring ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'}`}>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-base flex-shrink-0">{typeOpt?.icon || '📋'}</span>
+                <div className="min-w-0">
+                  <p className="font-black text-xs text-slate-800 dark:text-white truncate">{lic.type}</p>
+                  <p className="font-mono text-[10px] text-slate-500 dark:text-slate-400">{lic.number}{lic.state ? ` · ${lic.state}` : ''}</p>
+                  {lic.expiry && (
+                    <p className={`text-[9px] font-black uppercase ${expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-slate-400'}`}>
+                      {expired ? '⚠ EXPIRED ' : expiring ? '⏰ Expires ' : 'Exp: '}{fmtDate(lic.expiry)}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-1 flex-shrink-0 ml-2">
+                <button onClick={() => openEdit(i)} className="p-1.5 text-slate-400 hover:text-blue-500 transition-colors"><Pencil size={14}/></button>
+                <button onClick={() => remove(i)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+              </div>
+            </div>
+          );
+        })}
+        <button onClick={openNew} className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-xs font-black uppercase text-slate-400 hover:border-orange-400 hover:text-orange-500 transition-all">
+          <PlusCircle size={14}/> Add Credential
+        </button>
+      </div>
+    );
+  };
+
   /* ─── BusinessProfileEditor ──────────────────────────────────── */
   const BusinessProfileEditor = ({ profile, onSave, onClose, showToast }) => {
     const [form, setForm] = useState({
-      name:        profile.name        || '',
-      tradingName: profile.tradingName || '',
-      abn:         profile.abn         || '',
-      phone:       profile.phone       || '',
-      email:       profile.email       || '',
-      address:     profile.address     || '',
-      logo:        profile.logo        || '',
+      name:            profile.name            || '',
+      tradingName:     profile.tradingName     || '',
+      abn:             profile.abn             || '',
+      phone:           profile.phone           || '',
+      email:           profile.email           || '',
+      address:         profile.address         || '',
+      logo:            profile.logo            || '',
+      licences:        profile.licences        || [],
+      insurance:       profile.insurance       || '',
+      insurancePolicy: profile.insurancePolicy || '',
+      insuranceExpiry: profile.insuranceExpiry || '',
     });
 
     const handleLogoUpload = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+      const file = e.target.files[0]; if (!file) return;
       try { const logoData = await compressLogo(file); setForm(f => ({ ...f, logo: logoData })); }
       catch { showToast('Logo could not be processed.', 'error'); }
     };
 
+    const expiringLicences = form.licences.filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry));
+
     return (
       <div className="fixed inset-0 z-[190] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[90vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[92vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-5 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
             <h3 className="font-black text-lg flex items-center gap-2"><Building2 size={18} className="text-orange-500"/> Business Profile</h3>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={20}/></button>
           </div>
+
+          {expiringLicences.length > 0 && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-3 mb-4 flex items-start gap-2">
+              <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
+              <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">
+                {expiringLicences.length} credential{expiringLicences.length > 1 ? 's' : ''} {expiringLicences.some(l => isExpired(l.expiry)) ? 'expired or expiring soon' : 'expiring soon'} — update below.
+              </p>
+            </div>
+          )}
+
+          {/* Logo & Business Name */}
           <div className="flex items-center gap-4 mb-5 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
             <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
               {form.logo ? <img src={form.logo} className="w-full h-full object-contain p-1" alt="logo"/> : <ImageIcon size={26} className="text-slate-300 dark:text-slate-500"/>}
@@ -501,7 +554,9 @@
               {form.logo && <button onClick={() => setForm(f=>({...f,logo:''}))} className="text-[10px] text-red-400 font-bold mt-1 ml-2 hover:text-red-600">Remove</button>}
             </div>
           </div>
-          <div className="space-y-3">
+
+          {/* Business Details */}
+          <div className="space-y-3 mb-5">
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label>
               <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="e.g. Smith Building Services" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/>
@@ -529,8 +584,52 @@
               <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="123 Example St, Sydney NSW 2000" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/>
             </div>
           </div>
-          <div className="flex gap-3 mt-6">
-            <button onClick={() => { onSave(form); onClose(); showToast('Profile Saved', 'success'); }} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black active:scale-95 transition-all flex items-center justify-center gap-2"><Check size={16}/> Save</button>
+
+          {/* Licences & Credentials */}
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-3">
+              <BadgeCheck size={15} className="text-emerald-500"/>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Licences & Credentials</span>
+              {form.licences.length > 0 && (
+                <span className="ml-auto bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase">
+                  {form.licences.length} saved
+                </span>
+              )}
+            </div>
+            <LicenceEditor
+              licences={form.licences}
+              onChange={(updated) => setForm(f => ({ ...f, licences: updated }))}
+            />
+          </div>
+
+          {/* Insurance */}
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-3">
+              <ShieldCheck size={15} className="text-blue-500"/>
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Public Liability Insurance</span>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Insurer Name</label>
+                <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. Allianz, QBE, CGU" value={form.insurance} onChange={e=>setForm(f=>({...f,insurance:e.target.value}))}/>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Number</label>
+                  <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="POL-XXXXXXXX" value={form.insurancePolicy} onChange={e=>setForm(f=>({...f,insurancePolicy:e.target.value}))}/>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Expiry</label>
+                  <input type="date" className={`w-full p-3 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border dark:border-slate-600 ${isExpired(form.insuranceExpiry) ? 'bg-red-50 dark:bg-red-900/20 border-red-300' : isExpiringSoon(form.insuranceExpiry) ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300' : 'bg-white dark:bg-slate-700 border-slate-200'}`} value={form.insuranceExpiry} onChange={e=>setForm(f=>({...f,insuranceExpiry:e.target.value}))}/>
+                  {isExpired(form.insuranceExpiry) && <p className="text-[9px] text-red-500 font-black mt-1 uppercase">⚠ Policy Expired</p>}
+                  {!isExpired(form.insuranceExpiry) && isExpiringSoon(form.insuranceExpiry) && <p className="text-[9px] text-amber-500 font-black mt-1 uppercase">⏰ Expiring Soon</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3 mt-2">
+            <button onClick={() => { onSave(form); onClose(); showToast('Profile Saved', 'success'); }} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black active:scale-95 transition-all flex items-center justify-center gap-2"><Check size={16}/> Save Profile</button>
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
           </div>
         </div>
@@ -543,18 +642,15 @@
     const [list, setList] = useState([...templates]);
     const [editing, setEditing] = useState(null);
     const [form, setForm] = useState({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' });
-
     const addNew = () => { setEditing(-1); setForm({ name:'', title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'' }); };
     const editTemplate = (index) => { setEditing(index); setForm({...list[index].data, name: list[index].name}); };
     const deleteTemplate = (index) => { const nl = list.filter((_,i)=>i!==index); setList(nl); onSave(nl); };
     const saveForm = () => {
       if (!form.name.trim() || !form.title.trim()) return;
       const tpl = { name: form.name.trim(), type: 'quote', data: { title: form.title, time: form.time, rate: form.rate, materialsCost: form.materialsCost, materials: form.materials, tools: form.tools, desc: form.desc } };
-      let updated;
-      if (editing >= 0) { updated = list.map((t,i)=>i===editing?tpl:t); } else { updated = [...list, tpl]; }
+      let updated = editing >= 0 ? list.map((t,i)=>i===editing?tpl:t) : [...list, tpl];
       setList(updated); onSave(updated); setEditing(null);
     };
-
     return (
       <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
         <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
@@ -601,14 +697,12 @@
     const [list, setList] = useState([...materials]);
     const [newName, setNewName] = useState('');
     const [newPrice, setNewPrice] = useState('');
-
     const addMaterial = () => {
       if (!newName.trim() || !newPrice.trim()) return;
       const updated = [...list, { name: newName.trim(), price: newPrice.trim() }];
       setList(updated); onSave(updated); setNewName(''); setNewPrice('');
     };
     const deleteMaterial = (index) => { const updated = list.filter((_,i)=>i!==index); setList(updated); onSave(updated); };
-
     return (
       <div className="fixed inset-0 z-[180] bg-slate-900/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
         <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[80vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
@@ -648,12 +742,7 @@
     const [showBusiness, setShowBusiness] = useState(false);
     const [licenceInput, setLicenceInput] = useState('');
 
-    const save = () => {
-      onSave(draftKey, draftModel, draftExtraTax);
-      setGoogleClientId(draftGoogleClientId);
-      onClose();
-      showToast('Settings Saved', 'success');
-    };
+    const save = () => { onSave(draftKey, draftModel, draftExtraTax); setGoogleClientId(draftGoogleClientId); onClose(); showToast('Settings Saved', 'success'); };
     const hasBiz = !!businessProfile?.name;
 
     const handleLicenceUnlock = () => {
@@ -661,10 +750,12 @@
       const found = LICENCE_KEYS.find(k => k.key === input);
       if (!found) return showToast('Invalid licence key', 'error');
       if (found.expiry && new Date(found.expiry) < new Date()) return showToast('Key expired', 'error');
-      onUnlockPro(found);
-      setLicenceInput('');
-      showToast('Full version unlocked!', 'success');
+      onUnlockPro(found); setLicenceInput(''); showToast('Full version unlocked!', 'success');
     };
+
+    // Count expiring credentials for settings badge
+    const expiringCount = (businessProfile?.licences || []).filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry)).length
+      + (isExpiringSoon(businessProfile?.insuranceExpiry) || isExpired(businessProfile?.insuranceExpiry) ? 1 : 0);
 
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
@@ -677,33 +768,29 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
           </div>
           <div className="space-y-6">
+            {/* Pro Licence */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Pro Licence</label>
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-4 space-y-3">
                 {isPro ? (
-                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black text-sm">
-                    <CheckCircle2 size={16}/> Full version active – All Features Available
-                  </div>
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black text-sm"><CheckCircle2 size={16}/> Full version active – All Features Available</div>
                 ) : (
                   <>
                     <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Purchase a 1-year licence or enter your existing key.</p>
                     <PayPalButton />
-                    
                     <div className="flex items-center gap-2 my-2">
                       <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
                       <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase">OR</span>
                       <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
                     </div>
-
                     <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 border border-amber-200 dark:border-amber-700/40 rounded-xl font-mono text-sm dark:text-white uppercase outline-none focus:ring-2 focus:ring-amber-400" placeholder="Licence key" value={licenceInput} onChange={e => setLicenceInput(e.target.value)}/>
-                    <button onClick={handleLicenceUnlock} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2">
-                      <Lock size={16}/> Unlock Full Version
-                    </button>
+                    <button onClick={handleLicenceUnlock} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"><Lock size={16}/> Unlock Full Version</button>
                   </>
                 )}
               </div>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+            {/* Business Profile */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Business</label>
               <button onClick={() => setShowBusiness(true)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl active:scale-95 transition-all hover:border-orange-400 dark:hover:border-orange-500">
@@ -713,24 +800,32 @@
                     : <div className="bg-orange-100 dark:bg-orange-900/40 p-2 rounded-xl"><Building2 size={16} className="text-orange-500"/></div>
                   }
                   <div className="text-left">
-                    <p className="font-black text-sm text-slate-800 dark:text-white">{hasBiz ? businessProfile.name : 'Set Up Business Profile'}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-black text-sm text-slate-800 dark:text-white">{hasBiz ? businessProfile.name : 'Set Up Business Profile'}</p>
+                      {expiringCount > 0 && (
+                        <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{expiringCount}</span>
+                      )}
+                    </div>
                     {hasBiz && businessProfile.abn && <p className="text-[10px] text-slate-400 font-mono">ABN {businessProfile.abn}</p>}
-                    {!hasBiz && <p className="text-[10px] text-slate-400">Logo, ABN, contact details</p>}
+                    {hasBiz && businessProfile.licences?.length > 0 && <p className="text-[10px] text-slate-400">{businessProfile.licences.length} credential{businessProfile.licences.length !== 1 ? 's' : ''} saved</p>}
+                    {!hasBiz && <p className="text-[10px] text-slate-400">Logo, ABN, licences, insurance</p>}
                   </div>
                 </div>
                 <Pencil size={14} className="text-slate-400"/>
               </button>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+            {/* Extra Tax */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Universal Tax / Markup</label>
               <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border dark:border-slate-700">
                 <input type="range" min="0" max="50" step="0.5" value={draftExtraTax} onChange={e => setDraftExtraTax(e.target.value)} className="flex-1 accent-orange-500"/>
                 <span className="font-black text-slate-700 dark:text-slate-200 w-12 text-right">{draftExtraTax}%</span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium mt-2">Applies an extra percentage on top of the subtotal on all reports (works alongside standard GST toggle).</p>
+              <p className="text-[10px] text-slate-400 font-medium mt-2">Applies an extra percentage on top of the subtotal on all reports.</p>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+            {/* Appearance */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
               <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border dark:border-slate-700">
@@ -743,35 +838,29 @@
                 </div>
               </button>
             </div>
+            {/* Backup */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Backup & Restore</label>
                 <div className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-red-900/20 border-red-900/40' : 'text-emerald-500 bg-emerald-900/10 border-emerald-900/30'}`}>
-                  <HardDrive size={10} className={parseFloat(dbSize)>4?"text-red-400":"text-emerald-500"}/> {dbSize}
+                  <HardDrive size={10}/> {dbSize}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <button onClick={exportData} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                  <Download size={16}/> Export
-                </button>
-                <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer">
-                  <Upload size={16}/> Import
-                  <input type="file" accept=".json" className="hidden" onChange={importData}/>
-                </label>
+                <button onClick={exportData} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"><Download size={16}/> Export</button>
+                <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"><Upload size={16}/> Import<input type="file" accept=".json" className="hidden" onChange={importData}/></label>
               </div>
             </div>
+            {/* Library */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Your Library</label>
               <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => { setShowTemplates(true); setShowMaterials(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                  <Bookmark size={16}/> Templates ({userTemplates.length})
-                </button>
-                <button onClick={() => { setShowMaterials(true); setShowTemplates(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors">
-                  <Package size={16}/> Materials ({userMaterials.length})
-                </button>
+                <button onClick={() => { setShowTemplates(true); setShowMaterials(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"><Bookmark size={16}/> Templates ({userTemplates.length})</button>
+                <button onClick={() => { setShowMaterials(true); setShowTemplates(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"><Package size={16}/> Materials ({userMaterials.length})</button>
               </div>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+            {/* Gemini API */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
               <div className="flex items-start gap-3 p-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl">
@@ -784,26 +873,21 @@
                 <input type="text" className="w-full pl-11 pr-4 py-4 bg-slate-50 dark:bg-slate-800 border dark:border-slate-700 rounded-2xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
+            {/* Google Calendar */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar – Optional/Advanced</label>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border dark:border-slate-700 space-y-3">
                 <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Google Client ID" value={draftGoogleClientId} onChange={e => setDraftGoogleClientId(e.target.value)}/>
                 {isGoogleConnected ? (
-                  <button onClick={() => {disconnectGoogleCalendar(); showToast('Calendar Disconnected','info');}} className="w-full bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2">
-                    <X size={16}/> Disconnect Calendar
-                  </button>
+                  <button onClick={() => {disconnectGoogleCalendar(); showToast('Calendar Disconnected','info');}} className="w-full bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2"><X size={16}/> Disconnect Calendar</button>
                 ) : (
-                  <button onClick={() => connectGoogleCalendar(draftGoogleClientId)} disabled={!draftGoogleClientId} className={`w-full font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${draftGoogleClientId ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}>
-                    <CalendarPlus size={16}/> Connect Google Calendar
-                  </button>
+                  <button onClick={() => connectGoogleCalendar(draftGoogleClientId)} disabled={!draftGoogleClientId} className={`w-full font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${draftGoogleClientId ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}><CalendarPlus size={16}/> Connect Google Calendar</button>
                 )}
                 <p className="text-[10px] text-slate-400 font-medium">Enter your OAuth 2.0 Client ID.</p>
               </div>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-            <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all mt-4">
-              <Check size={16}/> Save & Close
-            </button>
+            <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all mt-4"><Check size={16}/> Save & Close</button>
           </div>
           {showBusiness && <BusinessProfileEditor profile={businessProfile || {}} onSave={saveBusinessProfile} onClose={() => setShowBusiness(false)} showToast={showToast}/>}
           {showTemplates && <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)}/>}
@@ -822,10 +906,7 @@
         {allTemplates.map((t, i) => (
           <button key={i} onClick={() => { onSelect(t.data); onClose(); }} className="w-full text-left p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 group">
             <Bookmark size={14} className="text-emerald-500"/>
-            <div className="min-w-0">
-              <div className="font-bold text-sm truncate">{t.name}</div>
-              {t.data.title && <div className="text-[10px] text-slate-400 truncate">{t.data.title}</div>}
-            </div>
+            <div className="min-w-0"><div className="font-bold text-sm truncate">{t.name}</div>{t.data.title && <div className="text-[10px] text-slate-400 truncate">{t.data.title}</div>}</div>
           </button>
         ))}
       </div>
@@ -866,26 +947,12 @@
         const fileParts = [];
         for (const file of files) {
           if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
-            const base64Data = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result.split(',')[1]);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            });
+            const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
             fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
           }
         }
-        const textPrompt = `Extract the following from the provided document(s) and additional text.
-          Return ONLY a valid JSON object with keys:
-          "address" (job site address),
-          "clientName" (client or customer name),
-          "dueDate" (ISO date string YYYY-MM-DD if a due date or completion date is mentioned, otherwise empty string),
-          "tasks" (array of objects with: "title", "time" (e.g. "2h 30m"), "rate" (string, e.g. "85"), "materialsCost" (string, e.g. "320"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (short factual description, avoid fluff)).
-          Additional text: ${additionalText || 'None'}`;
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
-          { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:textPrompt},...fileParts]}], generationConfig:{temperature:0,response_mime_type:'application/json'} }) }
-        );
+        const textPrompt = `Extract the following from the provided document(s) and additional text. Return ONLY a valid JSON object with keys: "address", "clientName", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array: title, time, rate, materialsCost, materials, tools, desc). Additional text: ${additionalText || 'None'}`;
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:textPrompt},...fileParts]}], generationConfig:{temperature:0,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error(`API error ${res.status}`);
         const data = await res.json();
         const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -909,9 +976,7 @@
           )}
           <div className="flex justify-between items-center mb-5">
             <div>
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
-                {isHandover ? 'Completion Report' : 'Job Sheet'}
-              </span>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{isHandover ? 'Completion Report' : 'Job Sheet'}</span>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1">New Project</h2>
             </div>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
@@ -937,31 +1002,17 @@
                 <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">Attach PDF/image files and add extra details below.</p>
               </div>
-              <label className="flex items-center gap-2 mb-2 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors text-xs font-black uppercase">
-                <Upload size={14}/> Add Documents
-                <input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/>
-              </label>
+              <label className="flex items-center gap-2 mb-2 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors text-xs font-black uppercase"><Upload size={14}/> Add Documents<input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/></label>
               {files.length > 0 && (
-                <div className="mb-2">
-                  {files.map((f, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1 shadow-sm">
-                      <span className="text-[11px] font-medium truncate flex-1">{f.name}</span>
-                      <button onClick={() => removeFile(i)} className="text-red-400"><X size={14}/></button>
-                    </div>
-                  ))}
-                </div>
+                <div className="mb-2">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1 shadow-sm"><span className="text-[11px] font-medium truncate flex-1">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400"><X size={14}/></button></div>))}</div>
               )}
               <textarea className="w-full p-3 bg-white dark:bg-slate-700 rounded-lg outline-none text-xs font-medium resize-none h-16 dark:text-white dark:placeholder-slate-400 shadow-sm" placeholder="Additional details..." value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
             </div>
           </div>
           <div className="flex gap-3 mt-4">
-            <button onClick={createManual} className={`flex-1 py-3 rounded-xl font-black text-sm shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
-              Create
-            </button>
+            <button onClick={createManual} className={`flex-1 py-3 rounded-xl font-black text-sm shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>Create</button>
             {apiKey && files.length > 0 && (
-              <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95">
-                <Sparkles size={16}/> Auto-Fill
-              </button>
+              <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95"><Sparkles size={16}/> Auto-Fill</button>
             )}
           </div>
         </div>
@@ -982,16 +1033,18 @@
     });
 
     const updateTask = (index, field, value) => {
-      const updated = [...tasks];
-      updated[index] = { ...updated[index], [field]: value };
-      setTasks(updated);
+      const updated = [...tasks]; updated[index] = { ...updated[index], [field]: value }; setTasks(updated);
     };
 
     const totals = getQuoteTotals(tasks, job.gstEnabled, extraTaxRate);
-    const showCosts = job.showCosts; // Respect the job setting
+    const showCosts = job.showCosts;
     const totalHours = tasks.reduce((a,t) => a + parseTimeToMinutes(t.time), 0);
     const biz = businessProfile;
     const docLabel = job.type === 'handover' ? 'Completion Report' : 'Quotation';
+
+    // Filter non-expired licences for print
+    const printLicences = (biz.licences || []);
+    const hasInsurance = biz.insurance && biz.insurancePolicy;
 
     return createPortal(
       <div id="print-container" className="print-preview-overlay fixed inset-0 z-[500] bg-white dark:bg-slate-900 p-4 overflow-y-auto">
@@ -1004,23 +1057,56 @@
             </div>
           </div>
           <div>
+            {/* ─── Business Header ─── */}
             {biz.name && (
-              <div className="flex justify-between items-start pb-4 mb-4 border-b-2 border-slate-300">
-                <div className="flex items-center gap-4">
-                  {biz.logo && <img src={biz.logo} className="h-16 w-auto object-contain rounded-lg" alt={biz.name}/>}
-                  <div>
-                    <h1 className="text-2xl font-black text-slate-900 leading-tight">{biz.name}</h1>
-                    {biz.tradingName && <p className="text-sm text-slate-500 font-medium">T/A {biz.tradingName}</p>}
-                    {biz.abn && <p className="text-xs font-bold text-slate-600 mt-0.5 font-mono">ABN {biz.abn}</p>}
+              <div className="pb-4 mb-4 border-b-2 border-slate-300">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-4">
+                    {biz.logo && <img src={biz.logo} className="h-16 w-auto object-contain rounded-lg" alt={biz.name}/>}
+                    <div>
+                      <h1 className="text-2xl font-black text-slate-900 leading-tight">{biz.name}</h1>
+                      {biz.tradingName && <p className="text-sm text-slate-500 font-medium">T/A {biz.tradingName}</p>}
+                      {biz.abn && <p className="text-xs font-bold text-slate-600 mt-0.5 font-mono">ABN {biz.abn}</p>}
+                    </div>
+                  </div>
+                  <div className="text-right text-sm text-slate-600 space-y-0.5">
+                    {biz.phone && <p className="font-bold">{biz.phone}</p>}
+                    {biz.email && <p>{biz.email}</p>}
+                    {biz.address && <p className="text-slate-400 text-xs">{biz.address}</p>}
                   </div>
                 </div>
-                <div className="text-right text-sm text-slate-600 space-y-0.5">
-                  {biz.phone && <p className="font-bold">{biz.phone}</p>}
-                  {biz.email && <p>{biz.email}</p>}
-                  {biz.address && <p className="text-slate-400 text-xs">{biz.address}</p>}
-                </div>
+
+                {/* Licences & Insurance row */}
+                {(printLicences.length > 0 || hasInsurance) && (
+                  <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-slate-200">
+                    {printLicences.map((lic, i) => {
+                      const expired = isExpired(lic.expiry);
+                      const expiring = isExpiringSoon(lic.expiry);
+                      const typeOpt = LICENCE_TYPE_OPTIONS.find(o => o.value === lic.type);
+                      return (
+                        <div key={i} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase border print-licence-badge ${expired ? 'border-red-300 text-red-600 bg-red-50' : expiring ? 'border-amber-300 text-amber-700 bg-amber-50' : 'border-slate-300 text-slate-600 bg-slate-50'}`}>
+                          <span>{typeOpt?.icon || '📋'}</span>
+                          <span>{lic.type}</span>
+                          <span className="font-mono text-slate-500">#{lic.number}</span>
+                          {lic.state && <span className="text-slate-400">· {lic.state}</span>}
+                          {lic.expiry && <span className={expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-slate-400'}>· Exp {fmtDate(lic.expiry)}</span>}
+                        </div>
+                      );
+                    })}
+                    {hasInsurance && (
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase border border-blue-200 text-blue-700 bg-blue-50 print-licence-badge">
+                        <span>🛡️</span>
+                        <span>{biz.insurance}</span>
+                        <span className="font-mono text-blue-500">#{biz.insurancePolicy}</span>
+                        {biz.insuranceExpiry && <span className={isExpired(biz.insuranceExpiry) ? 'text-red-500' : isExpiringSoon(biz.insuranceExpiry) ? 'text-amber-500' : 'text-blue-400'}>· {fmtDate(biz.insuranceExpiry)}</span>}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
+
+            {/* ─── Document Header ─── */}
             <div className="border-b-2 border-slate-300 pb-3 mb-4">
               <div className="flex justify-between text-xs font-black uppercase text-slate-500 mb-2">
                 <span>{docLabel}</span>
@@ -1030,24 +1116,17 @@
               {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1 outline-none" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
               <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
               {header.dueDate && <div className="text-sm font-bold text-amber-600 mb-2">Due: {fmtDate(header.dueDate)}</div>}
-              
-              <PrintEditableDiv
-                value={header.projectNotes}
-                onChange={v => setHeader({...header, projectNotes: v})}
-                placeholder="Project notes / Document Summary"
-                className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1"
-              />
-              
+              <PrintEditableDiv value={header.projectNotes} onChange={v => setHeader({...header, projectNotes: v})} placeholder="Project notes / Document Summary" className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1"/>
               {header.projectPhotos?.length > 0 && (
-                <div className="flex gap-2 mt-2 overflow-x-auto">
-                  {header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}
-                </div>
+                <div className="flex gap-2 mt-2 overflow-x-auto">{header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>
               )}
               <div className="flex gap-4 mt-2 text-sm font-medium">
                 <span>TOTAL TIME: {fmtMins(totalHours)}</span>
                 {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
               </div>
             </div>
+
+            {/* ─── Tasks ─── */}
             {tasks.map((t, idx) => {
               const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
               const mats   = parseFloat(t.materialsCost)||0;
@@ -1060,12 +1139,7 @@
                     {showCosts && subtotal > 0 && <span className="text-sm text-emerald-700 ml-4">{fmtAUD(subtotal)}</span>}
                   </div>
                   <div className="p-6">
-                    <PrintEditableDiv
-                      value={t.desc}
-                      onChange={v => updateTask(idx, 'desc', v)}
-                      placeholder="Task description"
-                      className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent outline-none"
-                    />
+                    <PrintEditableDiv value={t.desc} onChange={v => updateTask(idx, 'desc', v)} placeholder="Task description" className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent outline-none"/>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="p-4 bg-slate-50 rounded-xl border">
                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
@@ -1097,28 +1171,18 @@
                 </div>
               );
             })}
+
+            {/* ─── Totals ─── */}
             {showCosts && totals.total > 0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
                   <p className="font-black uppercase text-slate-500 text-sm">Labour: {fmtAUD(totals.labour)}</p>
                   <p className="font-black uppercase text-slate-500 text-sm">Materials: {fmtAUD(totals.mats)}</p>
-                  {(!job.gstEnabled && extraTaxRate > 0) && (
-                    <p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p>
-                  )}
-                  {job.gstEnabled && (
-                    <>
-                      <p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p>
-                      <p className="font-black uppercase text-slate-600 text-sm">GST (10%): {fmtAUD(totals.gst)}</p>
-                    </>
-                  )}
-                  {extraTaxRate > 0 && (
-                    <p className="font-black uppercase text-purple-600 text-sm">Tax/Markup ({extraTaxRate}%): {fmtAUD(totals.extra)}</p>
-                  )}
+                  {job.gstEnabled && (<><p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p><p className="font-black uppercase text-slate-600 text-sm">GST (10%): {fmtAUD(totals.gst)}</p></>)}
+                  {extraTaxRate > 0 && <p className="font-black uppercase text-purple-600 text-sm">Tax/Markup ({extraTaxRate}%): {fmtAUD(totals.extra)}</p>}
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                    {job.type === 'handover' ? 'Total Due' : job.gstEnabled ? 'Total inc. Tax/GST' : 'Quotation Total'}
-                  </p>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{job.type === 'handover' ? 'Total Due' : job.gstEnabled ? 'Total inc. Tax/GST' : 'Quotation Total'}</p>
                   <p className="text-4xl font-black text-slate-900">{fmtAUD(totals.total)}</p>
                   {job.gstEnabled && <p className="text-xs text-slate-400 font-bold mt-1">GST included: {fmtAUD(totals.gst)}</p>}
                 </div>
@@ -1136,21 +1200,11 @@
   ═══════════════════════════════════════════════════════════ */
   const AppointmentFormModal = ({ appointment, jobs, googleToken, onSave, onClose, showToast }) => {
     const editing = !!appointment.id;
-    const [form, setForm] = useState({
-      title: appointment.title || '',
-      jobId: appointment.jobId || '',
-      start: appointment.start ? new Date(appointment.start).toISOString().slice(0,16) : '',
-      end: appointment.end ? new Date(appointment.end).toISOString().slice(0,16) : '',
-      notes: appointment.notes || ''
-    });
+    const [form, setForm] = useState({ title: appointment.title || '', jobId: appointment.jobId || '', start: appointment.start ? new Date(appointment.start).toISOString().slice(0,16) : '', end: appointment.end ? new Date(appointment.end).toISOString().slice(0,16) : '', notes: appointment.notes || '' });
     const save = () => {
       if (!form.title.trim() || !form.start || !form.end) return showToast('Title, start, and end are required.', 'error');
       if (new Date(form.end) <= new Date(form.start)) return showToast('End must be after start.', 'error');
-      onSave({
-        id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()),
-        ...form,
-        googleEventId: appointment.googleEventId || null
-      });
+      onSave({ id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()), ...form, googleEventId: appointment.googleEventId || null });
     };
     return (
       <div className="fixed inset-0 z-[220] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
@@ -1160,20 +1214,20 @@
             <button onClick={onClose}><X size={20}/></button>
           </div>
           <div className="space-y-4">
-            <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white" placeholder="Title (e.g. Meet with client)" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
+            <input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white" placeholder="Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})}/>
             <select className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-medium text-sm dark:text-white" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}>
               <option value="">No linked job</option>
               {jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}
             </select>
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start</label>
-              <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white" value={form.start} onChange={e => setForm({...form, start: e.target.value})} />
+              <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white" value={form.start} onChange={e => setForm({...form, start: e.target.value})}/>
             </div>
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End</label>
-              <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white" value={form.end} onChange={e => setForm({...form, end: e.target.value})} />
+              <input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white" value={form.end} onChange={e => setForm({...form, end: e.target.value})}/>
             </div>
-            <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-medium h-20 resize-none dark:text-white" placeholder="Notes" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
+            <textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-medium h-20 resize-none dark:text-white" placeholder="Notes" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/>
             <div className="flex gap-3 mt-4">
               <button onClick={save} className="flex-1 bg-orange-500 text-white py-4 rounded-2xl font-black">Save</button>
               <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
@@ -1190,7 +1244,6 @@
     const [apptModal, setApptModal] = useState(null);
     const [googleEvents, setGoogleEvents] = useState([]);
     const [loadingGoogle, setLoadingGoogle] = useState(false);
-
     const today = new Date();
     const startOfWeek = getStartOfWeek(today, 1);
     startOfWeek.setDate(startOfWeek.getDate() + (weekOffset * 7));
@@ -1198,7 +1251,6 @@
     const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const days = Array.from({length:7}, (_,i) => { const d = new Date(startOfWeek); d.setDate(d.getDate()+i); return d; });
     const hours = Array.from({length:15}, (_,i) => i+6);
-
     useEffect(() => {
       if (!googleToken || !isGoogleConnected) return;
       const fetchEvents = async () => {
@@ -1206,10 +1258,7 @@
         try {
           const timeMin = new Date(startOfWeek).toISOString();
           const timeMax = new Date(days[6].getTime() + 24*3600*1000).toISOString();
-          const res = await fetch(
-            `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`,
-            { headers: { Authorization: `Bearer ${googleToken.access_token}` } }
-          );
+          const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, { headers: { Authorization: `Bearer ${googleToken.access_token}` } });
           if (res.status === 401) { showToast('Google session expired. Please reconnect.', 'error'); return; }
           const data = await res.json();
           setGoogleEvents(data.items || []);
@@ -1221,25 +1270,19 @@
 
     const localEvents = appointments.map(a => ({ ...a, isLocal: true, start: new Date(a.start), end: new Date(a.end) }));
     const localGoogleIds = new Set(appointments.filter(a => a.googleEventId).map(a => a.googleEventId));
-    const externalGoogleEvents = googleEvents
-      .filter(ev => !localGoogleIds.has(ev.id))
-      .map(ev => ({ id: ev.id, title: ev.summary || '(No title)', start: new Date(ev.start.dateTime || ev.start.date), end: new Date(ev.end.dateTime || ev.end.date), isGoogle: true, notes: ev.description || '' }));
+    const externalGoogleEvents = googleEvents.filter(ev => !localGoogleIds.has(ev.id)).map(ev => ({ id: ev.id, title: ev.summary || '(No title)', start: new Date(ev.start.dateTime || ev.start.date), end: new Date(ev.end.dateTime || ev.end.date), isGoogle: true, notes: ev.description || '' }));
     const allEvents = [...localEvents, ...externalGoogleEvents];
-
     const getEventsForSlot = (day, hour) => {
       const slotStart = new Date(day); slotStart.setHours(hour,0,0,0);
       const slotEnd = new Date(slotStart); slotEnd.setHours(hour+1,0,0,0);
       return allEvents.filter(ev => ev.start < slotEnd && ev.end > slotStart);
     };
-
     const handleSlotClick = (day, hour) => {
       const defStart = new Date(day); defStart.setHours(hour,0,0,0);
       const defEnd = new Date(defStart); defEnd.setHours(hour+1,0,0,0);
       setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString().slice(0,16), end: defEnd.toISOString().slice(0,16), notes: '' } });
     };
-
     const handleEventClick = (event) => { if (event.isGoogle) return; setApptModal({ appointment: event }); };
-
     const handleSave = async (data) => {
       if (googleToken && isGoogleConnected && !data.googleEventId) {
         try {
@@ -1250,36 +1293,26 @@
           showToast('Saved to Google Calendar', 'success');
         } catch (e) { showToast('Google sync failed', 'error'); }
       } else { showToast('Appointment Saved', 'success'); }
-      onSaveAppointment(data);
-      setApptModal(null);
+      onSaveAppointment(data); setApptModal(null);
     };
-
     const handleDeleteAppointment = (id) => {
       showConfirm('Delete this appointment?', () => {
         const appt = appointments.find(a => a.id === id);
-        if (appt?.googleEventId && googleToken) {
-          fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${googleToken.access_token}` } }).catch(e => console.error('Failed to delete Google event', e));
-        }
-        onDeleteAppointment(id);
-        showToast('Appointment Deleted', 'info');
+        if (appt?.googleEventId && googleToken) { fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${googleToken.access_token}` } }).catch(e => console.error('Failed to delete Google event', e)); }
+        onDeleteAppointment(id); showToast('Appointment Deleted', 'info');
       });
     };
-
     return (
       <div className="max-w-6xl mx-auto p-4 animate-slide-up pb-24">
         <div className="flex justify-between items-center mb-4">
           <button onClick={() => setWeekOffset(o => o-1)} className="p-3 bg-slate-200 dark:bg-slate-800 rounded-xl"><ChevronRight size={18} className="rotate-180"/></button>
-          <h2 className="text-xl font-black uppercase text-center">
-            {days[0].toLocaleDateString('en-AU', {day:'numeric',month:'short'})} – {days[6].toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'})}
-          </h2>
+          <h2 className="text-xl font-black uppercase text-center">{days[0].toLocaleDateString('en-AU', {day:'numeric',month:'short'})} – {days[6].toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'})}</h2>
           <button onClick={() => setWeekOffset(o => o+1)} className="p-3 bg-slate-200 dark:bg-slate-800 rounded-xl"><ChevronRight size={18}/></button>
         </div>
         <div className="calendar-grid shadow-sm">
           <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center">Time</div>
           {days.map((d,i) => (
-            <div key={i} className={`bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center py-2 ${d.toDateString()===today.toDateString()?'text-orange-500':''}`}>
-              {dayNames[i]}<br/>{d.getDate()}
-            </div>
+            <div key={i} className={`bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center py-2 ${d.toDateString()===today.toDateString()?'text-orange-500':''}`}>{dayNames[i]}<br/>{d.getDate()}</div>
           ))}
           {hours.map(hour => (
             <React.Fragment key={hour}>
@@ -1305,18 +1338,13 @@
           <h3 className="font-black text-sm uppercase tracking-widest mb-3 flex items-center gap-2"><Clock size={14} className="text-orange-500"/> Upcoming Appointments</h3>
           {allEvents.filter(ev => ev.start >= new Date()).sort((a,b)=>a.start-b.start).slice(0,5).map(ev => (
             <div key={ev.id} className="flex items-center justify-between py-2 border-b dark:border-slate-700 last:border-0">
-              <div>
-                <p className="font-bold text-sm">{ev.title}</p>
-                <p className="text-[10px] text-slate-400">{fmtDateTime(ev.start.toISOString())} – {fmtDateTime(ev.end.toISOString())}</p>
-              </div>
+              <div><p className="font-bold text-sm">{ev.title}</p><p className="text-[10px] text-slate-400">{fmtDateTime(ev.start.toISOString())} – {fmtDateTime(ev.end.toISOString())}</p></div>
               {!ev.isGoogle && <button onClick={() => handleDeleteAppointment(ev.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>}
             </div>
           ))}
           {allEvents.length===0 && <p className="text-sm text-slate-400">No upcoming appointments.</p>}
         </div>
-        {apptModal && (
-          <AppointmentFormModal appointment={apptModal.appointment} jobs={jobs} googleToken={googleToken} onSave={handleSave} onClose={() => setApptModal(null)} showToast={showToast}/>
-        )}
+        {apptModal && <AppointmentFormModal appointment={apptModal.appointment} jobs={jobs} googleToken={googleToken} onSave={handleSave} onClose={() => setApptModal(null)} showToast={showToast}/>}
       </div>
     );
   };
@@ -1329,35 +1357,19 @@
     const [userTemplates, setUserTemplates] = useState([]);
     const [userMaterials, setUserMaterials] = useState([]);
     const [appointments, setAppointments] = useState([]);
-    const [businessProfile, setBusinessProfile] = useState(() => {
-      try { return JSON.parse(localStorage.getItem(BIZA_KEY) || '{}'); } catch { return {}; }
-    });
-
+    const [businessProfile, setBusinessProfile] = useState(() => { try { return JSON.parse(localStorage.getItem(BIZA_KEY) || '{}'); } catch { return {}; } });
     const [isUnlocked, setIsUnlocked] = useState(() => {
       const stored = localStorage.getItem('joblog-licence');
-      if (stored) {
-        try {
-          const data = JSON.parse(stored);
-          if (data.expiry && new Date(data.expiry) < new Date()) {
-            localStorage.removeItem('joblog-unlocked');
-            localStorage.removeItem('joblog-licence');
-            return false;
-          }
-          return true;
-        } catch {}
-      }
+      if (stored) { try { const data = JSON.parse(stored); if (data.expiry && new Date(data.expiry) < new Date()) { localStorage.removeItem('joblog-unlocked'); localStorage.removeItem('joblog-licence'); return false; } return true; } catch {} }
       return localStorage.getItem('joblog-unlocked') === 'true';
     });
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [extraTaxRate, setExtraTaxRate] = useState(() => Number(localStorage.getItem('joblog-extratax') || 0));
-
-    // UI State
     const [viewMode, setViewMode] = useState('dashboard');
     const [activeJobId, setActiveJobId] = useState(null);
     const [selectionMode, setSelectionMode] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [toast, setToast] = useState(null);
-
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
     const [editingTaskId, setEditingTaskId] = useState(null);
     const [dbSize, setDbSize] = useState('0 MB');
@@ -1382,221 +1394,117 @@
     const [locStatus, setLocStatus] = useState('idle');
     const [currentCoords, setCurrentCoords] = useState(null);
     const [appointmentFromJob, setAppointmentFromJob] = useState(null);
-
-    // ─── AI generation state ───────────────────────────────────
     const [showAIAssistModal, setShowAIAssistModal] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
-
     const EMPTY_TASK = { title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'', images:[] };
     const [taskData, setTaskData] = useState(EMPTY_TASK);
     const [rateError, setRateError] = useState(false);
     const [matError, setMatError] = useState(false);
-
     const [editingImageIdx, setEditingImageIdx] = useState(null);
-    const canvasRef    = useRef(null);
-    const [isDrawing, setIsDrawing]   = useState(false);
-    const [penColor, setPenColor]     = useState('#ef4444');
-    const [undoStack, setUndoStack]   = useState([]);
+    const canvasRef = useRef(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [penColor, setPenColor] = useState('#ef4444');
+    const [undoStack, setUndoStack] = useState([]);
     const [canvasZoom, setCanvasZoom] = useState(1);
-    const [canvasPan, setCanvasPan]   = useState({ x:0, y:0 });
+    const [canvasPan, setCanvasPan] = useState({ x:0, y:0 });
     const [canvasMode, setCanvasMode] = useState('draw');
-    const zoomRef     = useRef(1);
-    const panRef      = useRef({ x:0, y:0 });
-    const modeRef     = useRef('draw');
-    const drawRef     = useRef(false);
-    const pinchRef    = useRef(null);
+    const zoomRef = useRef(1);
+    const panRef = useRef({ x:0, y:0 });
+    const modeRef = useRef('draw');
+    const drawRef = useRef(false);
+    const pinchRef = useRef(null);
     const panStartRef = useRef(null);
-    const COLORS = [
-      { hex:'#ef4444', name:'Red' }, { hex:'#22c55e', name:'Green' },
-      { hex:'#eab308', name:'Yellow' }, { hex:'#ffffff', name:'White' },
-      { hex:'#000000', name:'Black' }
-    ];
-
+    const COLORS = [{ hex:'#ef4444', name:'Red' }, { hex:'#22c55e', name:'Green' }, { hex:'#eab308', name:'Yellow' }, { hex:'#ffffff', name:'White' }, { hex:'#000000', name:'Black' }];
     const [showTemplatePop, setShowTemplatePop] = useState(false);
     const [showMaterialPop, setShowMaterialPop] = useState(false);
+    const showToast = (message, type = 'info') => setToast({ message, type });
 
-    const showToast = (message, type = 'info') => { setToast({ message, type }); };
-
-    /* ── DB helpers ── */
     const loadJobs = async () => {
       const d = await get(DB_KEY_JOBS) || [];
-      const migrated = d.map(j => {
-        const mj = { ...j };
-        if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false;
-        if (mj.type === 'quote' && mj.showCosts === undefined) mj.showCosts = true;
-        if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now();
-        return mj;
-      });
-      setJobs(migrated);
-      updMetric(migrated);
-      setIsLoading(false);
+      const migrated = d.map(j => { const mj = { ...j }; if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false; if (mj.type === 'quote' && mj.showCosts === undefined) mj.showCosts = true; if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now(); return mj; });
+      setJobs(migrated); updMetric(migrated); setIsLoading(false);
     };
     const loadTemplates = async () => setUserTemplates(await get(DB_KEY_TEMPL) || []);
     const loadMaterials = async () => setUserMaterials(await get(DB_KEY_MATS) || []);
     const loadAppointments = async () => setAppointments(await get(DB_KEY_APPOINTMENTS) || []);
     useEffect(() => { loadJobs(); loadTemplates(); loadMaterials(); loadAppointments(); }, []);
-
     const updMetric = (d) => setDbSize(`${(new TextEncoder().encode(JSON.stringify(d)).length/1024/1024).toFixed(2)} MB`);
-    const saveToDB = async (nj) => {
-      setJobs(nj);
-      try { await set(DB_KEY_JOBS, nj); } catch(e) { showToast('Warning: Data could not be saved (Storage limit).', 'error'); }
-      updMetric(nj);
-    };
+    const saveToDB = async (nj) => { setJobs(nj); try { await set(DB_KEY_JOBS, nj); } catch(e) { showToast('Warning: Data could not be saved (Storage limit).', 'error'); } updMetric(nj); };
     const saveUserTemplates = async (arr) => { setUserTemplates(arr); await set(DB_KEY_TEMPL, arr); };
     const saveUserMaterials = async (arr) => { setUserMaterials(arr); await set(DB_KEY_MATS, arr); };
     const saveAppointments = async (arr) => { setAppointments(arr); await set(DB_KEY_APPOINTMENTS, arr); };
     const saveBusinessProfile = (profile) => { setBusinessProfile(profile); localStorage.setItem(BIZA_KEY, JSON.stringify(profile)); };
-
     useEffect(() => {
       const root = document.documentElement;
       if (isDarkMode) { root.classList.add('dark'); document.getElementById('theme-color-meta').setAttribute('content','#020617'); localStorage.setItem('theme','dark'); }
       else { root.classList.remove('dark'); document.getElementById('theme-color-meta').setAttribute('content','#ffffff'); localStorage.setItem('theme','light'); }
     }, [isDarkMode]);
 
-    const activeJob   = jobs.find(j => j.id === activeJobId);
-    const getTotals   = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
+    const activeJob = jobs.find(j => j.id === activeJobId);
+    const getTotals = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
 
     const connectGoogleCalendar = (clientId) => {
       if (!clientId) return;
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly',
-        callback: (response) => {
-          if (response.error) return showToast('Google sign-in failed', 'error');
-          setGoogleToken(response);
-          localStorage.setItem('googleToken', JSON.stringify(response));
-          localStorage.setItem('googleClientId', clientId);
-          showToast('Google Calendar Connected!', 'success');
-        },
-      });
+      const tokenClient = google.accounts.oauth2.initTokenClient({ client_id: clientId, scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly', callback: (response) => { if (response.error) return showToast('Google sign-in failed', 'error'); setGoogleToken(response); localStorage.setItem('googleToken', JSON.stringify(response)); localStorage.setItem('googleClientId', clientId); showToast('Google Calendar Connected!', 'success'); } });
       tokenClient.requestAccessToken({ prompt: '' });
     };
     const disconnectGoogleCalendar = () => { setGoogleToken(null); localStorage.removeItem('googleToken'); };
-
-    useEffect(() => {
-      const savedToken = localStorage.getItem('googleToken');
-      if (savedToken) {
-        try { const parsed = JSON.parse(savedToken); if (parsed && parsed.access_token) setGoogleToken(parsed); } catch {}
-      }
-    }, []);
+    useEffect(() => { const savedToken = localStorage.getItem('googleToken'); if (savedToken) { try { const parsed = JSON.parse(savedToken); if (parsed && parsed.access_token) setGoogleToken(parsed); } catch {} } }, []);
 
     const handleSaveAppointment = (appt) => {
-      let updated;
-      if (appointments.find(a => a.id === appt.id)) { updated = appointments.map(a => a.id === appt.id ? appt : a); }
-      else { updated = [...appointments, appt]; }
-      saveAppointments(updated);
-      setAppointmentFromJob(null);
+      let updated = appointments.find(a => a.id === appt.id) ? appointments.map(a => a.id === appt.id ? appt : a) : [...appointments, appt];
+      saveAppointments(updated); setAppointmentFromJob(null);
     };
-    const handleDeleteAppointment = (id) => { saveAppointments(appointments.filter(a => a.id !== id)); };
-
+    const handleDeleteAppointment = (id) => saveAppointments(appointments.filter(a => a.id !== id));
     const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => setConfirmDialog({ message, onConfirm, confirmLabel, danger });
     const dismissConfirm = () => setConfirmDialog(null);
-
     const openAppointmentForJob = (jobId) => {
-      const job = jobs.find(j => j.id === jobId);
-      if (!job) return;
-      setAppointmentFromJob({ id: null, title: `Work: ${job.address}`, jobId: jobId, start: new Date().toISOString().slice(0,16), end: new Date(Date.now()+2*3600*1000).toISOString().slice(0,16), notes: '', googleEventId: null });
+      const job = jobs.find(j => j.id === jobId); if (!job) return;
+      setAppointmentFromJob({ id: null, title: `Work: ${job.address}`, jobId, start: new Date().toISOString().slice(0,16), end: new Date(Date.now()+2*3600*1000).toISOString().slice(0,16), notes: '', googleEventId: null });
     };
-
-    const handleNewJobClick = (type) => {
-      if (!isUnlocked && jobs.length >= 3) { setShowUpgrade(true); }
-      else { setNewJobModal(type); }
-    };
-
-    const handleUnlockSuccess = (keyData) => {
-      setIsUnlocked(true);
-      localStorage.setItem('joblog-unlocked', 'true');
-      if (keyData) localStorage.setItem('joblog-licence', JSON.stringify(keyData));
-    };
-
-    // ─── Gemini helper ─────────────────────────────────────────
+    const handleNewJobClick = (type) => { if (!isUnlocked && jobs.length >= 3) { setShowUpgrade(true); } else { setNewJobModal(type); } };
+    const handleUnlockSuccess = (keyData) => { setIsUnlocked(true); localStorage.setItem('joblog-unlocked', 'true'); if (keyData) localStorage.setItem('joblog-licence', JSON.stringify(keyData)); };
     const callGemini = async (prompt) => {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.3, response_mime_type: 'application/json' }
-          })
-        }
-      );
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, response_mime_type: 'application/json' } }) });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       const data = await res.json();
       const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
       return JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
     };
-
-    // ─── Generate Document (Quote or Invoice via AI) ───────────────────
     const handleGenerateDocument = async (customPrompt) => {
       if (!apiKey) { showToast('Please add your Gemini API key in Settings.', 'error'); return; }
       setIsGenerating(true);
       try {
         const job = activeJob;
-        const tasksData = job.tasks.map((t, i) => ({
-          index: i + 1, title: t.title, time: t.time, rate: t.rate,
-          materialsCost: t.materialsCost, materials: t.materials, desc: t.desc
-        }));
         const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
         const docType = job.type === 'handover' ? 'Completion Invoice' : 'Quotation';
-
-        const prompt = `You are a professional Australian trade document writer. Generate a formal, detailed ${docType} for the client using the data below.
-Return ONLY a valid JSON object with exactly these keys:
-- "summary": a detailed opening section (can include multiple paragraphs using \\n\\n) addressing the client by name, summarising the scope of work, and stating the total cost clearly.
-- "tasks": an array of objects, each with "title" (keep original), "desc" (a polished, client-friendly description of the work — include key materials, estimated time, and what the outcome will be).
-- "footer": a professional closing paragraph — thank the client, include payment terms (if an invoice, add a bank details placeholder).
-
-Job data:
-Address: ${job.address}
-Client: ${job.clientName || 'the client'}
-Tasks: ${JSON.stringify(tasksData, null, 2)}
-Costs: Labour $${qt.labour.toFixed(2)}, Materials $${qt.mats.toFixed(2)}, Subtotal $${qt.subtotal.toFixed(2)}, ${job.gstEnabled ? 'GST (10%) $' + qt.gst.toFixed(2) + ', ' : ''}${extraTaxRate > 0 ? 'Markup (' + extraTaxRate + '%) $' + qt.extra.toFixed(2) + ', ' : ''}Total $${qt.total.toFixed(2)}.
-GST Enabled: ${job.gstEnabled}
-
-Additional User Instructions/Focus: ${customPrompt || 'None'}`;
-
+        const prompt = `You are a professional Australian trade document writer. Generate a formal ${docType}. Return ONLY a valid JSON object with: "summary" (opening paragraphs, use \\n\\n for breaks), "tasks" (array of {title, desc}), "footer" (closing paragraph). Job: Address: ${job.address}, Client: ${job.clientName || 'the client'}, Tasks: ${JSON.stringify(job.tasks.map((t,i)=>({index:i+1,title:t.title,time:t.time,rate:t.rate,materialsCost:t.materialsCost,materials:t.materials,desc:t.desc})))}, Total: $${qt.total.toFixed(2)}. Extra instructions: ${customPrompt || 'None'}`;
         const result = await callGemini(prompt);
-        const updatedTasks = job.tasks.map((t, idx) => ({
-          ...t,
-          desc: result.tasks?.[idx]?.desc || t.desc,
-          title: result.tasks?.[idx]?.title || t.title,
-        }));
-        setPrintPreviewJob({
-          ...job,
-          projectNotes: result.summary + (result.footer ? '\n\n' + result.footer : ''),
-          tasks: updatedTasks,
-        });
+        const updatedTasks = job.tasks.map((t, idx) => ({ ...t, desc: result.tasks?.[idx]?.desc || t.desc, title: result.tasks?.[idx]?.title || t.title }));
+        setPrintPreviewJob({ ...job, projectNotes: result.summary + (result.footer ? '\n\n' + result.footer : ''), tasks: updatedTasks });
         setShowAIAssistModal(false);
         showToast(`AI ${docType} generated — review & print!`, 'success');
-      } catch (err) {
-        showToast('Failed to generate document: ' + err.message, 'error');
-      } finally {
-        setIsGenerating(false);
-      }
+      } catch (err) { showToast('Failed to generate document: ' + err.message, 'error'); }
+      finally { setIsGenerating(false); }
     };
-
-    // Voice
     const toggleVoice = () => {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) return showToast('Voice dictation not supported in this browser.', 'error');
       if (isListening) { recognitionRef.current?.stop(); recognitionRef.current = null; setIsListening(false); return; }
       const recognition = new SpeechRecognition();
-      recognitionRef.current = recognition;
-      recognition.continuous = false; recognition.interimResults = false;
+      recognitionRef.current = recognition; recognition.continuous = false; recognition.interimResults = false;
       recognition.onstart = () => setIsListening(true);
       recognition.onresult = (e) => { const t = e.results[0][0].transcript; setTaskData(p => ({ ...p, desc: p.desc ? p.desc + ' ' + t : t })); };
       recognition.onerror = () => { setIsListening(false); recognitionRef.current = null; };
       recognition.onend = () => { setIsListening(false); recognitionRef.current = null; };
       recognition.start();
     };
-
     const [isAiSuggesting, setIsAiSuggesting] = useState(false);
     const handleAiSuggest = async () => {
       if (!taskData.title.trim() && !taskData.desc.trim()) { showToast('Enter at least a title or description first.', 'error'); return; }
       if (!apiKey) { showToast('Please add your Gemini API key in Settings first.', 'error'); return; }
       setIsAiSuggesting(true);
-      const prompt = `You are a construction trade assistant. Based on the following task, return ONLY a valid JSON object (no extra text) with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD per hour, e.g. "85"), "materialsCost" (e.g. "45"), "materials" (comma-separated string), "tools" (comma-separated string), "desc" (short factual description, avoid fluff). Use typical Australian rates. Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
+      const prompt = `You are a construction trade assistant. Return ONLY a valid JSON object with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD/hr), "materialsCost", "materials" (comma-separated), "tools" (comma-separated), "desc" (short factual). Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.3,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error('AI request failed');
@@ -1608,33 +1516,24 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
       } catch (err) { showToast(`AI suggest failed: ${err.message}`, 'error'); }
       finally { setIsAiSuggesting(false); }
     };
-
     const [saveTemplateName, setSaveTemplateName] = useState('');
     const [isNamingTemplate, setIsNamingTemplate] = useState(false);
     const handleSaveAsTemplate = () => { if (!taskData.title) return showToast('Task title is required.', 'error'); setIsNamingTemplate(true); setSaveTemplateName(''); };
     const confirmSaveTemplate = () => {
       if (!saveTemplateName.trim()) return;
       const tpl = { name: saveTemplateName.trim(), type: activeJob?.type || 'quote', data: { title: taskData.title, time: taskData.time, rate: taskData.rate, materialsCost: taskData.materialsCost, materials: taskData.materials, tools: taskData.tools, desc: taskData.desc } };
-      saveUserTemplates([...userTemplates, tpl]);
-      setIsNamingTemplate(false);
-      showToast('Template Saved!', 'success');
+      saveUserTemplates([...userTemplates, tpl]); setIsNamingTemplate(false); showToast('Template Saved!', 'success');
     };
-
     const handleSaveMaterial = () => {
-      const matName = String(taskData.materials || '').trim();
-      const matCost = String(taskData.materialsCost || '').trim();
+      const matName = String(taskData.materials || '').trim(); const matCost = String(taskData.materialsCost || '').trim();
       if (!matName || !matCost) return;
       if (userMaterials.find(m => String(m.name)===matName && String(m.price)===matCost)) return;
-      saveUserMaterials([...userMaterials, { name: matName, price: matCost }]);
-      showToast('Material Saved!', 'success');
+      saveUserMaterials([...userMaterials, { name: matName, price: matCost }]); showToast('Material Saved!', 'success');
     };
-
     const exportData = () => {
       const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `joblog-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
-      URL.revokeObjectURL(url);
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = `joblog-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
     };
     const importData = (e) => {
       const file = e.target.files[0]; if (!file) return; e.target.value = '';
@@ -1651,82 +1550,34 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
       };
       reader.readAsText(file);
     };
-
     const handleCreateJob = (address, clientName, tasks = [], dueDate = '') => {
       const now = Date.now();
-      const newJob = {
-        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now,
-        date: new Date(now).toISOString(),
-        createdAt: now,
-        type: newJobModal,
-        address, clientName,
-        clientRef: '', dueDate: dueDate || '',
-        projectNotes: '', projectPhotos: [],
-        tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })),
-        status: 'draft',
-        gstEnabled: false,
-        showCosts: newJobModal === 'handover' ? false : true,
-      };
-      saveToDB([...jobs, newJob]);
-      setNewJobModal(null);
-      showToast('Project Created', 'success');
+      const newJob = { id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now, date: new Date(now).toISOString(), createdAt: now, type: newJobModal, address, clientName, clientRef: '', dueDate: dueDate || '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false, showCosts: newJobModal === 'handover' ? false : true };
+      saveToDB([...jobs, newJob]); setNewJobModal(null); showToast('Project Created', 'success');
     };
-
-    const cycleStatus = (id) => {
-      const j = jobs.find(x=>x.id===id), idx = STATUSES.findIndex(s=>s.key===(j.status||'draft'));
-      saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x));
-    };
-    const toggleGST   = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
+    const cycleStatus = (id) => { const j = jobs.find(x=>x.id===id), idx = STATUSES.findIndex(s=>s.key===(j.status||'draft')); saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x)); };
+    const toggleGST = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
     const toggleCosts = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,showCosts:!j.showCosts}:j));
-
-    const startEditHeader = () => {
-      setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] });
-      setIsEditingHeader(true);
-    };
-    const saveHeaderEdit = () => {
-      if (!headerDraft.address.trim()) return;
-      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, dueDate:headerDraft.dueDate, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j));
-      setIsEditingHeader(false);
-      showToast('Details Updated', 'success');
-    };
-    const handleProjectPhotoUpload = async (e) => {
-      try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setHeaderDraft(d => ({...d,projectPhotos:[...d.projectPhotos,...c]})); }
-      catch { showToast('One or more images could not be processed.', 'error'); }
-    };
-
+    const startEditHeader = () => { setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] }); setIsEditingHeader(true); };
+    const saveHeaderEdit = () => { if (!headerDraft.address.trim()) return; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, dueDate:headerDraft.dueDate, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j)); setIsEditingHeader(false); showToast('Details Updated', 'success'); };
+    const handleProjectPhotoUpload = async (e) => { try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setHeaderDraft(d => ({...d,projectPhotos:[...d.projectPhotos,...c]})); } catch { showToast('One or more images could not be processed.', 'error'); } };
     const handleSaveTask = () => {
       if (!taskData.title) return showToast('Task title is required.', 'error');
       if (!activeJob) return;
-      const updated = editingTaskId
-        ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t)
-        : [...activeJob.tasks, { ...taskData, id: Date.now() }];
-      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j));
-      closeModal();
-      showToast('Entry Saved', 'success');
+      const updated = editingTaskId ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t) : [...activeJob.tasks, { ...taskData, id: Date.now() }];
+      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j)); closeModal(); showToast('Entry Saved', 'success');
     };
-    const closeModal = () => {
-      recognitionRef.current?.stop(); recognitionRef.current = null;
-      setIsListening(false); setIsTaskFormOpen(false); setEditingTaskId(null);
-      setTaskData(EMPTY_TASK); setRateError(false); setMatError(false);
-      setIsNamingTemplate(false);
-    };
-    const handleImageUpload = async (e) => {
-      try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); }
-      catch { showToast('One or more images could not be processed.', 'error'); }
-    };
+    const closeModal = () => { recognitionRef.current?.stop(); recognitionRef.current = null; setIsListening(false); setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); setRateError(false); setMatError(false); setIsNamingTemplate(false); };
+    const handleImageUpload = async (e) => { try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); } catch { showToast('One or more images could not be processed.', 'error'); } };
     const validateRate = (val) => { const n = parseFloat(val); setRateError(val !== '' && isNaN(n)); };
-    const validateMat  = (val) => { const n = parseFloat(val); setMatError(val !== ''  && isNaN(n)); };
-
+    const validateMat = (val) => { const n = parseFloat(val); setMatError(val !== '' && isNaN(n)); };
     const toggleJobSelection = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
     const clearSelection = () => setSelectedJobs([]);
     const selectAllVisible = () => setSelectedJobs(prev => { const e=new Set(prev); return [...prev,...filteredJobs.map(j=>j.id).filter(id=>!e.has(id))].slice(0,MAX_STOPS); });
     const getMyLocation = () => {
       if (!navigator.geolocation) { setLocStatus('denied'); return; }
       setLocStatus('loading');
-      navigator.geolocation.getCurrentPosition(
-        (pos) => { setCurrentCoords({lat:pos.coords.latitude,lng:pos.coords.longitude}); setLocStatus('ok'); },
-        () => { setLocStatus('denied'); setUseMyLocation(false); }
-      );
+      navigator.geolocation.getCurrentPosition((pos) => { setCurrentCoords({lat:pos.coords.latitude,lng:pos.coords.longitude}); setLocStatus('ok'); }, () => { setLocStatus('denied'); setUseMyLocation(false); });
     };
     const handleLocToggle = () => { const next=!useMyLocation; setUseMyLocation(next); if (next && locStatus==='idle') getMyLocation(); };
     const openGoogleMaps = () => {
@@ -1742,7 +1593,6 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
       window.open(url, '_blank', 'noopener');
     };
     const atStopLimit = selectedJobs.length >= MAX_STOPS;
-
     const filteredJobs = jobs
       .filter(j => filterType==='all' || j.type===filterType)
       .filter(j => !searchQ.trim() || (j.address || '').toLowerCase().includes(searchQ.toLowerCase()) || (j.clientName||'').toLowerCase().includes(searchQ.toLowerCase()))
@@ -1754,7 +1604,6 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
         if (sortBy === 'az') return String(a.address || '').localeCompare(String(b.address || ''));
         return 0;
       });
-
     const handleShare = async () => {
       if (!activeJob) return;
       const qt = activeJob.type === 'quote' ? getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate) : null;
@@ -1775,74 +1624,25 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
         img.onload = () => { cvs.width=img.width; cvs.height=img.height; ctx.drawImage(img,0,0,img.width,img.height); setUndoStack([cvs.toDataURL()]); };
       }
     }, [editingImageIdx, taskData.images]);
-
-    const getCoords = (e) => {
-      const cvs=canvasRef.current, r=cvs.getBoundingClientRect();
-      let cx=e.clientX, cy=e.clientY;
-      if (e.touches?.length>0) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; }
-      return { x:(cx-r.left)*(cvs.width/r.width), y:(cy-r.top)*(cvs.height/r.height) };
-    };
-    const startDraw = (e) => {
-      setIsDrawing(true); drawRef.current=true;
-      const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d');
-      ctx.strokeStyle=penColor; ctx.lineWidth=Math.max(3,canvasRef.current.width/100);
-      ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x,y);
-    };
+    const getCoords = (e) => { const cvs=canvasRef.current, r=cvs.getBoundingClientRect(); let cx=e.clientX, cy=e.clientY; if (e.touches?.length>0) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; } return { x:(cx-r.left)*(cvs.width/r.width), y:(cy-r.top)*(cvs.height/r.height) }; };
+    const startDraw = (e) => { setIsDrawing(true); drawRef.current=true; const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.strokeStyle=penColor; ctx.lineWidth=Math.max(3,canvasRef.current.width/100); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x,y); };
     const doDraw = (e) => { if (!drawRef.current) return; e.preventDefault(); const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.lineTo(x,y); ctx.stroke(); };
     const stopDraw = () => { if (!drawRef.current) return; setIsDrawing(false); drawRef.current=false; setUndoStack(p=>[...p,canvasRef.current.toDataURL()]); };
-    const handleUndo = () => {
-      if (undoStack.length<=1) return;
-      const ns=[...undoStack]; ns.pop();
-      const img=new Image(); img.src=ns[ns.length-1];
-      img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack(ns); };
-    };
-    const handleClear = () => {
-      if (undoStack.length<=1) return;
-      const img=new Image(); img.src=undoStack[0];
-      img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack([undoStack[0]]); };
-    };
-    const saveAnnotated = () => {
-      if (!canvasRef.current) return;
-      const imgs=[...taskData.images]; imgs[editingImageIdx]=canvasRef.current.toDataURL('image/webp',0.8);
-      setTaskData(p=>({...p,images:imgs})); setEditingImageIdx(null);
-    };
+    const handleUndo = () => { if (undoStack.length<=1) return; const ns=[...undoStack]; ns.pop(); const img=new Image(); img.src=ns[ns.length-1]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack(ns); }; };
+    const handleClear = () => { if (undoStack.length<=1) return; const img=new Image(); img.src=undoStack[0]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack([undoStack[0]]); }; };
+    const saveAnnotated = () => { if (!canvasRef.current) return; const imgs=[...taskData.images]; imgs[editingImageIdx]=canvasRef.current.toDataURL('image/webp',0.8); setTaskData(p=>({...p,images:imgs})); setEditingImageIdx(null); };
     const dist2 = (t1,t2) => Math.hypot(t1.clientX-t2.clientX, t1.clientY-t2.clientY);
-    const onTouchStart = (e) => {
-      if (e.touches.length===2) {
-        if (drawRef.current) { drawRef.current=false; setIsDrawing(false); setUndoStack(p=>[...p,canvasRef.current.toDataURL()]); }
-        pinchRef.current={ dist:dist2(e.touches[0],e.touches[1]), zoom:zoomRef.current };
-      } else if (e.touches.length===1) {
-        pinchRef.current=null;
-        if (modeRef.current==='pan') { panStartRef.current={ clientX:e.touches[0].clientX, clientY:e.touches[0].clientY, panX:panRef.current.x, panY:panRef.current.y }; }
-        else startDraw(e);
-      }
-    };
-    const onTouchMove = (e) => {
-      e.preventDefault();
-      if (e.touches.length===2 && pinchRef.current) {
-        const nz=Math.min(Math.max(pinchRef.current.zoom*(dist2(e.touches[0],e.touches[1])/pinchRef.current.dist),1),6);
-        setCanvasZoom(nz); zoomRef.current=nz;
-      } else if (e.touches.length===1) {
-        if (modeRef.current==='pan' && panStartRef.current) {
-          const np={ x:panStartRef.current.panX+(e.touches[0].clientX-panStartRef.current.clientX), y:panStartRef.current.panY+(e.touches[0].clientY-panStartRef.current.clientY) };
-          setCanvasPan(np); panRef.current=np;
-        } else if (modeRef.current==='draw') doDraw(e);
-      }
-    };
-    const onTouchEnd = (e) => {
-      if (e.touches.length<2) pinchRef.current=null;
-      if (e.touches.length===0) { panStartRef.current=null; if (modeRef.current==='draw') stopDraw(); }
-    };
+    const onTouchStart = (e) => { if (e.touches.length===2) { if (drawRef.current) { drawRef.current=false; setIsDrawing(false); setUndoStack(p=>[...p,canvasRef.current.toDataURL()]); } pinchRef.current={ dist:dist2(e.touches[0],e.touches[1]), zoom:zoomRef.current }; } else if (e.touches.length===1) { pinchRef.current=null; if (modeRef.current==='pan') { panStartRef.current={ clientX:e.touches[0].clientX, clientY:e.touches[0].clientY, panX:panRef.current.x, panY:panRef.current.y }; } else startDraw(e); } };
+    const onTouchMove = (e) => { e.preventDefault(); if (e.touches.length===2 && pinchRef.current) { const nz=Math.min(Math.max(pinchRef.current.zoom*(dist2(e.touches[0],e.touches[1])/pinchRef.current.dist),1),6); setCanvasZoom(nz); zoomRef.current=nz; } else if (e.touches.length===1) { if (modeRef.current==='pan' && panStartRef.current) { const np={ x:panStartRef.current.panX+(e.touches[0].clientX-panStartRef.current.clientX), y:panStartRef.current.panY+(e.touches[0].clientY-panStartRef.current.clientY) }; setCanvasPan(np); panRef.current=np; } else if (modeRef.current==='draw') doDraw(e); } };
+    const onTouchEnd = (e) => { if (e.touches.length<2) pinchRef.current=null; if (e.touches.length===0) { panStartRef.current=null; if (modeRef.current==='draw') stopDraw(); } };
     const toggleMode = () => { const n=modeRef.current==='draw'?'pan':'draw'; setCanvasMode(n); modeRef.current=n; };
     const onMDown = (e) => { if (modeRef.current==='draw') startDraw(e); else panStartRef.current={clientX:e.clientX,clientY:e.clientY,panX:panRef.current.x,panY:panRef.current.y}; };
-    const onMMove = (e) => {
-      if (modeRef.current==='draw') doDraw(e);
-      else if (modeRef.current==='pan' && panStartRef.current) {
-        const np={x:panStartRef.current.panX+(e.clientX-panStartRef.current.clientX),y:panStartRef.current.panY+(e.clientY-panStartRef.current.clientY)};
-        setCanvasPan(np); panRef.current=np;
-      }
-    };
+    const onMMove = (e) => { if (modeRef.current==='draw') doDraw(e); else if (modeRef.current==='pan' && panStartRef.current) { const np={x:panStartRef.current.panX+(e.clientX-panStartRef.current.clientX),y:panStartRef.current.panY+(e.clientY-panStartRef.current.clientY)}; setCanvasPan(np); panRef.current=np; } };
     const onMUp = () => { panStartRef.current=null; stopDraw(); };
+
+    // Credential expiry warning banner
+    const expiringLicences = (businessProfile?.licences || []).filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry));
+    const insuranceExpiring = businessProfile?.insuranceExpiry && (isExpiringSoon(businessProfile.insuranceExpiry) || isExpired(businessProfile.insuranceExpiry));
 
     if (isLoading) {
       return (
@@ -1858,44 +1658,36 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
     return (
       <div className="min-h-screen nav-spacing relative">
         {toast && <ToastMessage message={toast.message} type={toast.type} onClose={() => setToast(null)}/>}
-
-        {confirmDialog && (
-          <ConfirmDialog message={confirmDialog.message} confirmLabel={confirmDialog.confirmLabel} danger={confirmDialog.danger}
-            onConfirm={() => { confirmDialog.onConfirm(); dismissConfirm(); }} onCancel={dismissConfirm}/>
-        )}
+        {confirmDialog && <ConfirmDialog message={confirmDialog.message} confirmLabel={confirmDialog.confirmLabel} danger={confirmDialog.danger} onConfirm={() => { confirmDialog.onConfirm(); dismissConfirm(); }} onCancel={dismissConfirm}/>}
 
         {/* ── Top Header ── */}
         <header className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md text-slate-900 dark:text-white px-4 py-3 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
-            {businessProfile?.logo
-              ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5" alt=""/>
-              : <div className="bg-orange-500 p-1.5 rounded-xl"><Hammer size={20} className="text-white"/></div>
-            }
+            {businessProfile?.logo ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5" alt=""/> : <div className="bg-orange-500 p-1.5 rounded-xl"><Hammer size={20} className="text-white"/></div>}
             <h1 className="font-black text-lg tracking-tight uppercase">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'JobLog')}</h1>
           </div>
           <div className="flex items-center gap-2">
             {viewMode === 'detail' && activeJob && (
               <>
-                <button onClick={handleShare} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 active:scale-95" title="Share summary">
-                  <Share2 size={16}/>
-                </button>
-                <button onClick={() => setPrintPreviewJob(activeJob)} className="p-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full active:scale-95 shadow-md" title="Print preview">
-                  <Printer size={16}/>
-                </button>
+                <button onClick={handleShare} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 active:scale-95"><Share2 size={16}/></button>
+                <button onClick={() => setPrintPreviewJob(activeJob)} className="p-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full active:scale-95 shadow-md"><Printer size={16}/></button>
               </>
             )}
           </div>
         </header>
 
-        {/* SCHEDULE VIEW */}
-        {viewMode==='schedule' && (
-          <ScheduleView
-            appointments={appointments} jobs={jobs} googleToken={googleToken}
-            isGoogleConnected={!!googleToken} onSaveAppointment={handleSaveAppointment}
-            onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm}
-            onScheduleFromJob={openAppointmentForJob} showToast={showToast}
-          />
+        {/* Credential expiry warning */}
+        {(expiringLicences.length > 0 || insuranceExpiring) && viewMode === 'dashboard' && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700/40 px-4 py-2 flex items-center gap-2 no-print cursor-pointer" onClick={() => setShowSettings(true)}>
+            <AlertTriangle size={14} className="text-amber-500 flex-shrink-0"/>
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-bold flex-1">
+              {[...expiringLicences.map(l => l.type), ...(insuranceExpiring ? ['Insurance'] : [])].join(', ')} — credential{expiringLicences.length + (insuranceExpiring?1:0) > 1 ? 's' : ''} expiring or expired. Tap to update.
+            </p>
+          </div>
         )}
+
+        {/* SCHEDULE VIEW */}
+        {viewMode==='schedule' && <ScheduleView appointments={appointments} jobs={jobs} googleToken={googleToken} isGoogleConnected={!!googleToken} onSaveAppointment={handleSaveAppointment} onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm} onScheduleFromJob={openAppointmentForJob} showToast={showToast}/>}
 
         {/* DASHBOARD */}
         {viewMode==='dashboard' && (
@@ -1904,8 +1696,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
               <div className="bg-blue-950 border border-blue-800 rounded-3xl p-5 mb-5">
                 <div className="flex items-start gap-3 mb-4">
                   <Navigation size={18} className="text-blue-400 flex-shrink-0 mt-0.5"/>
-                  <div><p className="text-white font-black text-sm uppercase tracking-widest mb-1">Route Planning</p>
-                  <p className="text-blue-300 text-xs font-medium">Tap jobs in visit order — numbered badges show your stop sequence.</p></div>
+                  <div><p className="text-white font-black text-sm uppercase tracking-widest mb-1">Route Planning</p><p className="text-blue-300 text-xs font-medium">Tap jobs in visit order — numbered badges show your stop sequence.</p></div>
                 </div>
                 <div className="flex items-center justify-between bg-blue-900/60 rounded-2xl px-4 py-3 mb-3">
                   <div className="flex items-center gap-2">
@@ -1925,19 +1716,12 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                 </div>
               </div>
             )}
-
             {!selectionMode && (
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <button onClick={() => handleNewJobClick('quote')} className="bg-orange-500 hover:bg-orange-400 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all">
-                  <Plus size={18}/> New Quote
-                </button>
-                <button onClick={() => handleNewJobClick('handover')} className="bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all">
-                  <CheckCircle2 size={18}/> Completion
-                </button>
+                <button onClick={() => handleNewJobClick('quote')} className="bg-orange-500 hover:bg-orange-400 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"><Plus size={18}/> New Quote</button>
+                <button onClick={() => handleNewJobClick('handover')} className="bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"><CheckCircle2 size={18}/> Completion</button>
               </div>
             )}
-
-            {/* Tight Search and Sort Row */}
             <div className="flex items-center gap-2 mb-3">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
@@ -1946,23 +1730,16 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
               </div>
               <div className="relative w-28 flex-shrink-0">
                 <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-3 pr-8 rounded-xl text-[11px] font-black uppercase tracking-widest outline-none focus:border-orange-400 shadow-sm cursor-pointer">
-                  <option value="created_desc">Newest</option>
-                  <option value="created_asc">Oldest</option>
-                  <option value="due_asc">Due Soon</option>
-                  <option value="due_desc">Due Late</option>
-                  <option value="az">A-Z</option>
+                  <option value="created_desc">Newest</option><option value="created_asc">Oldest</option><option value="due_asc">Due Soon</option><option value="due_desc">Due Late</option><option value="az">A-Z</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
               </div>
             </div>
-
-            {/* Scrollable Filter Pills */}
             <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1">
               {[{key:'all',label:'All Projects'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'}].map(f => (
                 <button key={f.key} onClick={() => setFilterType(f.key)} className={`px-4 py-2 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border ${filterType===f.key?'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700 shadow-md':'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>{f.label}</button>
               ))}
             </div>
-
             <div className="grid gap-4">
               {filteredJobs.map(j => {
                 const status = getStatus(j.status||'draft');
@@ -1975,24 +1752,15 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                 const isDueSoon = dueDate && (dueDate - Date.now()) < 2 * 24 * 60 * 60 * 1000 && (dueDate - Date.now()) > 0;
                 const isOverdue = dueDate && dueDate < Date.now();
                 return (
-                  <div key={j.id}
-                    onClick={() => { if (selectionMode) { if (canSelect) toggleJobSelection(j.id); } else { setActiveJobId(j.id); setViewMode('detail'); setIsEditingHeader(false); }}}
-                    className={`bg-white dark:bg-slate-800 rounded-2xl border-2 transition-all cursor-pointer shadow-sm
-                      ${selectionMode?(isSelected?'border-blue-500 ring-2 ring-blue-500/30':canSelect?'border-slate-200 dark:border-slate-700 hover:border-blue-400':'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed')
-                      :j.type==='handover'?'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500':'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
+                  <div key={j.id} onClick={() => { if (selectionMode) { if (canSelect) toggleJobSelection(j.id); } else { setActiveJobId(j.id); setViewMode('detail'); setIsEditingHeader(false); }}}
+                    className={`bg-white dark:bg-slate-800 rounded-2xl border-2 transition-all cursor-pointer shadow-sm ${selectionMode?(isSelected?'border-blue-500 ring-2 ring-blue-500/30':canSelect?'border-slate-200 dark:border-slate-700 hover:border-blue-400':'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'):j.type==='handover'?'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500':'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
                     <div className="p-4 flex justify-between items-start">
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        {selectionMode && (
-                          <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black transition-all ${isSelected?'bg-blue-500 text-white shadow-lg shadow-blue-500/30':'border-2 border-slate-300 dark:border-slate-600 text-transparent'}`}>
-                            {isSelected ? stopIdx+1 : ''}
-                          </div>
-                        )}
+                        {selectionMode && (<div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black transition-all ${isSelected?'bg-blue-500 text-white shadow-lg shadow-blue-500/30':'border-2 border-slate-300 dark:border-slate-600 text-transparent'}`}>{isSelected ? stopIdx+1 : ''}</div>)}
                         <div className="flex-1 min-w-0">
                           {!selectionMode && (
                             <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>
-                                {j.type==='handover' ? 'Completion' : 'Quote'}
-                              </span>
+                              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{j.type==='handover' ? 'Completion' : 'Quote'}</span>
                               <button onClick={e=>{e.stopPropagation();cycleStatus(j.id);}} className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
                               {j.gstEnabled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
                               {isDueSoon && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">Due soon</span>}
@@ -2007,11 +1775,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                       <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hrs</span>
                         <span className="font-black text-slate-900 dark:text-slate-200 text-sm">{getTotals(j.tasks).str}</span>
-                        {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && (
-                          <div className="flex flex-col items-end mt-1">
-                            <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt||handoverQt).total)}</span>
-                          </div>
-                        )}
+                        {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && <div className="flex flex-col items-end mt-1"><span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt||handoverQt).total)}</span></div>}
                       </div>
                     </div>
                   </div>
@@ -2026,12 +1790,9 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
         {viewMode==='detail' && activeJob && (
           <main className="p-4 max-w-2xl mx-auto no-print animate-slide-up">
             <div className="flex justify-between items-center mb-4">
-              <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full">
-                <ChevronRight size={14} className="rotate-180"/> Dashboard
-              </button>
+              <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full"><ChevronRight size={14} className="rotate-180"/> Dashboard</button>
               <button onClick={() => showConfirm('Permanently delete this project?', () => { saveToDB(jobs.filter(x=>x.id!==activeJobId)); setViewMode('dashboard'); showToast('Project Deleted','success'); }, 'Delete')} className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase"><Trash2 size={14}/> Delete</button>
             </div>
-
             <div className={`p-5 sm:p-8 rounded-[2rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
@@ -2039,25 +1800,10 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                   <input className="w-full text-xl font-black bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e=>setHeaderDraft(d=>({...d,address:e.target.value}))}/>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
-                  <div className="mb-3">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date</label>
-                    <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none font-medium text-sm dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/>
-                  </div>
+                  <div className="mb-3"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date</label><input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none font-medium text-sm dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/></div>
                   <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e=>setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
-                  <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase w-fit">
-                    <ImageIcon size={14}/> Add Photos
-                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleProjectPhotoUpload}/>
-                  </label>
-                  {headerDraft.projectPhotos.length > 0 && (
-                    <div className="flex gap-2 overflow-x-auto pb-2 mt-2">
-                      {headerDraft.projectPhotos.map((p,i) => (
-                        <div key={i} className="relative h-16 w-16 flex-shrink-0">
-                          <img src={p} className="w-full h-full object-cover rounded-lg" alt=""/>
-                          <button onClick={() => setHeaderDraft(d=>({...d,projectPhotos:d.projectPhotos.filter((_,idx)=>idx!==i)}))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase w-fit"><ImageIcon size={14}/> Add Photos<input type="file" multiple accept="image/*" className="hidden" onChange={handleProjectPhotoUpload}/></label>
+                  {headerDraft.projectPhotos.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-2 mt-2">{headerDraft.projectPhotos.map((p,i) => (<div key={i} className="relative h-16 w-16 flex-shrink-0"><img src={p} className="w-full h-full object-cover rounded-lg" alt=""/><button onClick={() => setHeaderDraft(d=>({...d,projectPhotos:d.projectPhotos.filter((_,idx)=>idx!==i)}))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button></div>))}</div>)}
                   <div className="flex gap-3 mt-4">
                     <button onClick={saveHeaderEdit} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"><Check size={16}/> Save</button>
                     <button onClick={() => setIsEditingHeader(false)} className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 py-3 rounded-xl font-black text-sm">Cancel</button>
@@ -2073,29 +1819,15 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3 whitespace-pre-wrap">{activeJob.projectNotes}</p>}
                     {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
                   </div>
-                  
                   <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-sm border border-orange-200 dark:border-orange-800">
-                      <Clock size={12}/> {getTotals(activeJob?.tasks||[]).str}
-                    </div>
-                    <button onClick={() => cycleStatus(activeJobId)} className={`px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all border ${getStatus(activeJob?.status||'draft').cls}`}>
-                      {getStatus(activeJob?.status||'draft').label}
-                    </button>
-                    <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts?'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400':'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
-                      <DollarSign size={12}/> Costs {activeJob.showCosts?'ON':'OFF'}
-                    </button>
+                    <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-sm border border-orange-200 dark:border-orange-800"><Clock size={12}/> {getTotals(activeJob?.tasks||[]).str}</div>
+                    <button onClick={() => cycleStatus(activeJobId)} className={`px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all border ${getStatus(activeJob?.status||'draft').cls}`}>{getStatus(activeJob?.status||'draft').label}</button>
+                    <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts?'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400':'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}><DollarSign size={12}/> Costs {activeJob.showCosts?'ON':'OFF'}</button>
                   </div>
-
                   <div className="grid grid-cols-3 gap-2 mt-2">
-                    <button onClick={startEditHeader} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors">
-                      <Pencil size={16}/> Edit
-                    </button>
-                    <button onClick={() => openAppointmentForJob(activeJobId)} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors">
-                      <CalendarPlus size={16}/> Schedule
-                    </button>
-                    <button onClick={() => setShowAIAssistModal(true)} className="bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 border border-purple-100 dark:border-purple-800 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-600 dark:text-purple-400 flex flex-col items-center gap-1 transition-colors">
-                      <Sparkles size={16}/> AI Assist
-                    </button>
+                    <button onClick={startEditHeader} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><Pencil size={16}/> Edit</button>
+                    <button onClick={() => openAppointmentForJob(activeJobId)} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><CalendarPlus size={16}/> Schedule</button>
+                    <button onClick={() => setShowAIAssistModal(true)} className="bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 border border-purple-100 dark:border-purple-800 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-600 dark:text-purple-400 flex flex-col items-center gap-1 transition-colors"><Sparkles size={16}/> AI Assist</button>
                   </div>
                 </div>
               )}
@@ -2106,9 +1838,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-5 mb-5 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2"><DollarSign size={16} className="text-orange-500"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cost Summary</span></div>
-                  <button onClick={() => toggleGST(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.gstEnabled?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'}`}>
-                    <Receipt size={12}/> GST {activeJob.gstEnabled?'On':'Off'}
-                  </button>
+                  <button onClick={() => toggleGST(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.gstEnabled?'bg-amber-500/20 border-amber-500/40 text-amber-400':'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300 hover:border-slate-500'}`}><Receipt size={12}/> GST {activeJob.gstEnabled?'On':'Off'}</button>
                 </div>
                 {(() => {
                   const qt = getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate);
@@ -2117,24 +1847,10 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                       <div className="grid grid-cols-2 gap-2">
                         <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-sm">{fmtAUD(qt.labour)}</p></div>
                         <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-sm">{fmtAUD(qt.mats)}</p></div>
-                        {activeJob.gstEnabled
-                          ? <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-sm">{fmtAUD(qt.subtotal)}</p></div>
-                          : <div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div>
-                        }
+                        {activeJob.gstEnabled ? <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-sm">{fmtAUD(qt.subtotal)}</p></div> : <div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div>}
                       </div>
-                      {activeJob.gstEnabled && extraTaxRate === 0 && (
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div>
-                          <div className="bg-orange-500 rounded-xl p-3"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div>
-                        </div>
-                      )}
-                      {extraTaxRate > 0 && (
-                        <div className={`grid mt-2 gap-2 ${activeJob.gstEnabled ? 'grid-cols-2' : 'grid-cols-2'}`}>
-                          {activeJob.gstEnabled && <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div>}
-                          <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Markup ({extraTaxRate}%)</p><p className="font-black text-purple-400 text-sm">{fmtAUD(qt.extra)}</p></div>
-                          <div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. Tax</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div>
-                        </div>
-                      )}
+                      {activeJob.gstEnabled && extraTaxRate === 0 && (<div className="grid grid-cols-2 gap-2 mt-2"><div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div><div className="bg-orange-500 rounded-xl p-3"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div></div>)}
+                      {extraTaxRate > 0 && (<div className={`grid mt-2 gap-2 ${activeJob.gstEnabled ? 'grid-cols-2' : 'grid-cols-2'}`}>{activeJob.gstEnabled && <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div>}<div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Markup ({extraTaxRate}%)</p><p className="font-black text-purple-400 text-sm">{fmtAUD(qt.extra)}</p></div><div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. Tax</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div></div>)}
                     </>
                   );
                 })()}
@@ -2145,7 +1861,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
             <div className="space-y-4 mb-6">
               {activeJob?.tasks.map((t, i) => {
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
-                const mats   = parseFloat(t.materialsCost)||0;
+                const mats = parseFloat(t.materialsCost)||0;
                 const subtotal = labour + mats;
                 const showCosts = activeJob.showCosts;
                 return (
@@ -2166,25 +1882,18 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                       {showCosts && subtotal > 0 && (
                         <div className="flex gap-1.5 mb-3 flex-wrap">
                           {labour>0 && <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md">Labour {fmtAUD(labour)}</span>}
-                          {mats>0   && <span className="text-[10px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-1 rounded-md">Mats {fmtAUD(mats)}</span>}
+                          {mats>0 && <span className="text-[10px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-1 rounded-md">Mats {fmtAUD(mats)}</span>}
                           <span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-2 py-1 rounded-md">Subtotal {fmtAUD(subtotal)}</span>
                         </div>
                       )}
-                      {t.images?.length > 0 && (
-                        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                          {t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}
-                        </div>
-                      )}
+                      {t.images?.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">{t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}</div>)}
                     </div>
                   </div>
                 );
               })}
               {activeJob?.tasks.length===0 && <div className="text-center py-20 text-slate-300 dark:text-slate-700 font-black uppercase tracking-widest">No Log Entries Yet</div>}
             </div>
-
-            <button onClick={() => setIsTaskFormOpen(true)} className={`fixed right-5 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-[3px] border-white dark:border-slate-800 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`} style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}>
-              <Plus size={28}/>
-            </button>
+            <button onClick={() => setIsTaskFormOpen(true)} className={`fixed right-5 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-[3px] border-white dark:border-slate-800 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`} style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}><Plus size={28}/></button>
           </main>
         )}
 
@@ -2212,56 +1921,23 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
           </button>
           <button onClick={() => setShowSettings(true)} className="flex flex-col items-center p-2 w-16 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors relative">
             <Settings size={22}/>
-            {!apiKey && <span className="absolute top-2 right-4 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-900"/>}
+            {(!apiKey || expiringLicences.length > 0 || insuranceExpiring) && <span className="absolute top-2 right-4 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-900"/>}
             <span className="text-[10px] font-bold mt-1">Settings</span>
           </button>
         </div>
 
         {/* Modals */}
-        {showSettings && (
-          <SettingsModal
-            apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate}
-            isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)}
-            exportData={exportData} importData={importData}
-            userTemplates={userTemplates} saveUserTemplates={saveUserTemplates}
-            userMaterials={userMaterials} saveUserMaterials={saveUserMaterials}
-            businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile}
-            googleClientId={googleClientId} setGoogleClientId={setGoogleClientId}
-            isGoogleConnected={!!googleToken} googleToken={googleToken}
-            connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar}
-            onSave={(k,m,t) => {
-              setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t));
-              localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t);
-            }}
-            onClose={() => setShowSettings(false)}
-            showToast={showToast} dbSize={dbSize}
-            isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}
-          />
-        )}
-
+        {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} googleClientId={googleClientId} setGoogleClientId={setGoogleClientId} isGoogleConnected={!!googleToken} googleToken={googleToken} connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar} onSave={(k,m,t) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
         {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUnlock={handleUnlockSuccess} showToast={showToast}/>}
-
         {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast}/>}
-
-        {/* AIAssistModal */}
-        {showAIAssistModal && activeJob && (
-          <AIAssistModal
-            onClose={() => setShowAIAssistModal(false)}
-            onGenerate={handleGenerateDocument}
-            isGenerating={isGenerating}
-            docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'}
-            apiKey={apiKey}
-          />
-        )}
+        {showAIAssistModal && activeJob && <AIAssistModal onClose={() => setShowAIAssistModal(false)} onGenerate={handleGenerateDocument} isGenerating={isGenerating} docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'} apiKey={apiKey}/>}
 
         {/* Task Form */}
         {isTaskFormOpen && (
           <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
             <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-5 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[95vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
               <div className="flex justify-between items-center mb-6 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
-                <h2 className="text-xl font-black text-slate-900 dark:text-white">
-                  {editingTaskId ? 'Edit' : 'New'} {activeJob?.type==='handover' ? 'Completion Entry' : 'Job Sheet Entry'}
-                </h2>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">{editingTaskId ? 'Edit' : 'New'} {activeJob?.type==='handover' ? 'Completion Entry' : 'Job Sheet Entry'}</h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
               <div className="mb-4 relative">
@@ -2269,11 +1945,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                   <span className="flex items-center gap-2"><Sparkles size={16} className="text-purple-500"/>Templates</span>
                   <ChevronDown size={16} className={showTemplatePop?'rotate-180':''}/>
                 </button>
-                {showTemplatePop && (
-                  <TemplatePopover userTemplates={userTemplates}
-                    onSelect={(data) => setTaskData(prev=>({...prev,...data}))}
-                    onClose={() => setShowTemplatePop(false)}/>
-                )}
+                {showTemplatePop && <TemplatePopover userTemplates={userTemplates} onSelect={(data) => setTaskData(prev=>({...prev,...data}))} onClose={() => setShowTemplatePop(false)}/>}
               </div>
               <div className="space-y-3">
                 <input placeholder="Task / Item Title" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.title} onChange={e=>setTaskData(p=>({...p,title:e.target.value}))}/>
@@ -2282,67 +1954,28 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                     <input placeholder="Time (e.g. 2h 30m)" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.time} onChange={e=>setTaskData(p=>({...p,time:e.target.value}))}/>
                     {taskData.time && <div className="absolute -bottom-4 left-3 text-[9px] text-orange-500 font-black">= {fmtMins(parseTimeToMinutes(taskData.time))}</div>}
                   </div>
-                  <label className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 px-4 rounded-xl cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 gap-2">
-                    <ImageIcon className="text-slate-600 dark:text-slate-400" size={16}/>
-                    <span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase">Photos</span>
-                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/>
-                  </label>
+                  <label className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 px-4 rounded-xl cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 gap-2"><ImageIcon className="text-slate-600 dark:text-slate-400" size={16}/><span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase">Photos</span><input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/></label>
                 </div>
                 {activeJob?.showCosts && (
                   <div className="flex gap-2 mt-3">
                     <div className="flex-1 relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                      <input placeholder="Rate/hr" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${rateError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
-                        value={taskData.rate}
-                        onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,rate:v}));validateRate(v);}}
-                        onBlur={e=>validateRate(e.target.value)}/>
+                      <input placeholder="Rate/hr" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${rateError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.rate} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,rate:v}));validateRate(v);}} onBlur={e=>validateRate(e.target.value)}/>
                       <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-black uppercase">/hr</span>
                     </div>
                     <div className="flex-1 relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
                       <div className="flex items-center">
-                        <input placeholder="Materials $" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${matError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`}
-                          value={taskData.materialsCost}
-                          onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,materialsCost:v}));validateMat(v);}}
-                          onBlur={e=>validateMat(e.target.value)}/>
-                        {userMaterials.length > 0 && (
-                          <div className="relative ml-1">
-                            <button onClick={() => setShowMaterialPop(!showMaterialPop)} className="bg-slate-200 dark:bg-slate-700 p-2.5 rounded-lg text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600" title="Pick saved material"><Package size={14}/></button>
-                            {showMaterialPop && (
-                              <div className="absolute right-0 top-full mt-1 z-50">
-                                <MaterialPicker materials={userMaterials} onSelect={(m)=>{setTaskData(p=>({...p,materials:m.name,materialsCost:m.price}));}} onClose={()=>setShowMaterialPop(false)}/>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        <input placeholder="Materials $" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${matError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800'} dark:text-white dark:placeholder-slate-500`} value={taskData.materialsCost} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,materialsCost:v}));validateMat(v);}} onBlur={e=>validateMat(e.target.value)}/>
+                        {userMaterials.length > 0 && (<div className="relative ml-1"><button onClick={() => setShowMaterialPop(!showMaterialPop)} className="bg-slate-200 dark:bg-slate-700 p-2.5 rounded-lg text-slate-500 hover:bg-slate-300 dark:hover:bg-slate-600"><Package size={14}/></button>{showMaterialPop && (<div className="absolute right-0 top-full mt-1 z-50"><MaterialPicker materials={userMaterials} onSelect={(m)=>{setTaskData(p=>({...p,materials:m.name,materialsCost:m.price}));}} onClose={()=>setShowMaterialPop(false)}/></div>)}</div>)}
                       </div>
                     </div>
                   </div>
                 )}
-                {activeJob?.showCosts && (() => {
-                  const hrs=parseTimeToMinutes(taskData.time)/60;
-                  const labour=hrs*(parseFloat(taskData.rate)||0);
-                  const mats=parseFloat(taskData.materialsCost)||0;
-                  const total=labour+mats;
-                  return total>0 ? (
-                    <div className="bg-slate-900 dark:bg-slate-800 rounded-xl px-4 py-2 flex justify-between items-center">
-                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        {labour>0&&<span className="mr-3">Labour {fmtAUD(labour)}</span>}
-                        {mats>0&&<span>Mats {fmtAUD(mats)}</span>}
-                      </div>
-                      <div className="text-white font-black text-sm">{fmtAUD(total)}</div>
-                    </div>
-                  ) : null;
-                })()}
+                {activeJob?.showCosts && (() => { const hrs=parseTimeToMinutes(taskData.time)/60; const labour=hrs*(parseFloat(taskData.rate)||0); const mats=parseFloat(taskData.materialsCost)||0; const total=labour+mats; return total>0 ? (<div className="bg-slate-900 dark:bg-slate-800 rounded-xl px-4 py-2 flex justify-between items-center"><div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{labour>0&&<span className="mr-3">Labour {fmtAUD(labour)}</span>}{mats>0&&<span>Mats {fmtAUD(mats)}</span>}</div><div className="text-white font-black text-sm">{fmtAUD(total)}</div></div>) : null; })()}
                 {taskData.images.length > 0 && (
                   <div className="mt-4 img-preview-grid">
-                    {taskData.images.map((img,i) => (
-                      <div key={i} className="relative w-full aspect-[4/3] group cursor-pointer" onClick={() => setEditingImageIdx(i)}>
-                        <img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-700 shadow-sm"/>
-                        <div className="absolute inset-0 bg-slate-900/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white drop-shadow-md" size={24}/></div>
-                        <button onClick={e=>{e.stopPropagation();setTaskData(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}));}} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md z-10"><X size={12}/></button>
-                      </div>
-                    ))}
+                    {taskData.images.map((img,i) => (<div key={i} className="relative w-full aspect-[4/3] group cursor-pointer" onClick={() => setEditingImageIdx(i)}><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-700 shadow-sm"/><div className="absolute inset-0 bg-slate-900/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white drop-shadow-md" size={24}/></div><button onClick={e=>{e.stopPropagation();setTaskData(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}));}} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md z-10"><X size={12}/></button></div>))}
                     <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
                   </div>
                 )}
@@ -2350,36 +1983,21 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
                 <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border-l-4 border-slate-300 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
                 <div className="relative">
                   <textarea placeholder="Full details…" className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
-                  <button onClick={toggleVoice} type="button" className={`absolute right-2 bottom-3 p-2 rounded-full text-white shadow-md transition-all ${isListening?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`} title="Tap to dictate">
-                    <Mic size={14}/>
-                  </button>
+                  <button onClick={toggleVoice} type="button" className={`absolute right-2 bottom-3 p-2 rounded-full text-white shadow-md transition-all ${isListening?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`}><Mic size={14}/></button>
                 </div>
-                <button onClick={handleAiSuggest} disabled={isAiSuggesting||!apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 ${apiKey?'bg-purple-600 hover:bg-purple-500 text-white':'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>
-                  <Sparkles size={14}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}
-                </button>
+                <button onClick={handleAiSuggest} disabled={isAiSuggesting||!apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 ${apiKey?'bg-purple-600 hover:bg-purple-500 text-white':'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}><Sparkles size={14}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}</button>
                 <div className="flex gap-2">
-                  <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors uppercase">
-                    <Bookmark size={14}/> Template
-                  </button>
-                  {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (
-                    <button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-600 transition-colors uppercase">
-                      <Package size={14}/> Material
-                    </button>
-                  )}
+                  <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors uppercase"><Bookmark size={14}/> Template</button>
+                  {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (<button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-600 transition-colors uppercase"><Package size={14}/> Material</button>)}
                 </div>
                 {isNamingTemplate && (
                   <div className="absolute inset-0 bg-slate-900/80 rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm p-6">
                     <h3 className="text-white font-black text-xl mb-4">Template Name</h3>
                     <input autoFocus className="w-full p-4 bg-white dark:bg-slate-800 rounded-2xl outline-none font-bold mb-3 dark:text-white" placeholder="e.g. Bathroom Patch" value={saveTemplateName} onChange={e=>setSaveTemplateName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&confirmSaveTemplate()}/>
-                    <div className="flex gap-3 w-full">
-                      <button onClick={confirmSaveTemplate} className="flex-1 bg-emerald-600 text-white py-3 rounded-2xl font-black">Save</button>
-                      <button onClick={() => setIsNamingTemplate(false)} className="flex-1 bg-slate-700 text-white py-3 rounded-2xl font-black">Cancel</button>
-                    </div>
+                    <div className="flex gap-3 w-full"><button onClick={confirmSaveTemplate} className="flex-1 bg-emerald-600 text-white py-3 rounded-2xl font-black">Save</button><button onClick={() => setIsNamingTemplate(false)} className="flex-1 bg-slate-700 text-white py-3 rounded-2xl font-black">Cancel</button></div>
                   </div>
                 )}
-                <button onClick={handleSaveTask} className={`w-full text-white p-4 rounded-xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] mt-2 ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800'}`}>
-                  <Save size={18}/> SAVE ENTRY
-                </button>
+                <button onClick={handleSaveTask} className={`w-full text-white p-4 rounded-xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] mt-2 ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800'}`}><Save size={18}/> SAVE ENTRY</button>
               </div>
             </div>
           </div>
@@ -2395,10 +2013,7 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
             </div>
             <div className="flex items-center justify-between px-4 py-2 bg-slate-900/80 border-b border-slate-800/50 flex-shrink-0">
               <div className="flex items-center gap-2">
-                <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${canvasMode==='draw'?'bg-orange-500/20 text-orange-400 border border-orange-500/40':'bg-blue-500/20 text-blue-400 border border-blue-500/40'}`}>
-                  {canvasMode==='draw'?<Pencil size={11}/>:<Move size={11}/>}
-                  {canvasMode==='draw'?'Draw mode':'Pan mode'}
-                </div>
+                <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${canvasMode==='draw'?'bg-orange-500/20 text-orange-400 border border-orange-500/40':'bg-blue-500/20 text-blue-400 border border-blue-500/40'}`}>{canvasMode==='draw'?<Pencil size={11}/>:<Move size={11}/>}{canvasMode==='draw'?'Draw mode':'Pan mode'}</div>
                 {canvasZoom>1 && <div className="text-[10px] font-black text-slate-500 uppercase">{canvasZoom.toFixed(1)}×</div>}
               </div>
               <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Pinch to zoom · 2 fingers</div>
@@ -2410,13 +2025,9 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
             </div>
             <div className="bg-slate-900 border-t border-slate-800 p-4 z-10 flex-shrink-0">
               <div className="flex justify-between items-center">
-                <div className="flex gap-3 items-center">
-                  {COLORS.map(c => <button key={c.name} onClick={() => setPenColor(c.hex)} className={`w-8 h-8 rounded-full shadow-inner transition-transform ${penColor===c.hex?'scale-125 ring-2 ring-white ring-offset-1 ring-offset-slate-900':'opacity-70 hover:opacity-100'}`} style={{backgroundColor:c.hex}}/>)}
-                </div>
+                <div className="flex gap-3 items-center">{COLORS.map(c => <button key={c.name} onClick={() => setPenColor(c.hex)} className={`w-8 h-8 rounded-full shadow-inner transition-transform ${penColor===c.hex?'scale-125 ring-2 ring-white ring-offset-1 ring-offset-slate-900':'opacity-70 hover:opacity-100'}`} style={{backgroundColor:c.hex}}/>)}</div>
                 <div className="flex items-center gap-3">
-                  <button onClick={toggleMode} className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase transition-colors px-3 py-2 rounded-xl ${canvasMode==='pan'?'bg-blue-500/20 text-blue-400':'text-slate-400 hover:text-white'}`}>
-                    {canvasMode==='draw'?<Move size={20}/>:<Pencil size={20}/>} {canvasMode==='draw'?'Pan':'Draw'}
-                  </button>
+                  <button onClick={toggleMode} className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase transition-colors px-3 py-2 rounded-xl ${canvasMode==='pan'?'bg-blue-500/20 text-blue-400':'text-slate-400 hover:text-white'}`}>{canvasMode==='draw'?<Move size={20}/>:<Pencil size={20}/>} {canvasMode==='draw'?'Pan':'Draw'}</button>
                   {canvasZoom>1 && <button onClick={() => {setCanvasZoom(1);zoomRef.current=1;setCanvasPan({x:0,y:0});panRef.current={x:0,y:0};}} className="flex flex-col items-center gap-1 text-[10px] font-black uppercase text-slate-400 hover:text-white"><ZoomIn size={20}/>Reset</button>}
                   <button onClick={handleUndo} disabled={undoStack.length<=1} className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase ${undoStack.length<=1?'text-slate-700':'text-slate-300 hover:text-white'}`}><Undo size={20}/>Undo</button>
                   <button onClick={handleClear} disabled={undoStack.length<=1} className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase ${undoStack.length<=1?'text-slate-700':'text-red-400 hover:text-red-300'}`}><RefreshCcw size={20}/>Clear</button>
@@ -2427,17 +2038,12 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
         )}
 
         {printPreviewJob && <PrintPreview job={printPreviewJob} extraTaxRate={extraTaxRate} businessProfile={businessProfile} onClose={() => setPrintPreviewJob(null)}/>}
-
-        {appointmentFromJob && (
-          <AppointmentFormModal appointment={appointmentFromJob} jobs={jobs} googleToken={googleToken} onSave={handleSaveAppointment} onClose={() => setAppointmentFromJob(null)} showToast={showToast}/>
-        )}
+        {appointmentFromJob && <AppointmentFormModal appointment={appointmentFromJob} jobs={jobs} googleToken={googleToken} onSave={handleSaveAppointment} onClose={() => setAppointmentFromJob(null)} showToast={showToast}/>}
       </div>
     );
   };
 
-  ReactDOM.createRoot(document.getElementById('root')).render(
-    <ErrorBoundary><App /></ErrorBoundary>
-  );
+  ReactDOM.createRoot(document.getElementById('root')).render(<ErrorBoundary><App /></ErrorBoundary>);
     </script>
   </body>
 </html>
