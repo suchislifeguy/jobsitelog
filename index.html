@@ -24,6 +24,9 @@
       }
     </script>
 
+    <!-- PAYPAL SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=BAA4zpTO_3zmcoQkk-UyKIdJDt6e4PWFwCQVVtXihsQe9I-l188FNq4S8O2I08YmE3FG5uo2iEO46w8SGo&components=hosted-buttons&disable-funding=venmo&currency=AUD"></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -133,6 +136,10 @@
     { key: "JOBLOG-DEMO-1234", expiry: null },
     { key: "JOBLOG-PRO-001",   expiry: "2027-01-01" },
     { key: "JOBLOG-PRO-002",   expiry: null },
+    // Pre-generate a few below for your convenience
+    { key: "JOBLOG-PRO-003",   expiry: null },
+    { key: "JOBLOG-PRO-004",   expiry: null },
+    { key: "JOBLOG-PRO-005",   expiry: null },
   ];
 
   const BIZA_KEY         = 'joblog-business';
@@ -226,7 +233,7 @@
 
   /* ─── Components ─────────────────────────────────────────────── */
 
-  // A robust contentEditable wrapper designed to perfectly retain whitespace and resize natively for PDFs/Printing
+  // PrintEditableDiv wrapper
   const PrintEditableDiv = ({ value, onChange, placeholder, className }) => {
     return (
       <div
@@ -258,6 +265,32 @@
       return this.props.children;
     }
   }
+
+  /* ─── PayPal Button Component ────────────────────────────────── */
+  const PayPalButton = () => {
+    // Generate a unique ID for this instance so React doesn't get confused
+    const containerId = useRef(`paypal-${Math.random().toString(36).substr(2, 9)}`);
+    
+    useEffect(() => {
+      if (window.paypal) {
+        const el = document.getElementById(containerId.current);
+        // Only render if container is empty to prevent duplication on re-renders
+        if (el && el.children.length === 0) {
+          try {
+            window.paypal.HostedButtons({
+              hostedButtonId: "KQQ6Q5YFX758G",
+            }).render(`#${containerId.current}`);
+          } catch (err) {
+            console.error("PayPal render error", err);
+          }
+        }
+      }
+    }, []);
+
+    return (
+      <div id={containerId.current} className="w-full flex justify-center z-0 relative min-h-[45px]"></div>
+    );
+  };
 
   /* ─── Toast System ───────────────────────────────────────────── */
   const ToastMessage = ({ message, type, onClose }) => {
@@ -306,24 +339,38 @@
     };
 
     return (
-      <div className="fixed inset-0 z-[300] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border dark:border-slate-800 animate-slide-up sm:animate-none pb-safe text-center">
+      <div className="fixed inset-0 z-[300] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto">
+        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-6 sm:p-8 shadow-2xl border dark:border-slate-800 animate-slide-up sm:animate-none pb-safe text-center my-auto">
+          <div className="flex justify-end mb-2">
+             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600"><X size={18}/></button>
+          </div>
           <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
             <Lock size={32} className="text-orange-500"/>
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Limit Reached</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
-            You've reached the 3‑job free limit. Enter a licence key for full‑version features.
+            You've reached the 3‑job free limit. Purchase a licence or enter an existing key to unlock unlimited features.
           </p>
-          <input
-            className="w-full p-4 mb-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-mono text-center font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 uppercase"
-            placeholder="ENTER LICENCE KEY"
-            value={key}
-            onChange={e => setKey(e.target.value.toUpperCase())}
-          />
-          <div className="flex gap-3">
-            <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-black">Cancel</button>
-            <button onClick={handleUnlock} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black">Unlock</button>
+
+          {/* Checkout Section */}
+          <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl mb-6 border border-slate-200 dark:border-slate-700 text-left">
+            <h3 className="font-black text-sm mb-1 text-slate-800 dark:text-white">1. Buy a Licence</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 font-medium">Purchase a 1-year Pro Licence. Your unique unlock key will be emailed to you after checkout.</p>
+            <PayPalButton />
+          </div>
+
+          {/* Key Input Section */}
+          <div className="text-left mb-6">
+            <h3 className="font-black text-sm mb-2 text-slate-800 dark:text-white">2. Enter your Key</h3>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-mono font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 uppercase text-sm border border-slate-200 dark:border-slate-700"
+                placeholder="ENTER LICENCE KEY"
+                value={key}
+                onChange={e => setKey(e.target.value.toUpperCase())}
+              />
+              <button onClick={handleUnlock} className="bg-orange-500 hover:bg-orange-400 text-white px-5 rounded-xl font-black text-sm">Unlock</button>
+            </div>
           </div>
         </div>
       </div>
@@ -594,8 +641,16 @@
                   </div>
                 ) : (
                   <>
-                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Enter a licence key for full‑version features.</p>
-                    <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl font-mono text-sm dark:text-white uppercase" placeholder="Licence key" value={licenceInput} onChange={e => setLicenceInput(e.target.value)}/>
+                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Purchase a 1-year licence or enter your existing key.</p>
+                    <PayPalButton />
+                    
+                    <div className="flex items-center gap-2 my-2">
+                      <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
+                      <span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase">OR</span>
+                      <div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div>
+                    </div>
+
+                    <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 border border-amber-200 dark:border-amber-700/40 rounded-xl font-mono text-sm dark:text-white uppercase outline-none focus:ring-2 focus:ring-amber-400" placeholder="Licence key" value={licenceInput} onChange={e => setLicenceInput(e.target.value)}/>
                     <button onClick={handleLicenceUnlock} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2">
                       <Lock size={16}/> Unlock Full Version
                     </button>
