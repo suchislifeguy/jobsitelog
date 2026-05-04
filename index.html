@@ -1910,6 +1910,14 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
       if (navigator.share) { try { await navigator.share({ title: 'Job Summary', text }); } catch(e) {} }
       else { navigator.clipboard.writeText(text); showToast('Summary copied to clipboard!', 'success'); }
     };
+    
+    // **FIX**: Handler for updates from the PrintPreview modal
+    const handleUpdateJobFromPreview = (updatedJob) => {
+        const updatedJobs = jobs.map(j => (j.id === updatedJob.id ? updatedJob : j));
+        saveToDB(updatedJobs);
+        // Keep the preview in sync with the latest changes
+        setPrintPreviewJob(updatedJob);
+    };
 
     // Canvas helpers
     const resetView = () => { setCanvasZoom(1); zoomRef.current=1; setCanvasPan({x:0,y:0}); panRef.current={x:0,y:0}; setCanvasMode('draw'); modeRef.current='draw'; };
@@ -2347,8 +2355,7 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
               <h3 className="text-slate-900 dark:text-white font-black text-xl mb-4">Name your Template</h3>
               <input autoFocus className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none font-bold mb-4 dark:text-white border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-purple-400" placeholder="e.g. Bathroom Patch" value={saveTemplateName} onChange={e=>setSaveTemplateName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&confirmSaveTemplate()}/>
               <div className="flex gap-3 w-full">
-                <button onClick={() => setIsNamingTemplate(false)} className="flex
--1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-2xl font-black">Cancel</button>
+                <button onClick={() => setIsNamingTemplate(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-2xl font-black">Cancel</button>
                 <button onClick={confirmSaveTemplate} className="flex-1 bg-purple-600 text-white py-3 rounded-2xl font-black shadow-lg shadow-purple-500/30">Save</button>
               </div>
             </div>
@@ -2389,7 +2396,16 @@ Combine the data intelligently. Return ONLY a valid JSON object with keys: "addr
           </div>
         )}
 
-        {printPreviewJob && <PrintPreview job={printPreviewJob} extraTaxRate={extraTaxRate} businessProfile={businessProfile} onClose={() => setPrintPreviewJob(null)}/>}
+        {/* **FIX**: Pass the `onUpdateJob` and `showToast` props to the PrintPreview component */}
+        {printPreviewJob && <PrintPreview 
+            job={printPreviewJob} 
+            extraTaxRate={extraTaxRate} 
+            businessProfile={businessProfile} 
+            onClose={() => setPrintPreviewJob(null)}
+            onUpdateJob={handleUpdateJobFromPreview} 
+            showToast={showToast}
+        />}
+        
         {appointmentFromJob && <AppointmentFormModal appointment={appointmentFromJob} jobs={jobs} googleToken={googleToken} onSave={handleSaveAppointment} onClose={() => setAppointmentFromJob(null)} showToast={showToast}/>}
       </div>
     );
