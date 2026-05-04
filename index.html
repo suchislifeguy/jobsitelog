@@ -932,98 +932,120 @@
   );
 
   /* ─── NewJobModal ────────────────────────────────────────────── */
-  const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast }) => {
-    const [addr, setAddr] = useState('');
-    const [client, setClient] = useState('');
-    const [additionalText, setAdditionalText] = useState('');
-    const [dueDate, setDueDate] = useState('');
-    const [files, setFiles] = useState([]);
-    const [isImporting, setIsImporting] = useState(false);
-    const fileInputRef = useRef(null);
-
-    const handleFiles = (e) => { setFiles(prev => [...prev, ...Array.from(e.target.files)]); e.target.value = ''; };
-    const removeFile = (index) => setFiles(prev => prev.filter((_,i) => i!==index));
-    const createManual = () => { if (!addr.trim()) return showToast('Address is required', 'error'); onSave(addr.trim(), client.trim(), [], dueDate); };
-
-    const createWithAI = async () => {
-      if (!apiKey) { showToast('Please save a Gemini API key in Settings first.', 'error'); return; }
-      setIsImporting(true);
-      try {
-        const fileParts = [];
-        for (const file of files) {
-          if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
-            const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
-            fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
+    const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast }) => {
+      const [addr, setAddr] = useState('');
+      const [client, setClient] = useState('');
+      const [additionalText, setAdditionalText] = useState('');
+      const [dueDate, setDueDate] = useState('');
+      const [files, setFiles] = useState([]);
+      const [isImporting, setIsImporting] = useState(false);
+      const fileInputRef = useRef(null);
+  
+      const handleFiles = (e) => { setFiles(prev => [...prev, ...Array.from(e.target.files)]); e.target.value = ''; };
+      const removeFile = (index) => setFiles(prev => prev.filter((_,i) => i!==index));
+      const createManual = () => { if (!addr.trim()) return showToast('Address is required', 'error'); onSave(addr.trim(), client.trim(), [], dueDate); };
+  
+      const createWithAI = async () => {
+        if (!apiKey) { showToast('Please save a Gemini API key in Settings first.', 'error'); return; }
+        setIsImporting(true);
+        try {
+          const fileParts = [];
+          for (const file of files) {
+            if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
+              const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
+              fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
+            }
           }
-        }
-        const textPrompt = `Extract the following from the provided document(s) and additional text. Return ONLY a valid JSON object with keys: "address", "clientName", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array: title, time, rate, materialsCost, materials, tools, desc). Additional text: ${additionalText || 'None'}`;
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:textPrompt},...fileParts]}], generationConfig:{temperature:0,response_mime_type:'application/json'} }) });
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        const data = await res.json();
-        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-        const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
-        onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
-        showToast('Successfully imported via AI!', 'success');
-      } catch (err) { showToast(`AI import failed: ${err.message}`, 'error'); }
-      finally { setIsImporting(false); }
-    };
-
-    const isHandover = type === 'handover';
-    return (
-      <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 relative overflow-hidden animate-slide-up sm:animate-none pb-safe">
-          {isImporting && (
-            <div className="absolute inset-0 bg-slate-900/80 rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
-              <p className="text-white font-black text-sm uppercase">Processing with AI…</p>
-            </div>
-          )}
-          <div className="flex justify-between items-center mb-5">
-            <div>
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{isHandover ? 'Completion Report' : 'Job Sheet'}</span>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1">New Project</h2>
-            </div>
-            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
-          </div>
-          <div className="space-y-3 max-h-[70vh] overflow-y-auto no-scrollbar pb-4">
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Job Address *</label>
-              <input autoFocus className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Client Name</label>
-              <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date (optional)</label>
-              <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" value={dueDate} onChange={e => setDueDate(e.target.value)}/>
-            </div>
-            <div className="flex items-center gap-3 py-1">
-              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or use AI</span><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
-              <div className="mb-2">
-                <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Attach PDF/image files and add extra details below.</p>
+          
+          // Updated prompt to heavily weight pasted text alongside any files
+          const textPrompt = `You are a data extraction AI. Extract the job details from the attached files (if any) AND the following source text.
+          
+  Source Text:
+  """
+  ${additionalText || 'No additional text provided.'}
+  """
+  
+  Combine the data intelligently. Return ONLY a valid JSON object with keys: "address", "clientName", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
+  
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { 
+            method:'POST', 
+            headers:{'Content-Type':'application/json'}, 
+            body: JSON.stringify({ 
+              contents:[{parts:[{text:textPrompt},...fileParts]}], 
+              generationConfig:{temperature:0,response_mime_type:'application/json'} 
+            }) 
+          });
+          
+          if (!res.ok) throw new Error(`API error ${res.status}`);
+          const data = await res.json();
+          const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
+          const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
+          onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
+          showToast('Successfully imported via AI!', 'success');
+        } catch (err) { showToast(`AI import failed: ${err.message}`, 'error'); }
+        finally { setIsImporting(false); }
+      };
+  
+      const isHandover = type === 'handover';
+      
+      // The Auto-Fill button is now active if there are files OR pasted text
+      const canUseAI = apiKey && (files.length > 0 || additionalText.trim().length > 0);
+  
+      return (
+        <div className="fixed inset-0 z-[150] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 relative overflow-hidden animate-slide-up sm:animate-none pb-safe">
+            {isImporting && (
+              <div className="absolute inset-0 bg-slate-900/80 rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col items-center justify-center z-10 backdrop-blur-sm">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mb-4"/>
+                <p className="text-white font-black text-sm uppercase">Processing with AI…</p>
               </div>
-              <label className="flex items-center gap-2 mb-2 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors text-xs font-black uppercase"><Upload size={14}/> Add Documents<input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/></label>
-              {files.length > 0 && (
-                <div className="mb-2">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1 shadow-sm"><span className="text-[11px] font-medium truncate flex-1">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400"><X size={14}/></button></div>))}</div>
-              )}
-              <textarea className="w-full p-3 bg-white dark:bg-slate-700 rounded-lg outline-none text-xs font-medium resize-none h-16 dark:text-white dark:placeholder-slate-400 shadow-sm" placeholder="Additional details..." value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
-            </div>
-          </div>
-          <div className="flex gap-3 mt-4">
-            <button onClick={createManual} className={`flex-1 py-3 rounded-xl font-black text-sm shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>Create</button>
-            {apiKey && files.length > 0 && (
-              <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95"><Sparkles size={16}/> Auto-Fill</button>
             )}
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{isHandover ? 'Completion Report' : 'Job Sheet'}</span>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-1">New Project</h2>
+              </div>
+              <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
+            </div>
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto no-scrollbar pb-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Job Address *</label>
+                <input autoFocus className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)}/>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Client Name</label>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="e.g. John Smith" value={client} onChange={e => setClient(e.target.value)}/>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date (optional)</label>
+                <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" value={dueDate} onChange={e => setDueDate(e.target.value)}/>
+              </div>
+              <div className="flex items-center gap-3 py-1">
+                <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or use AI</span><div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+                <div className="mb-2">
+                  <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Sparkles size={12} className="text-orange-500"/> AI Auto‑Fill</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Attach PDF/image files or paste raw text below.</p>
+                </div>
+                <label className="flex items-center gap-2 mb-2 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 transition-colors text-xs font-black uppercase"><Upload size={14}/> Add Documents<input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/></label>
+                {files.length > 0 && (
+                  <div className="mb-2">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 p-2 rounded-lg mb-1 shadow-sm"><span className="text-[11px] font-medium truncate flex-1">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400"><X size={14}/></button></div>))}</div>
+                )}
+                <textarea className="w-full p-3 bg-white dark:bg-slate-700 rounded-lg outline-none text-xs font-medium resize-none h-16 dark:text-white dark:placeholder-slate-400 shadow-sm" placeholder="Paste .docx text or additional details here..." value={additionalText} onChange={e => setAdditionalText(e.target.value)}/>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button onClick={createManual} className={`flex-1 py-3 rounded-xl font-black text-sm shadow-xl transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>Create</button>
+              {canUseAI && (
+                <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black text-sm shadow-xl flex items-center justify-center gap-2 transition-all active:scale-95"><Sparkles size={16}/> Auto-Fill</button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    );
-  };
+      );
+    };
 
   /* ─── PrintPreview ───────────────────────────────────────────── */
   const PrintPreview = ({ job, extraTaxRate, businessProfile = {}, onClose }) => {
