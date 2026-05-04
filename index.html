@@ -25,9 +25,8 @@
     </script>
 
     <!-- PAYPAL SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=BAA4zpTO_3zmcoQkk-UyKIdJDt6e4PWFwCQVVtXihsQe9I-l188FNq4S8O2I08YmE3FG5uo2iEO46w8SGo&components=hosted-buttons&disable-funding=venmo&currency=AUD"></script>
 
-    <script src="https://www.paypal.com/sdk/js?client-id=BAA4zpTO_3zmcoQkk-UyKIdJDt6e4PWFwCQVVtXihsQe9I-l188FNq4S8O2I08YmE3FG5uo2iEO46w8SGo&components=hosted-buttons&disable-funding=venmo&currency=AUD&shipping_preference=no_shipping"></script>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -61,6 +60,48 @@
         .nav-spacing { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
       }
 
+    /* Global overflow fixes */
+          * {
+            max-width: 100%;
+            box-sizing: border-box;
+          }
+          
+          /* Fix all containers */
+          .container, [class*="max-w-"], [class*="w-"] {
+            overflow-x: hidden;
+          }
+          
+          /* Ensure text wraps properly */
+          p, h1, h2, h3, h4, span, div {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          
+          /* Fix for the main content area */
+          .max-w-2xl {
+            width: 100%;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            margin-left: auto;
+            margin-right: auto;
+          }
+          
+          /* Mobile-specific fixes */
+          @media (max-width: 640px) {
+            .p-4 {
+              padding: 0.75rem;
+            }
+            
+            .gap-3 {
+              gap: 0.5rem;
+            }
+            
+            .text-lg {
+              font-size: 1rem;
+            }
+          }
+      
+
       @media print {
         @page { margin: 12mm; size: A4; }
         html, body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -87,47 +128,6 @@
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       .canvas-editor-area { touch-action: none; }
-
-      /* Global overflow fixes */
-      * {
-        max-width: 100%;
-        box-sizing: border-box;
-      }
-      
-      /* Fix all containers */
-      .container, [class*="max-w-"], [class*="w-"] {
-        overflow-x: hidden;
-      }
-      
-      /* Ensure text wraps properly */
-      p, h1, h2, h3, h4, span, div {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-      }
-      
-      /* Fix for the main content area */
-      .max-w-2xl {
-        width: 100%;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        margin-left: auto;
-        margin-right: auto;
-      }
-      
-      /* Mobile-specific fixes */
-      @media (max-width: 640px) {
-        .p-4 {
-          padding: 0.75rem;
-        }
-        
-        .gap-3 {
-          gap: 0.5rem;
-        }
-        
-        .text-lg {
-          font-size: 1rem;
-        }
-      }
 
       .calendar-grid { display: grid; grid-template-columns: 60px repeat(7, 1fr); background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 1.5rem; overflow: hidden; }
       .dark .calendar-grid { background-color: #1e293b; border-color: #334155; }
@@ -309,67 +309,37 @@
   }
 
   /* ─── PayPal Button Component ────────────────────────────────── */
-  const PayPalButton = () => {
-    const [processing, setProcessing] = useState(false);
-    const containerId = useRef(`paypal-${Math.random().toString(36).substr(2, 9)}`);
-    
-    useEffect(() => {
-      if (window.paypal && !processing) {
-        window.paypal.Buttons({
-          style: {
-            shape: 'rect',
-            color: 'gold',
-            layout: 'vertical',
-            label: 'paypal',
-            height: 40
-          },
-          createOrder: (data, actions) => {
-            return actions.order.create({
-              purchase_units: [{
-                amount: {
-                  value: '49.00',
-                  currency_code: 'AUD'
-                },
-                description: 'JobLog Pro Licence - 1 Year Access'
-              }],
-              application_context: {
-                shipping_preference: 'NO_SHIPPING',  // This removes address!
-                brand_name: 'JobLog',
-                locale: 'en-AU',
-                user_action: 'PAY_NOW'
-              }
-            });
-          },
-          onApprove: async (data, actions) => {
-            const order = await actions.order.capture();
-            // Payment successful
-            const customerEmail = order.payer.email_address;
-            const customerName = order.payer.name.given_name;
-            
-            // Here you'd trigger your email system
-            // For now, show success and tell them to check email
-            showToast(`Thanks ${customerName}! Your licence key has been sent to ${customerEmail}`, 'success');
-            
-            // You'll need to manually email them a key, OR
-            // Set up a webhook to automate it
-          },
-          onError: (err) => {
-            console.error(err);
-            showToast('Payment failed. Please try again.', 'error');
+    const PayPalButton = () => {
+      const containerId = useRef(`paypal-${Math.random().toString(36).substr(2, 9)}`);
+      
+      useEffect(() => {
+        if (window.paypal) {
+          const el = document.getElementById(containerId.current);
+          if (el && el.children.length === 0) {
+            try {
+              window.paypal.HostedButtons({
+                hostedButtonId: "KQQ6Q5YFX758G",
+              }).render(`#${containerId.current}`);
+            } catch (err) {
+              console.error("PayPal render error", err);
+            }
           }
-        }).render(`#${containerId.current}`);
-        
-        setProcessing(true);
-      }
-    }, []);
+        }
+      }, []);
     
+      return (
+        <div className="flex justify-center overflow-x-auto" style={{ isolation: 'isolate' }}>
+          <div 
+            id={containerId.current} 
+            className="paypal-isolate"
+            style={{ minWidth: '220px', width: 'auto', display: 'inline-block' }}
+          />
+        </div>
+      );
+    };
+
     return (
-      <div className="w-full">
-        <div id={containerId.current} className="min-h-[45px] w-full"></div>
-        <p className="text-[10px] text-slate-400 text-center mt-2">
-          After payment, you'll receive your licence key via email
-        </p>
-      </div>
+      <div id={containerId.current} className="w-full flex justify-center z-0 relative min-h-[45px]"></div>
     );
   };
 
@@ -2477,3 +2447,6 @@ Additional User Instructions/Focus: ${customPrompt || 'None'}`;
     </script>
   </body>
 </html>
+
+
+Why does the paypal button type it all vertically... in phone or computer.. is that a design flaw? looks annoying.
