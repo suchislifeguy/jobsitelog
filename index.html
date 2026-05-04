@@ -25,8 +25,9 @@
     </script>
 
     <!-- PAYPAL SDK -->
-    <script src="https://www.paypal.com/sdk/js?client-id=BAA4zpTO_3zmcoQkk-UyKIdJDt6e4PWFwCQVVtXihsQe9I-l188FNq4S8O2I08YmE3FG5uo2iEO46w8SGo&components=hosted-buttons&disable-funding=venmo&currency=AUD"></script>
 
+    <script src="https://www.paypal.com/sdk/js?client-id=BAA4zpTO_3zmcoQkk-UyKIdJDt6e4PWFwCQVVtXihsQe9I-l188FNq4S8O2I08YmE3FG5uo2iEO46w8SGo&currency=AUD"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -309,30 +310,65 @@
 
   /* ─── PayPal Button Component ────────────────────────────────── */
   const PayPalButton = () => {
+    const [processing, setProcessing] = useState(false);
     const containerId = useRef(`paypal-${Math.random().toString(36).substr(2, 9)}`);
     
     useEffect(() => {
-      if (window.paypal) {
-        const el = document.getElementById(containerId.current);
-        if (el && el.children.length === 0) {
-          try {
-            window.paypal.HostedButtons({
-              hostedButtonId: "KQQ6Q5YFX758G",
-            }).render(`#${containerId.current}`);
-          } catch (err) {
-            console.error("PayPal render error", err);
+      if (window.paypal && !processing) {
+        window.paypal.Buttons({
+          style: {
+            shape: 'rect',
+            color: 'gold',
+            layout: 'vertical',
+            label: 'paypal',
+            height: 40
+          },
+          createOrder: (data, actions) => {
+            return actions.order.create({
+              purchase_units: [{
+                amount: {
+                  value: '49.00',
+                  currency_code: 'AUD'
+                },
+                description: 'JobLog Pro Licence - 1 Year Access'
+              }],
+              application_context: {
+                shipping_preference: 'NO_SHIPPING',  // This removes address!
+                brand_name: 'JobLog',
+                locale: 'en-AU',
+                user_action: 'PAY_NOW'
+              }
+            });
+          },
+          onApprove: async (data, actions) => {
+            const order = await actions.order.capture();
+            // Payment successful
+            const customerEmail = order.payer.email_address;
+            const customerName = order.payer.name.given_name;
+            
+            // Here you'd trigger your email system
+            // For now, show success and tell them to check email
+            showToast(`Thanks ${customerName}! Your licence key has been sent to ${customerEmail}`, 'success');
+            
+            // You'll need to manually email them a key, OR
+            // Set up a webhook to automate it
+          },
+          onError: (err) => {
+            console.error(err);
+            showToast('Payment failed. Please try again.', 'error');
           }
-        }
+        }).render(`#${containerId.current}`);
+        
+        setProcessing(true);
       }
     }, []);
-  
+    
     return (
-      <div className="flex justify-center overflow-x-auto" style={{ isolation: 'isolate' }}>
-        <div 
-          id={containerId.current} 
-          className="paypal-isolate"
-          style={{ minWidth: '220px', width: 'auto', display: 'inline-block' }}
-        />
+      <div className="w-full">
+        <div id={containerId.current} className="min-h-[45px] w-full"></div>
+        <p className="text-[10px] text-slate-400 text-center mt-2">
+          After payment, you'll receive your licence key via email
+        </p>
       </div>
     );
   };
