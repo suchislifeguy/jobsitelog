@@ -268,13 +268,11 @@
 
   /* ─── PayPal Button Component ────────────────────────────────── */
   const PayPalButton = () => {
-    // Generate a unique ID for this instance so React doesn't get confused
     const containerId = useRef(`paypal-${Math.random().toString(36).substr(2, 9)}`);
     
     useEffect(() => {
       if (window.paypal) {
         const el = document.getElementById(containerId.current);
-        // Only render if container is empty to prevent duplication on re-renders
         if (el && el.children.length === 0) {
           try {
             window.paypal.HostedButtons({
@@ -286,9 +284,15 @@
         }
       }
     }, []);
-
+  
     return (
-      <div id={containerId.current} className="w-full flex justify-center z-0 relative min-h-[45px]"></div>
+      <div className="flex justify-center overflow-x-auto" style={{ isolation: 'isolate' }}>
+        <div 
+          id={containerId.current} 
+          className="paypal-isolate"
+          style={{ minWidth: '220px', width: 'auto', display: 'inline-block' }}
+        />
+      </div>
     );
   };
 
