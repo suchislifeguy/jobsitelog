@@ -61,46 +61,45 @@
       }
 
     /* Global overflow fixes */
-          * {
-            max-width: 100%;
-            box-sizing: border-box;
-          }
-          
-          /* Fix all containers */
-          .container, [class*="max-w-"], [class*="w-"] {
-            overflow-x: hidden;
-          }
-          
-          /* Ensure text wraps properly */
-          p, h1, h2, h3, h4, span, div {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-          }
-          
-          /* Fix for the main content area */
-          .max-w-2xl {
-            width: 100%;
-            padding-left: 1rem;
-            padding-right: 1rem;
-            margin-left: auto;
-            margin-right: auto;
-          }
-          
-          /* Mobile-specific fixes */
-          @media (max-width: 640px) {
-            .p-4 {
-              padding: 0.75rem;
-            }
-            
-            .gap-3 {
-              gap: 0.5rem;
-            }
-            
-            .text-lg {
-              font-size: 1rem;
-            }
-          }
+      * {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
       
+      /* Fix all containers */
+      .container, [class*="max-w-"], [class*="w-"] {
+        overflow-x: hidden;
+      }
+      
+      /* Ensure text wraps properly */
+      p, h1, h2, h3, h4, span, div {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+      
+      /* Fix for the main content area */
+      .max-w-2xl {
+        width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      
+      /* Mobile-specific fixes */
+      @media (max-width: 640px) {
+        .p-4 {
+          padding: 0.75rem;
+        }
+        
+        .gap-3 {
+          gap: 0.5rem;
+        }
+        
+        .text-lg {
+          font-size: 1rem;
+        }
+      }
 
       @media print {
         @page { margin: 12mm; size: A4; }
