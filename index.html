@@ -1057,10 +1057,10 @@
             </div>
           </div>
           <div>
-            {/* ─── Business Header ─── */}
+{/* ─── Business Header ─── */}
             {biz.name && (
               <div className="pb-4 mb-4 border-b-2 border-slate-300">
-                <div className="flex justify-between items-start mb-3">
+                <div className="flex justify-between items-start">
                   <div className="flex items-center gap-4">
                     {biz.logo && <img src={biz.logo} className="h-16 w-auto object-contain rounded-lg" alt={biz.name}/>}
                     <div>
@@ -1069,40 +1069,30 @@
                       {biz.abn && <p className="text-xs font-bold text-slate-600 mt-0.5 font-mono">ABN {biz.abn}</p>}
                     </div>
                   </div>
-                  <div className="text-right text-sm text-slate-600 space-y-0.5">
+                  
+                  {/* Right-aligned Contact & Credential Details */}
+                  <div className="text-right text-sm text-slate-600 space-y-0.5 flex flex-col items-end">
                     {biz.phone && <p className="font-bold">{biz.phone}</p>}
                     {biz.email && <p>{biz.email}</p>}
-                    {biz.address && <p className="text-slate-400 text-xs">{biz.address}</p>}
-                  </div>
-                </div>
+                    {biz.address && <p className="text-slate-400 text-xs mb-2">{biz.address}</p>}
 
-                {/* Licences & Insurance row */}
-                {(printLicences.length > 0 || hasInsurance) && (
-                  <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-slate-200">
-                    {printLicences.map((lic, i) => {
-                      const expired = isExpired(lic.expiry);
-                      const expiring = isExpiringSoon(lic.expiry);
-                      const typeOpt = LICENCE_TYPE_OPTIONS.find(o => o.value === lic.type);
-                      return (
-                        <div key={i} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase border print-licence-badge ${expired ? 'border-red-300 text-red-600 bg-red-50' : expiring ? 'border-amber-300 text-amber-700 bg-amber-50' : 'border-slate-300 text-slate-600 bg-slate-50'}`}>
-                          <span>{typeOpt?.icon || '📋'}</span>
-                          <span>{lic.type}</span>
-                          <span className="font-mono text-slate-500">#{lic.number}</span>
-                          {lic.state && <span className="text-slate-400">· {lic.state}</span>}
-                          {lic.expiry && <span className={expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-slate-400'}>· Exp {fmtDate(lic.expiry)}</span>}
-                        </div>
-                      );
-                    })}
-                    {hasInsurance && (
-                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-black uppercase border border-blue-200 text-blue-700 bg-blue-50 print-licence-badge">
-                        <span>🛡️</span>
-                        <span>{biz.insurance}</span>
-                        <span className="font-mono text-blue-500">#{biz.insurancePolicy}</span>
-                        {biz.insuranceExpiry && <span className={isExpired(biz.insuranceExpiry) ? 'text-red-500' : isExpiringSoon(biz.insuranceExpiry) ? 'text-amber-500' : 'text-blue-400'}>· {fmtDate(biz.insuranceExpiry)}</span>}
+                    {/* Licences stacked cleanly under contact info */}
+                    {(printLicences.length > 0 || hasInsurance) && (
+                      <div className="mt-1 pt-2 border-t border-slate-200 inline-block text-right min-w-[150px]">
+                        {printLicences.map((lic, i) => (
+                          <p key={i} className="text-[10px] text-slate-500 font-medium uppercase tracking-wide leading-tight mb-0.5">
+                            {lic.type}: <span className="font-bold text-slate-800 font-mono">{lic.number}</span>
+                          </p>
+                        ))}
+                        {hasInsurance && (
+                          <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide leading-tight">
+                            PLI ({biz.insurance}): <span className="font-bold text-slate-800 font-mono">{biz.insurancePolicy}</span>
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
+                </div>
               </div>
             )}
 
