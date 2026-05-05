@@ -1,3 +1,11 @@
+An elegant and highly robust solution. We've replaced the fragile task-based
+guessing logic with a hardened, professional Timesheet architecture. We've also
+transformed the AI pipeline into a "smart router" that gracefully degrades
+through fallbacks to survive Google's free-tier rate limits, all completely
+invisible to the user.
+
+Here is the fully rewritten and unified index.html file.
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -122,10 +130,11 @@
     ShieldCheck, BadgeCheck, FileCheck, Camera, Wand2, Play, Square, Phone, Wallet, Timer, FileDown
   } from 'lucide-react';
 
-  const DB_KEY_JOBS      = 'jobsite-master-v5';
-  const DB_KEY_TEMPL     = 'joblog-templates';
-  const DB_KEY_MATS      = 'joblog-materials';
+  const DB_KEY_JOBS         = 'jobsite-master-v5';
+  const DB_KEY_TEMPL        = 'joblog-templates';
+  const DB_KEY_MATS         = 'joblog-materials';
   const DB_KEY_APPOINTMENTS = 'joblog-appointments';
+  const DB_KEY_TIMESHEETS   = 'joblog-timesheets';
 
   const LICENCE_KEYS = [
     { key: "JOBLOG-DEMO-1234", expiry: null },
@@ -145,6 +154,11 @@
   const MAX_STOPS = 12;
   const GST_RATE  = 0.1;
 
+  // --- Utility Functions ---
+  const getLocalYYYYMMDD = () => {
+    const date = new Date();
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  };
   const parseTimeToMinutes = (str) => {
     if (!str) return 0;
     const s = str.toLowerCase().trim();
@@ -161,6 +175,45 @@
   const toLocalISO = (d) => { if (!d) return ''; const date = new Date(d); return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); };
   const isExpiringSoon = (expiryStr) => { if (!expiryStr) return false; const diff = new Date(expiryStr) - new Date(); return diff > 0 && diff < 60 * 24 * 60 * 60 * 1000; };
   const isExpired = (expiryStr) => { if (!expiryStr) return false; return new Date(expiryStr) < new Date(); };
+
+  // --- Core AI "Smart Router" & Waterfall ---
+  const smartFetchAI = async (taskType, contents, generationConfig, apiKey) => {
+    // Determine the optimal route path.
+    const heavyModels = ['gemini-3-flash', 'gemini-2.5-flash', 'gemini-3.1-flash-lite'];
+    const lightModels = ['gemini-3.1-flash-lite', 'gemini-3-flash', 'gemini-2.5-flash'];
+    const models = taskType === 'heavy' ? heavyModels : lightModels;
+
+    let lastError;
+    for (const model of models) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents, generationConfig })
+        });
+        
+        if (res.status === 429) {
+          console.warn(`[AI] 429 Rate Limit hit on ${model}. Gracefully falling back...`);
+          lastError = new Error(`429 Too Many Requests on ${model}`);
+          continue;
+        }
+        
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`API error ${res.status} on ${model}: ${errText}`);
+        }
+        
+        return await res.json();
+      } catch (err) {
+        if (err.message.includes('429')) {
+          lastError = err;
+          continue;
+        }
+        throw err; // For invalid API keys or offline connectivity, fail fast.
+      }
+    }
+    throw lastError || new Error("All fallback models failed.");
+  };
 
   const getQuoteTotals = (tasks, gstEnabled, extraTaxRate = 0) => {
     let labour = 0, mats = 0;
@@ -677,10 +730,8 @@
     );
   };
 
-  /* Settings Modal - Cleaned up Google Auth into Advanced section */
-  const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
+  const SettingsModal = ({ apiKey, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
-    const [draftModel, setDraftModel] = useState(geminiModel);
     const [draftExtraTax, setDraftExtraTax] = useState(extraTaxRate);
     const [draftGoogleClientId, setDraftGoogleClientId] = useState(googleClientId);
     const [showTemplates, setShowTemplates] = useState(false);
@@ -689,7 +740,7 @@
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [licenceInput, setLicenceInput] = useState('');
 
-    const save = () => { onSave(draftKey, draftModel, draftExtraTax); setGoogleClientId(draftGoogleClientId); onClose(); showToast('Settings Saved', 'success'); };
+    const save = () => { onSave(draftKey, draftExtraTax); setGoogleClientId(draftGoogleClientId); onClose(); showToast('Settings Saved', 'success'); };
     const hasBiz = !!businessProfile?.name;
 
     const handleLicenceUnlock = () => {
@@ -788,10 +839,10 @@
             {/* Gemini API */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
-              <input type="password" className="w-full p-3.5 mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
+              <p className="text-[10px] text-slate-400 font-medium mb-3">JobLog uses a smart routing AI framework. Ensure your API key is active. Free tier requests are handled via intelligent fallback models.</p>
               <div className="relative">
                 <Bot size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
+                <input type="password" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
               </div>
             </div>
 
@@ -869,7 +920,7 @@
     };
     const start = (e) => { e.preventDefault(); isDrawing.current = true; const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
     const draw = (e) => { if (!isDrawing.current) return; e.preventDefault(); const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
-    const end = () => { if (!isDrawing.current) return; isDrawing.current = false; onSave(canvasRef.current.toDataURL('image/webp', 0.5)); }; // Compress Signature heavily
+    const end = () => { if (!isDrawing.current) return; isDrawing.current = false; onSave(canvasRef.current.toDataURL('image/webp', 0.5)); }; 
     const clear = () => { if(!canvasRef.current) return; const cvs = canvasRef.current; cvs.getContext('2d').clearRect(0, 0, cvs.width, cvs.height); onSave(null); };
     return (
       <div className="relative border-2 border-slate-300 border-dashed rounded-xl overflow-hidden bg-slate-50 no-print-border inline-block max-w-full touch-none">
@@ -879,8 +930,7 @@
     );
   };
 
-  /* New Job Modal - Featuring File API fix for PDFs */
-  const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast, toggleVoice, listeningField }) => {
+  const NewJobModal = ({ type, onSave, onClose, apiKey, showToast, toggleVoice, listeningField }) => {
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
     const [phone, setPhone] = useState('');
@@ -916,7 +966,6 @@
               const uploadData = await uploadRes.json();
               fileParts.push({ fileData: { mimeType: file.type, fileUri: uploadData.file.uri } });
             } catch (err) {
-              // Failsafe: Fallback to Base64 Inline Data if File API endpoint fails
               const base64Data = await new Promise((resolve, reject) => { 
                 const reader = new FileReader(); 
                 reader.onload = () => resolve(reader.result.split(',')[1]); 
@@ -930,13 +979,17 @@
             fileParts.push({ inlineData: { mimeType: file.type || 'image/jpeg', data: base64Data } });
           }
         }
+        
         const textPrompt = `You are a data extraction AI. Extract job details from the attached files (if any) AND the following source text.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "clientPhone", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:textPrompt},...fileParts]}], generationConfig:{temperature:0,response_mime_type:'application/json'} }) });
         
-        if (!res.ok) throw new Error(`API error ${res.status}`);
+        const resData = await smartFetchAI(
+          'heavy',
+          [{ parts: [{ text: textPrompt }, ...fileParts] }],
+          { temperature: 0, response_mime_type: 'application/json' },
+          apiKey
+        );
         
-        const data = await res.json();
-        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
         const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
         onSave(json.address || addr, json.clientName || client, json.clientPhone || phone, tasks, json.dueDate || dueDate);
@@ -1030,7 +1083,6 @@
     );
   };
 
-  /* Print Preview */
   const PrintPreview = ({ job, extraTaxRate, businessProfile = {}, onClose, onUpdateJob, showToast }) => {
     const [tasks, setTasks] = useState(job.tasks.map(t => ({...t})));
     const [header, setHeader] = useState({
@@ -1185,7 +1237,6 @@
               </div>
             )}
 
-            {/* Global T&Cs printed automatically at bottom of PDF */}
             {biz.termsAndConditions && (
               <div className="mt-12 pt-4 border-t border-slate-300 text-[10px] text-slate-500 font-medium whitespace-pre-wrap leading-tight break-inside-avoid">
                 <p className="font-bold text-slate-700 uppercase mb-1">Terms & Conditions</p>
@@ -1206,7 +1257,7 @@
       if (!form.title.trim() || !form.start || !form.end) return showToast('Title, start, and end are required.', 'error');
       const startDate = new Date(form.start); const endDate = new Date(form.end);
       if (endDate <= startDate) return showToast('End must be after start.', 'error');
-      onSave({ id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now()), ...form, start: startDate.toISOString(), end: endDate.toISOString(), googleEventId: appointment.googleEventId || null });
+      onSave({ id: appointment.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()), ...form, start: startDate.toISOString(), end: endDate.toISOString(), googleEventId: appointment.googleEventId || null });
     };
     return (
       <div className="fixed inset-0 z-[500] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
@@ -1234,8 +1285,76 @@
     );
   };
 
-  /* The New Schedule & Timesheet View combined */
-  const ScheduleView = ({ appointments, jobs, googleToken, onSaveAppointment, onDeleteAppointment, isGoogleConnected, showConfirm, onScheduleFromJob, showToast }) => {
+  const TimeEntryModal = ({ entry, jobs, onSave, onDelete, onClose, showToast }) => {
+    const editing = !!entry.id;
+    const [form, setForm] = useState({
+      date: entry.date || getLocalYYYYMMDD(),
+      startTime: entry.startTime || '08:00',
+      endTime: entry.endTime || '16:00',
+      jobId: entry.jobId || '',
+      category: entry.category || 'Site Work',
+      notes: entry.notes || ''
+    });
+
+    const CATEGORIES = ['Site Work', 'Quoting', 'Admin', 'Travel', 'Maintenance'];
+
+    const save = () => {
+      if (!form.date || !form.startTime || !form.endTime) return showToast('Date and times are required.', 'error');
+      const sm = parseInt(form.startTime.split(':')[0])*60 + parseInt(form.startTime.split(':')[1]);
+      const em = parseInt(form.endTime.split(':')[0])*60 + parseInt(form.endTime.split(':')[1]);
+      if (em <= sm) return showToast('End time must be after start time.', 'error');
+      
+      onSave({ id: entry.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()), ...form });
+    };
+
+    return (
+      <div className="fixed inset-0 z-[500] bg-slate-900/95 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 animate-slide-up sm:animate-none">
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 flex flex-col pb-safe max-h-[90vh]">
+          <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+            <h3 className="font-black text-lg text-slate-900 dark:text-white">{editing ? 'Edit Time Entry' : 'Log Time'}</h3>
+            <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
+          </div>
+          
+          <div className="overflow-y-auto flex-1 no-scrollbar space-y-4 pb-2">
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Date</label>
+              <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.date} onChange={e => setForm({...form, date: e.target.value})}/>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start Time</label><input type="time" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.startTime} onChange={e => setForm({...form, startTime: e.target.value})}/></div>
+              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End Time</label><input type="time" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.endTime} onChange={e => setForm({...form, endTime: e.target.value})}/></div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Category</label>
+              <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Link to Project (Optional)</label>
+              <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-medium text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}>
+                <option value="">No linked project</option>
+                {jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}
+              </select>
+            </div>
+
+            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label><textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm font-medium h-20 resize-none dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="e.g. Rough in bathroom..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/></div>
+          </div>
+          
+          <div className="flex gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
+            {editing && (<button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-3.5 rounded-xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={18}/></button>)}
+            <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-3.5 rounded-xl font-black text-sm text-slate-600 dark:text-slate-300">Cancel</button>
+            <button onClick={save} className="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-3.5 rounded-xl font-black text-sm shadow-lg flex justify-center items-center gap-2"><Check size={16}/> Save</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const ScheduleView = ({ appointments, timesheets, jobs, googleToken, onSaveAppointment, onDeleteAppointment, isGoogleConnected, showConfirm, onScheduleFromJob, showToast, onNewTimeEntry, onEditTimeEntry }) => {
     const [viewTab, setViewTab] = useState('upcoming'); // 'upcoming' | 'timesheet'
     const [weekOffset, setWeekOffset] = useState(0);
     const [apptModal, setApptModal] = useState(null);
@@ -1293,28 +1412,50 @@
     // Setup Timesheet Calcs
     const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(endOfWeek.getDate()+7);
     const fullDayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-    let weeklyTotalMins = 0; const dailyMins = [0,0,0,0,0,0,0]; const weeklyLogs = [];
+    
+    let weeklyTotalMins = 0; 
+    const dailyMins = [0,0,0,0,0,0,0]; 
+    const weeklyLogs = [];
 
-    jobs.forEach(job => {
-      job.tasks.forEach(task => {
-        const tDate = new Date(task.id);
-        if (tDate >= startOfWeek && tDate < endOfWeek) {
-          const m = parseTimeToMinutes(task.time);
-          if (m > 0) {
-            weeklyTotalMins += m;
-            const dIdx = (tDate.getDay() + 6) % 7; 
-            dailyMins[dIdx] += m;
-            weeklyLogs.push({ day: fullDayNames[dIdx], date: tDate.toLocaleDateString(), job: job.address, task: task.title, time: fmtMins(m), rawMins: m });
-          }
+    timesheets.forEach(entry => {
+      const [y,m,d] = entry.date.split('-');
+      const tDate = new Date(y, m-1, d);
+      tDate.setHours(0,0,0,0);
+      
+      if (tDate >= startOfWeek && tDate < endOfWeek) {
+        const sm = parseInt(entry.startTime.split(':')[0])*60 + parseInt(entry.startTime.split(':')[1]);
+        const em = parseInt(entry.endTime.split(':')[0])*60 + parseInt(entry.endTime.split(':')[1]);
+        let mins = em >= sm ? em - sm : (em + 24*60) - sm;
+        
+        if (mins > 0) {
+          weeklyTotalMins += mins;
+          const dIdx = (tDate.getDay() + 6) % 7; 
+          dailyMins[dIdx] += mins;
+          weeklyLogs.push({ 
+            id: entry.id,
+            day: fullDayNames[dIdx], 
+            date: entry.date,
+            jobId: entry.jobId,
+            category: entry.category,
+            notes: entry.notes, 
+            timeStr: `${entry.startTime} - ${entry.endTime}`,
+            hours: fmtMins(mins),
+            rawMins: mins,
+            originalEntry: entry
+          });
         }
-      });
+      }
     });
 
     const exportCSV = () => {
       if (weeklyLogs.length===0) return showToast('No entries to export', 'error');
-      let csv = "Day,Date,Job,Task,Hours\n";
-      weeklyLogs.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(l => { csv += `"${l.day}","${l.date}","${l.job}","${l.task}","${l.time}"\n`; });
-      csv += `\nTotal,,,"${fmtMins(weeklyTotalMins)}"\n`;
+      let csv = "Day,Date,Category,Job,Notes,Hours\n";
+      weeklyLogs.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(l => { 
+        const jobInfo = jobs.find(j => j.id === l.jobId);
+        const jobName = jobInfo ? `${jobInfo.address}` : '';
+        csv += `"${l.day}","${l.date}","${l.category}","${jobName}","${l.notes.replace(/"/g, '""')}","${l.hours}"\n`; 
+      });
+      csv += `\nTotal,,,,, "${fmtMins(weeklyTotalMins)}"\n`;
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = `Timesheet_${startOfWeek.toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
@@ -1373,9 +1514,16 @@
           </>
         ) : (
           <div className="space-y-4 max-w-sm mx-auto">
-            <div className="bg-purple-600 text-white rounded-3xl p-6 flex justify-between items-center shadow-lg">
-              <div><p className="text-purple-200 font-black text-xs uppercase tracking-widest">This Week's Hours</p><h2 className="text-4xl font-black mt-1">{fmtMins(weeklyTotalMins)}</h2></div>
-              <button onClick={exportCSV} className="bg-white/20 hover:bg-white/30 p-3 rounded-xl transition-colors active:scale-95"><FileDown size={24}/></button>
+            <div className="bg-purple-600 text-white rounded-3xl p-6 flex justify-between items-center shadow-lg relative overflow-hidden">
+              <div className="relative z-10">
+                <p className="text-purple-200 font-black text-xs uppercase tracking-widest">This Week's Hours</p>
+                <h2 className="text-4xl font-black mt-1">{fmtMins(weeklyTotalMins)}</h2>
+              </div>
+              <div className="flex flex-col gap-2 relative z-10">
+                <button onClick={onNewTimeEntry} className="bg-white text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-xl text-xs font-black shadow transition-all active:scale-95 flex items-center gap-1 justify-center"><Plus size={14}/> Log Time</button>
+                <button onClick={exportCSV} className="bg-purple-800/40 hover:bg-purple-800/60 text-white px-4 py-2 rounded-xl text-xs font-black transition-colors active:scale-95 flex items-center gap-1 justify-center"><FileDown size={14}/> Export</button>
+              </div>
+              <div className="absolute -right-4 -bottom-8 opacity-10 pointer-events-none"><Clock size={120}/></div>
             </div>
             <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border dark:border-slate-700 shadow-sm space-y-3">
               {fullDayNames.map((d,i) => {
@@ -1384,12 +1532,19 @@
                 return (
                   <div key={d} className="border-b dark:border-slate-700 pb-3 last:border-0 last:pb-0">
                     <div className="flex justify-between items-end mb-2"><h4 className="font-black text-slate-800 dark:text-white">{d}</h4><span className="font-black text-purple-600 text-sm">{fmtMins(dailyMins[i])}</span></div>
-                    {logs.map((l,idx) => (
-                      <div key={idx} className="flex justify-between items-start text-xs bg-slate-50 dark:bg-slate-900 p-2 rounded-lg mb-1 border border-slate-100 dark:border-slate-800">
-                        <div className="min-w-0 pr-2"><p className="font-bold dark:text-slate-300 truncate">{l.job}</p><p className="text-slate-400 truncate">{l.task}</p></div>
-                        <span className="font-bold whitespace-nowrap bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded flex-shrink-0">{l.time}</span>
-                      </div>
-                    ))}
+                    {logs.map((l,idx) => {
+                      const jobInfo = jobs.find(j => j.id === l.jobId);
+                      return (
+                        <div key={l.id} onClick={() => onEditTimeEntry(l.originalEntry)} className="flex flex-col justify-center text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-xl mb-2 border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-purple-300 transition-colors">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="font-black text-slate-900 dark:text-white text-sm">{l.category}</span>
+                            <span className="font-bold whitespace-nowrap bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-md">{l.timeStr} ({l.hours})</span>
+                          </div>
+                          {jobInfo && <p className="font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1 mb-1 truncate"><MapPinned size={12}/> {jobInfo.address}</p>}
+                          {l.notes && <p className="text-slate-500 italic truncate pl-2 border-l-2 border-slate-300 dark:border-slate-600">{l.notes}</p>}
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })}
@@ -1412,6 +1567,7 @@
     const [userTemplates, setUserTemplates] = useState([]);
     const [userMaterials, setUserMaterials] = useState([]);
     const [appointments, setAppointments] = useState([]);
+    const [timesheets, setTimesheets] = useState([]);
     const [businessProfile, setBusinessProfile] = useState(() => { try { return JSON.parse(localStorage.getItem(BIZA_KEY) || '{}'); } catch { return {}; } });
     const [isUnlocked, setIsUnlocked] = useState(() => {
       const stored = localStorage.getItem('joblog-licence');
@@ -1439,7 +1595,6 @@
     const [listeningField, setListeningField] = useState(null);
     const recognitionRef = useRef(null);
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
-    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-2.5-flash');
     const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('googleClientId') || '');
     const [googleToken, setGoogleToken] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState(null);
@@ -1449,16 +1604,11 @@
     const [locStatus, setLocStatus] = useState('idle');
     const [currentCoords, setCurrentCoords] = useState(null);
     const [appointmentFromJob, setAppointmentFromJob] = useState(null);
+    const [timeEntryModal, setTimeEntryModal] = useState(null);
     const [showAIAssistModal, setShowAIAssistModal] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isScanningReceipt, setIsScanningReceipt] = useState(false);
     const [isProfessionalizing, setIsProfessionalizing] = useState(false);
-
-    // Live Timer
-    const [activeTimer, setActiveTimer] = useState(() => { try { return JSON.parse(localStorage.getItem('joblog-timer') || 'null'); } catch { return null; } });
-    const [now, setNow] = useState(Date.now());
-    useEffect(() => { localStorage.setItem('joblog-timer', JSON.stringify(activeTimer)); }, [activeTimer]);
-    useEffect(() => { if (!activeTimer) return; const int = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(int); }, [activeTimer]);
 
     const EMPTY_TASK = { title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'', images:[] };
     const [taskData, setTaskData] = useState(EMPTY_TASK);
@@ -1487,12 +1637,15 @@
     const loadTemplates = async () => setUserTemplates(await get(DB_KEY_TEMPL) || []);
     const loadMaterials = async () => setUserMaterials(await get(DB_KEY_MATS) || []);
     const loadAppointments = async () => setAppointments(await get(DB_KEY_APPOINTMENTS) || []);
-    useEffect(() => { loadJobs(); loadTemplates(); loadMaterials(); loadAppointments(); }, []);
+    const loadTimesheets = async () => setTimesheets(await get(DB_KEY_TIMESHEETS) || []);
+    useEffect(() => { loadJobs(); loadTemplates(); loadMaterials(); loadAppointments(); loadTimesheets(); }, []);
+    
     const updMetric = (d) => setDbSize(`${(new TextEncoder().encode(JSON.stringify(d)).length/1024/1024).toFixed(2)} MB`);
     const saveToDB = async (nj) => { setJobs(nj); try { await set(DB_KEY_JOBS, nj); } catch(e) { showToast('Warning: Data could not be saved (Storage limit).', 'error'); } updMetric(nj); };
     const saveUserTemplates = async (arr) => { setUserTemplates(arr); await set(DB_KEY_TEMPL, arr); };
     const saveUserMaterials = async (arr) => { setUserMaterials(arr); await set(DB_KEY_MATS, arr); };
     const saveAppointments = async (arr) => { setAppointments(arr); await set(DB_KEY_APPOINTMENTS, arr); };
+    const saveTimesheets = async (arr) => { setTimesheets(arr); await set(DB_KEY_TIMESHEETS, arr); };
     const saveBusinessProfile = (profile) => { setBusinessProfile(profile); localStorage.setItem(BIZA_KEY, JSON.stringify(profile)); };
     useEffect(() => { const root = document.documentElement; if (isDarkMode) { root.classList.add('dark'); document.getElementById('theme-color-meta').setAttribute('content','#020617'); localStorage.setItem('theme','dark'); } else { root.classList.remove('dark'); document.getElementById('theme-color-meta').setAttribute('content','#ffffff'); localStorage.setItem('theme','light'); } }, [isDarkMode]);
 
@@ -1509,19 +1662,36 @@
 
     const handleSaveAppointment = (appt) => { let updated = appointments.find(a => a.id === appt.id) ? appointments.map(a => a.id === appt.id ? appt : a) : [...appointments, appt]; saveAppointments(updated); setAppointmentFromJob(null); };
     const handleDeleteAppointment = (id) => saveAppointments(appointments.filter(a => a.id !== id));
+    
+    const handleSaveTimeEntry = async (entry) => {
+      const updated = timeEntryModal.id ? timesheets.map(t => t.id === entry.id ? entry : t) : [...timesheets, entry];
+      await saveTimesheets(updated);
+      setTimeEntryModal(null);
+      showToast('Time entry saved!', 'success');
+    };
+    const handleDeleteTimeEntry = async (id) => {
+      const updated = timesheets.filter(t => t.id !== id);
+      await saveTimesheets(updated);
+      setTimeEntryModal(null);
+      showToast('Time entry deleted', 'info');
+    };
+    const openTimeEntryForJob = (jobId) => {
+      setTimeEntryModal({
+        id: null,
+        date: getLocalYYYYMMDD(),
+        startTime: '08:00',
+        endTime: '12:00',
+        jobId: jobId,
+        category: 'Site Work',
+        notes: ''
+      });
+    };
+
     const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => setConfirmDialog({ message, onConfirm, confirmLabel, danger });
     const dismissConfirm = () => setConfirmDialog(null);
     const openAppointmentForJob = (jobId) => { const job = jobs.find(j => j.id === jobId); if (!job) return; setAppointmentFromJob({ id: null, title: `Work: ${job.address}`, jobId, start: new Date().toISOString(), end: new Date(Date.now()+2*3600*1000).toISOString(), notes: '', googleEventId: null }); };
     const handleNewJobClick = (type) => { if (!isUnlocked && jobs.length >= 3) { setShowUpgrade(true); } else { setNewJobModal(type); } };
     const handleUnlockSuccess = (keyData) => { setIsUnlocked(true); localStorage.setItem('joblog-unlocked', 'true'); if (keyData) localStorage.setItem('joblog-licence', JSON.stringify(keyData)); };
-
-    const callGemini = async (prompt) => {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, response_mime_type: 'application/json' } }) });
-      if (!res.ok) throw new Error(`API error ${res.status}`);
-      const data = await res.json();
-      const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      return JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-    };
 
     const handleGenerateDocument = async (customPrompt) => {
       if (!apiKey) { showToast('Please add your Gemini API key in Settings.', 'error'); return; }
@@ -1531,7 +1701,16 @@
         const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
         const docType = job.type === 'handover' ? 'Completion Invoice' : 'Quotation';
         const prompt = `You are a professional Australian trade document writer. Generate a formal ${docType}. Return ONLY a valid JSON object with: "summary" (opening paragraphs, use \\n\\n for breaks), "tasks" (array of {title, desc}), "footer" (closing paragraph). Job: Address: ${job.address}, Client: ${job.clientName || 'the client'}, Tasks: ${JSON.stringify(job.tasks.map((t,i)=>({index:i+1,title:t.title,time:t.time,rate:t.rate,materialsCost:t.materialsCost,materials:t.materials,desc:t.desc})))}, Total: $${qt.total.toFixed(2)}. Extra instructions: ${customPrompt || 'None'}`;
-        const result = await callGemini(prompt);
+        
+        const resData = await smartFetchAI(
+          'heavy',
+          [{ parts: [{ text: prompt }] }],
+          { temperature: 0.3, response_mime_type: 'application/json' },
+          apiKey
+        );
+        const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const result = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
+        
         const updatedTasks = job.tasks.map((t, idx) => ({ ...t, desc: result.tasks?.[idx]?.desc || t.desc, title: result.tasks?.[idx]?.title || t.title }));
         setPrintPreviewJob({ ...job, projectNotes: result.summary + (result.footer ? '\n\n' + result.footer : ''), tasks: updatedTasks });
         setShowAIAssistModal(false);
@@ -1563,10 +1742,13 @@
       setIsAiSuggesting(true);
       const prompt = `You are a construction trade assistant. Return ONLY a valid JSON object with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD/hr), "materialsCost", "materials" (comma-separated), "tools" (comma-separated), "desc" (short factual). Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.3,response_mime_type:'application/json'} }) });
-        if (!res.ok) throw new Error('AI request failed');
-        const data = await res.json();
-        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const resData = await smartFetchAI(
+          'light',
+          [{ parts: [{ text: prompt }] }],
+          { temperature: 0.3, response_mime_type: 'application/json' },
+          apiKey
+        );
+        const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
         setTaskData(prev => ({ ...prev, title: json.title||prev.title, time: json.time||prev.time, rate: json.rate||prev.rate, materialsCost: json.materialsCost||prev.materialsCost, materials: json.materials||prev.materials, tools: json.tools||prev.tools, desc: json.desc||prev.desc }));
         showToast('Suggestions applied!', 'success');
@@ -1580,9 +1762,14 @@
       setIsProfessionalizing(true);
       try {
         const prompt = `Rewrite this rough field note into a professional, concise client-facing description. Return ONLY the rewritten text, no quotes or intro: "${taskData.desc}"`;
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.2} }) });
-        const data = await res.json();
-        setTaskData(p => ({...p, desc: data.candidates[0].content.parts[0].text.trim()}));
+        const resData = await smartFetchAI(
+          'light',
+          [{ parts: [{ text: prompt }] }],
+          { temperature: 0.2 },
+          apiKey
+        );
+        const text = resData.candidates[0].content.parts[0].text.trim();
+        setTaskData(p => ({...p, desc: text}));
         showToast('Text professionalized!', 'success');
       } catch (e) { showToast('AI failed', 'error'); } finally { setIsProfessionalizing(false); }
     };
@@ -1594,10 +1781,15 @@
       try {
         const base64Data = await compressImage(file);
         const textPrompt = `You are an OCR JSON extraction tool. Read this receipt. Return ONLY a valid JSON object. Format: {"cost": 123.45, "items": "Hammer, Nails"}`;
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text: textPrompt},{inlineData: {mimeType: 'image/webp', data: base64Data.split(',')[1]}}]}], generationConfig:{temperature:0, response_mime_type:'application/json'} }) });
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        const data = await res.json();
-        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        
+        const resData = await smartFetchAI(
+          'light',
+          [{ parts: [{ text: textPrompt }, { inlineData: { mimeType: 'image/webp', data: base64Data.split(',')[1] } }] }],
+          { temperature: 0, response_mime_type: 'application/json' },
+          apiKey
+        );
+        
+        const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
         setTaskData(prev => ({ ...prev, materialsCost: json.cost ? String(json.cost) : prev.materialsCost, materials: prev.materials ? prev.materials + (json.items ? ', ' + json.items : '') : (json.items || '') }));
         showToast('Receipt scanned successfully!', 'success');
@@ -1636,7 +1828,7 @@
 
     const handleCreateJob = (address, clientName, clientPhone, tasks = [], dueDate = '') => {
       const now = Date.now();
-      const newJob = { id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now, date: new Date(now).toISOString(), createdAt: now, type: newJobModal, address, clientName, clientPhone, clientRef: '', dueDate: dueDate || '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false, showCosts: newJobModal === 'handover' ? false : true };
+      const newJob = { id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now.toString(), date: new Date(now).toISOString(), createdAt: now, type: newJobModal, address, clientName, clientPhone, clientRef: '', dueDate: dueDate || '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false, showCosts: newJobModal === 'handover' ? false : true };
       saveToDB([...jobs, newJob]); setNewJobModal(null); showToast('Project Created', 'success');
     };
     const cycleStatus = (id) => { const j = jobs.find(x=>x.id===id), idx = STATUSES.findIndex(s=>s.key===(j.status||'draft')); saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x)); };
@@ -1674,15 +1866,6 @@
       let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`;
       if (wps) url += `&waypoints=${wps}`;
       window.open(url, '_blank', 'noopener');
-    };
-
-    const stopTimer = () => {
-      const elapsedMins = Math.floor((Date.now() - activeTimer.startTime) / 60000);
-      setActiveJobId(activeTimer.jobId);
-      setViewMode('detail');
-      setTaskData({ ...EMPTY_TASK, time: fmtMins(elapsedMins) });
-      setIsTaskFormOpen(true);
-      setActiveTimer(null);
     };
 
     const atStopLimit = selectedJobs.length >= MAX_STOPS;
@@ -1727,7 +1910,7 @@
     const getCoords = (e) => { const cvs=canvasRef.current, r=cvs.getBoundingClientRect(); let cx=e.clientX, cy=e.clientY; if (e.touches?.length>0) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; } return { x:(cx-r.left)*(cvs.width/r.width), y:(cy-r.top)*(cvs.height/r.height) }; };
     const startDraw = (e) => { setIsDrawing(true); drawRef.current=true; const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.strokeStyle=penColor; ctx.lineWidth=Math.max(3,canvasRef.current.width/100); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x,y); };
     const doDraw = (e) => { if (!drawRef.current) return; e.preventDefault(); const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.lineTo(x,y); ctx.stroke(); };
-    const stopDraw = () => { if (!drawRef.current) return; setIsDrawing(false); drawRef.current=false; setUndoStack(p=>[...p.slice(-4),canvasRef.current.toDataURL('image/webp',0.7)]); }; // Limited to 5 undos
+    const stopDraw = () => { if (!drawRef.current) return; setIsDrawing(false); drawRef.current=false; setUndoStack(p=>[...p.slice(-4),canvasRef.current.toDataURL('image/webp',0.7)]); }; 
     const handleUndo = () => { if (undoStack.length<=1) return; const ns=[...undoStack]; ns.pop(); const img=new Image(); img.src=ns[ns.length-1]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack(ns); }; };
     const handleClear = () => { if (undoStack.length<=1) return; const img=new Image(); img.src=undoStack[0]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack([undoStack[0]]); }; };
     const saveAnnotated = () => { if (!canvasRef.current) return; const imgs=[...taskData.images]; imgs[editingImageIdx]=canvasRef.current.toDataURL('image/webp',0.8); setTaskData(p=>({...p,images:imgs})); setEditingImageIdx(null); };
@@ -1785,7 +1968,7 @@
         )}
 
         {/* Schedule View */}
-        {viewMode==='schedule' && <ScheduleView jobs={jobs} appointments={appointments} googleToken={googleToken} isGoogleConnected={!!googleToken} onSaveAppointment={handleSaveAppointment} onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm} onScheduleFromJob={openAppointmentForJob} showToast={showToast}/>}
+        {viewMode==='schedule' && <ScheduleView jobs={jobs} appointments={appointments} timesheets={timesheets} googleToken={googleToken} isGoogleConnected={!!googleToken} onSaveAppointment={handleSaveAppointment} onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm} onScheduleFromJob={openAppointmentForJob} showToast={showToast} onNewTimeEntry={() => setTimeEntryModal({id: null, date: getLocalYYYYMMDD(), startTime: '08:00', endTime: '16:00', jobId: '', category: 'Site Work', notes: ''})} onEditTimeEntry={(entry) => setTimeEntryModal(entry)} />}
 
         {/* Dashboard */}
         {viewMode==='dashboard' && (
