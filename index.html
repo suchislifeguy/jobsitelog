@@ -903,13 +903,33 @@
       if (!apiKey) { showToast('Please save a Gemini API key in Settings first.', 'error'); return; }
       setIsImporting(true);
       try {
-        const fileParts = [];
-        for (const file of files) {
-          if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
-            const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
-            fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
-          }
-        }
+    const fileParts = [];
+    for (const file of files) {
+      if (file.type === 'application/pdf') {
+        // 1. Upload PDFs using the File API to bypass Free Tier payload limits
+        const uploadRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media&key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': file.type },
+          body: file
+        });
+        
+        if (!uploadRes.ok) throw new Error(`PDF Upload failed with status ${uploadRes.status}`);
+        const uploadData = await uploadRes.json();
+        
+        // 2. Pass the lightweight URI to the AI instead of the heavy Base64 data
+        fileParts.push({ fileData: { mimeType: file.type, fileUri: uploadData.file.uri } });
+        
+      } else if (file.type.startsWith('image/')) {
+        // Images are compressed in our app, so they are small enough for inlineData
+        const base64Data = await new Promise((resolve, reject) => { 
+          const reader = new FileReader(); 
+          reader.onload = () => resolve(reader.result.split(',')[1]); 
+          reader.onerror = reject; 
+          reader.readAsDataURL(file); 
+        });
+        fileParts.push({ inlineData: { mimeType: file.type, data: base64Data } });
+      }
+    }
         const textPrompt = `You are a data extraction AI. Extract job details from the attached files (if any) AND the following source text.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:textPrompt},...fileParts]}], generationConfig:{temperature:0,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error(`API error ${res.status}`);
