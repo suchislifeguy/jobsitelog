@@ -2111,53 +2111,245 @@
         )}
 
         {/* Detail View */}
-        {viewMode === 'detail' && activeJob && (
-          <main className="p-4 max-w-2xl mx-auto no-print animate-slide-up pb-32">
-            {/* Navigation Bar */}
-            <div className="flex justify-between items-center mb-6">
-              <button 
-                onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} 
-                className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
-              >
-                <ChevronRight size={14} className="rotate-180" /> Dashboard
-              </button>
-              <button 
-                onClick={() => showConfirm('Permanently delete this project?', () => { saveToDB(jobs.filter(x => x.id !== activeJobId)); setViewMode('dashboard'); showToast('Project Deleted', 'success'); }, 'Delete')} 
-                className="text-red-500 hover:text-red-600 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider"
-              >
-                <Trash2 size={14} /> Delete
-              </button>
-            </div>
-        
-            {/* Header Section */}
-            <div className={`p-6 sm:p-8 rounded-[2rem] border shadow-sm mb-6 bg-white dark:bg-slate-800 ${activeJob?.type === 'handover' ? 'border-emerald-200 dark:border-emerald-900/50' : 'border-slate-200 dark:border-slate-700'}`}>
-              {isEditingHeader ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Edit3 size={16} className="text-orange-500" />
-                    <span className="text-xs font-black text-orange-500 uppercase tracking-widest">Editing Details</span>
-                  </div>
-                  <input className="w-full text-xl font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Address" value={headerDraft.address} onChange={e => setHeaderDraft(d => ({ ...d, address: e.target.value }))} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <input className="w-full font-medium bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none text-sm dark:text-white" placeholder="Client Name" value={headerDraft.clientName} onChange={e => setHeaderDraft(d => ({ ...d, clientName: e.target.value }))} />
-                    <input className="w-full font-medium bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none text-sm dark:text-white" placeholder="Client Phone" value={headerDraft.clientPhone || ''} onChange={e => setHeaderDraft(d => ({ ...d, clientPhone: e.target.value }))} />
-                  </div>
-                  <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none text-sm h-24 resize-none dark:text-white" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e => setHeaderDraft(d => ({ ...d, projectNotes: e.target.value }))} />
-                  <div className="flex gap-3">
-                    <button onClick={saveHeaderEdit} className="flex-1 bg-orange-500 text-white py-3 rounded-xl font-bold text-sm">Save</button>
-                    <button onClick={() => setIsEditingHeader(false)} className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-3 rounded-xl font-bold text-sm">Cancel</button>
-                  </div>
+        <main className="p-4 max-w-2xl mx-auto no-print animate-slide-up pb-32">
+          
+          {/* Top Navigation & Actions */}
+          <div className="flex justify-between items-center mb-4">
+            <button 
+              onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} 
+              className="flex items-center gap-1 px-4 py-2 rounded-full text-xs font-bold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 dark:text-slate-400 dark:bg-slate-800 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors uppercase tracking-wider"
+            >
+              <ChevronRight size={16} className="rotate-180" /> Dashboard
+            </button>
+            
+            <button 
+              onClick={() => showConfirm('Permanently delete this project?', () => { 
+                saveToDB(jobs.filter(x => x.id !== activeJobId)); 
+                setViewMode('dashboard'); 
+                showToast('Project Deleted', 'success'); 
+              }, 'Delete')} 
+              className="flex items-center gap-1.5 text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wider transition-colors"
+            >
+              <Trash2 size={14} /> Delete
+            </button>
+          </div>
+          
+          {/* Main Card */}
+          <div className={`p-6 sm:p-8 rounded-[2rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 transition-colors ${
+            activeJob?.type === 'handover' ? 'border-emerald-200 dark:border-emerald-900/50' : 'border-slate-200 dark:border-slate-700'
+          }`}>
+            
+            {isEditingHeader ? (
+              
+              /* --- EDIT MODE --- */
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Edit3 size={16} className="text-orange-500" />
+                  <span className="text-xs font-bold text-orange-500 uppercase tracking-widest">Edit Job Details</span>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{activeJob?.address}</h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold text-sm">{activeJob?.clientName}</p>
-                    <div className="flex flex-wrap gap-3 mt-3 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                      {activeJob?.clientPhone && <span className="flex items-center gap-1"><Phone size={12} /> {activeJob.clientPhone}</span>}
-                      {activeJob?.dueDate && <span className="flex items-center gap-1 text-amber-600"><Calendar size={12} /> Due: {fmtDate(activeJob.dueDate)}</span>}
+                
+                <input 
+                  className="w-full text-xl font-black bg-slate-50 dark:bg-slate-700/50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white transition-all" 
+                  placeholder="Job Address" 
+                  value={headerDraft.address} 
+                  onChange={e => setHeaderDraft(d => ({...d, address: e.target.value}))}
+                />
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <input 
+                    className="w-full font-medium bg-slate-50 dark:bg-slate-700/50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-700 text-sm transition-all" 
+                    placeholder="Client Name" 
+                    value={headerDraft.clientName} 
+                    onChange={e => setHeaderDraft(d => ({...d, clientName: e.target.value}))}
+                  />
+                  <input 
+                    className="w-full font-medium bg-slate-50 dark:bg-slate-700/50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-700 text-sm transition-all" 
+                    placeholder="Client Phone" 
+                    value={headerDraft.clientPhone || ''} 
+                    onChange={e => setHeaderDraft(d => ({...d, clientPhone: e.target.value}))}
+                  />
+                </div>
+                
+                <input 
+                  className="w-full font-medium bg-slate-50 dark:bg-slate-700/50 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-700 text-sm transition-all" 
+                  placeholder="Client Ref / CTS Number" 
+                  value={headerDraft.clientRef} 
+                  onChange={e => setHeaderDraft(d => ({...d, clientRef: e.target.value}))}
+                />
+                
+                <div>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2 ml-1">Due Date</label>
+                  <input 
+                    type="date" 
+                    className="w-full p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl outline-none font-medium text-sm dark:text-white transition-all focus:ring-2 focus:ring-orange-400" 
+                    value={headerDraft.dueDate} 
+                    onChange={e => setHeaderDraft(d => ({...d, dueDate: e.target.value}))}
+                  />
+                </div>
+                
+                <textarea 
+                  className="w-full p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl outline-none text-sm font-medium h-28 resize-none dark:text-white dark:placeholder-slate-400 transition-all focus:ring-2 focus:ring-orange-400" 
+                  placeholder="Project notes…" 
+                  value={headerDraft.projectNotes} 
+                  onChange={e => setHeaderDraft(d => ({...d, projectNotes: e.target.value}))}
+                />
+                
+                <div>
+                  <label className="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-700 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                    <ImageIcon size={16} /> Add Photos
+                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleProjectPhotoUpload}/>
+                  </label>
+                  
+                  {headerDraft.projectPhotos.length > 0 && (
+                    <div className="flex gap-3 overflow-x-auto py-3 mt-2 scrollbar-hide">
+                      {headerDraft.projectPhotos.map((p, i) => (
+                        <div key={i} className="relative h-20 w-20 flex-shrink-0 group">
+                          <img src={p} className="w-full h-full object-cover rounded-xl shadow-sm" alt="Project" />
+                          <button 
+                            onClick={() => setHeaderDraft(d => ({...d, projectPhotos: d.projectPhotos.filter((_, idx) => idx !== i)}))} 
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <X size={12}/>
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                    {activeJob?.projectNotes && <p className="text-slate-600 dark:text-slate-400 text-sm mt-4 italic border-l-4 border-slate-200 dark:border-slate-700 pl-3">{activeJob.projectNotes}</p>}
+                  )}
+                </div>
+                
+                <div className="flex gap-3 pt-2">
+                  <button 
+                    onClick={saveHeaderEdit} 
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Check size={18} /> Save Details
+                  </button>
+                  <button 
+                    onClick={() => setIsEditingHeader(false)} 
+                    className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-3.5 rounded-xl font-bold text-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+              
+            ) : (
+              
+              /* --- VIEW MODE --- */
+              <div className="flex flex-col gap-6">
+                
+                {/* Header Info */}
+                <div>
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white leading-tight mb-2">
+                    {activeJob?.address}
+                  </h2>
+                  <p className="text-slate-600 dark:text-slate-300 font-semibold text-base mb-3">
+                    {activeJob?.clientName}
+                  </p>
+                  
+                  <div className="flex flex-wrap gap-y-2 gap-x-4 mb-4">
+                    {activeJob?.clientPhone && (
+                      <p className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                        <Phone size={14} /> {activeJob.clientPhone}
+                      </p>
+                    )}
+                    {activeJob?.dueDate && (
+                      <p className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500 text-sm font-semibold">
+                        <Calendar size={14} /> Due: {fmtDate(activeJob.dueDate)}
+                      </p>
+                    )}
+                    {activeJob?.clientRef && (
+                      <p className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                        <span className="text-[10px] uppercase font-bold tracking-widest bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">REF</span>
+                        {activeJob.clientRef}
+                      </p>
+                    )}
+                  </div>
+      
+                  {activeJob?.projectNotes && (
+                    <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700/50">
+                      <p className="text-slate-600 dark:text-slate-400 text-sm whitespace-pre-wrap leading-relaxed">
+                        {activeJob.projectNotes}
+                      </p>
+                    </div>
+                  )}
+      
+                  {activeJob?.projectPhotos?.length > 0 && (
+                    <div className="flex gap-3 mt-4 overflow-x-auto pb-2 scrollbar-hide">
+                      {activeJob.projectPhotos.map((p, i) => (
+                        <img key={i} src={p} className="h-20 w-20 object-cover rounded-xl shadow-sm border border-slate-200 dark:border-slate-700" alt=""/>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                <hr className="border-slate-100 dark:border-slate-700/50" />
+                
+                {/* Controls & Actions Container */}
+                <div className="space-y-4">
+                  
+                  {/* Primary Actions (3-col Grid) */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <button onClick={startEditHeader} className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold transition-all">
+                      <Pencil size={18} /> Edit
+                    </button>
+                    <button onClick={() => openAppointmentForJob(activeJobId)} className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold transition-all">
+                      <CalendarPlus size={18} /> Schedule
+                    </button>
+                    <button onClick={() => setShowAIAssistModal(true)} className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/40 border border-purple-200 dark:border-purple-800/60 text-purple-700 dark:text-purple-400 text-xs font-semibold transition-all">
+                      <Sparkles size={18} /> AI Assist
+                    </button>
+                  </div>
+      
+                  {/* Toggles Row */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button 
+                      onClick={() => cycleStatus(activeJobId)} 
+                      className={`px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-all border ${getStatus(activeJob?.status || 'draft').cls}`}
+                    >
+                      {getStatus(activeJob?.status || 'draft').label}
+                    </button>
+                    
+                    <button 
+                      onClick={() => toggleCosts(activeJobId)} 
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all active:scale-95 ${
+                        activeJob.showCosts 
+                          ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-400' 
+                          : 'bg-slate-50 border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
+                      }`}
+                    >
+                      <DollarSign size={14} /> Costs {activeJob.showCosts ? 'ON' : 'OFF'}
+                    </button>
+                    
+                    <button 
+                      onClick={() => toggleGST(activeJobId)} 
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all active:scale-95 ${
+                        activeJob.gstEnabled 
+                          ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-400' 
+                          : 'bg-slate-50 border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400'
+                      }`}
+                    >
+                      <Receipt size={14} /> GST {activeJob.gstEnabled ? 'ON' : 'OFF'}
+                    </button>
+                  </div>
+      
+                  {/* Quick Actions (Full width buttons on mobile, split on larger screens) */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button 
+                      onClick={() => openTimeEntryForJob(activeJobId)} 
+                      className="flex-1 flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-bold bg-purple-100 text-purple-700 border border-purple-200 hover:bg-purple-200 dark:bg-purple-500/20 dark:text-purple-300 dark:border-purple-500/30 dark:hover:bg-purple-500/30 transition-all"
+                    >
+                      <Timer size={18} /> Log Time
+                    </button>
+                    
+                    {activeJob.clientPhone && (
+                      <a 
+                        href={`sms:${activeJob.clientPhone}?body=${encodeURIComponent(`Hi ${activeJob.clientName || ''}, this is ${businessProfile?.name || 'your tradie'}. I'm on my way to ${activeJob.address} now. ETA is about __ mins.`)}`} 
+                        className="flex-1 flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-bold bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-500/30 dark:hover:bg-blue-500/30 transition-all"
+                      >
+                        <Phone size={18} /> SMS "On My Way"
+                      </a>
+                    )}
                   </div>
         
                   <div className="grid grid-cols-3 gap-2">
