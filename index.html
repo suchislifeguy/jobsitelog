@@ -1426,7 +1426,7 @@
     const [listeningField, setListeningField] = useState(null);
     const recognitionRef = useRef(null);
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
-    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-1.5-flash-8b');
+    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-2.5-flash');
     const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('googleClientId') || '');
     const [googleToken, setGoogleToken] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState(null);
