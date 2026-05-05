@@ -220,7 +220,7 @@
           if (h > MAX) { w *= MAX/h; h = MAX; }
           c.width = w; c.height = h;
           c.getContext('2d').drawImage(img, 0, 0, w, h);
-          res(c.toDataURL('image/webp', 0.88));
+          res(c.toDataURL('image/webp', 0.75));
         } catch(e) { rej(e); }
       };
     };
@@ -875,7 +875,7 @@
     };
     const start = (e) => { e.preventDefault(); isDrawing.current = true; const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
     const draw = (e) => { if (!isDrawing.current) return; e.preventDefault(); const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
-    const end = () => { if (!isDrawing.current) return; isDrawing.current = false; onSave(canvasRef.current.toDataURL()); };
+    const end = () => { if (!isDrawing.current) return; isDrawing.current = false; onSave(canvasRef.current.toDataURL('image/webp', 0.5)); };
     const clear = () => { if(!canvasRef.current) return; const cvs = canvasRef.current; cvs.getContext('2d').clearRect(0, 0, cvs.width, cvs.height); onSave(null); };
     return (
       <div className="relative border-2 border-slate-300 border-dashed rounded-xl overflow-hidden bg-slate-50 no-print-border inline-block max-w-full touch-none">
@@ -1694,7 +1694,12 @@
     const getCoords = (e) => { const cvs=canvasRef.current, r=cvs.getBoundingClientRect(); let cx=e.clientX, cy=e.clientY; if (e.touches?.length>0) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; } return { x:(cx-r.left)*(cvs.width/r.width), y:(cy-r.top)*(cvs.height/r.height) }; };
     const startDraw = (e) => { setIsDrawing(true); drawRef.current=true; const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.strokeStyle=penColor; ctx.lineWidth=Math.max(3,canvasRef.current.width/100); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x,y); };
     const doDraw = (e) => { if (!drawRef.current) return; e.preventDefault(); const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.lineTo(x,y); ctx.stroke(); };
-    const stopDraw = () => { if (!drawRef.current) return; setIsDrawing(false); drawRef.current=false; setUndoStack(p=>[...p,canvasRef.current.toDataURL()]); };
+    const stopDraw = () => { 
+      if (!drawRef.current) return; 
+      setIsDrawing(false); 
+      drawRef.current = false; 
+      setUndoStack(p => [...p.slice(-4), canvasRef.current.toDataURL('image/webp', 0.7)]); 
+    };
     const handleUndo = () => { if (undoStack.length<=1) return; const ns=[...undoStack]; ns.pop(); const img=new Image(); img.src=ns[ns.length-1]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack(ns); }; };
     const handleClear = () => { if (undoStack.length<=1) return; const img=new Image(); img.src=undoStack[0]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack([undoStack[0]]); }; };
     const saveAnnotated = () => { if (!canvasRef.current) return; const imgs=[...taskData.images]; imgs[editingImageIdx]=canvasRef.current.toDataURL('image/webp',0.8); setTaskData(p=>({...p,images:imgs})); setEditingImageIdx(null); };
