@@ -69,17 +69,11 @@
         input[type="date"]::-webkit-inner-spin-button,
         input[type="datetime-local"]::-webkit-calendar-picker-indicator { display: none !important; opacity: 0 !important; }
       }
-      /* Hide calendar picker arrow inside PDF preview area at all times */
       #pdf-content input[type="date"]::-webkit-calendar-picker-indicator,
       #pdf-content input[type="date"]::-webkit-inner-spin-button {
-        display: none;
-        -webkit-appearance: none;
-        opacity: 0;
+        display: none; -webkit-appearance: none; opacity: 0;
       }
-      #pdf-content input[type="date"] {
-        -webkit-appearance: none;
-        appearance: none;
-      }
+      #pdf-content input[type="date"] { -webkit-appearance: none; appearance: none; }
       .img-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 12px; margin-top: 10px; }
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -125,10 +119,10 @@
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt, Home, Info,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert, Lock,
     Bookmark, Package, PlusCircle, Calendar, Building2, CalendarPlus, Award,
-    ShieldCheck, BadgeCheck, FileCheck, Camera
+    ShieldCheck, BadgeCheck, FileCheck, Camera, Wand2, Play, Square, Phone, Wallet, Timer, FileDown
   } from 'lucide-react';
 
-  const DB_KEY_JOBS      = 'jobsite-master-v4';
+  const DB_KEY_JOBS      = 'jobsite-master-v5';
   const DB_KEY_TEMPL     = 'joblog-templates';
   const DB_KEY_MATS      = 'joblog-materials';
   const DB_KEY_APPOINTMENTS = 'joblog-appointments';
@@ -137,9 +131,6 @@
     { key: "JOBLOG-DEMO-1234", expiry: null },
     { key: "JOBLOG-PRO-001",   expiry: "2027-01-01" },
     { key: "JOBLOG-PRO-002",   expiry: null },
-    { key: "JOBLOG-PRO-003",   expiry: null },
-    { key: "JOBLOG-PRO-004",   expiry: null },
-    { key: "JOBLOG-PRO-005",   expiry: null },
   ];
 
   const LICENCE_TYPE_OPTIONS = [
@@ -162,7 +153,7 @@
     if (!hM && !mM) { const n = parseFloat(s); return isNaN(n) ? 0 : n * 60; }
     return (hM ? parseFloat(hM[1]) * 60 : 0) + (mM ? parseFloat(mM[1]) : 0);
   };
-  const fmtMins = (m) => { const h = Math.floor(m/60), r = Math.round(m%60); if (!h) return `${r}m`; if (!r) return `${h}h`; return `${h}h ${r}m`; };
+  const fmtMins = (m) => { const h = Math.floor(m/60), r = Math.round(m%60); if (!h && !r) return `0m`; if (!h) return `${r}m`; if (!r) return `${h}h`; return `${h}h ${r}m`; };
   const fmtAUD  = (n) => `$${Number(n||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
   const fmtDate = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU') : '';
   const fmtDateShort = (iso) => iso ? new Date(iso).toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'}) : '';
@@ -194,12 +185,13 @@
       img.onload = () => {
         try {
           const c = document.createElement('canvas');
-          const MAX = 1200; let w = img.width, h = img.height;
+          const MAX = 800; // Optimal size to save on AI Tokens
+          let w = img.width, h = img.height;
           if (w > MAX) { h *= MAX/w; w = MAX; }
           if (h > MAX) { w *= MAX/h; h = MAX; }
           c.width = w; c.height = h;
           c.getContext('2d').drawImage(img, 0, 0, w, h);
-          res(c.toDataURL('image/webp', 0.75));
+          res(c.toDataURL('image/webp', 0.6)); // Lower quality to save payload size
         } catch(e) { rej(e); }
       };
     };
@@ -220,17 +212,19 @@
           if (h > MAX) { w *= MAX/h; h = MAX; }
           c.width = w; c.height = h;
           c.getContext('2d').drawImage(img, 0, 0, w, h);
-          res(c.toDataURL('image/webp', 0.75));
+          res(c.toDataURL('image/webp', 0.7)); // Reduced to save LocalStorage limits
         } catch(e) { rej(e); }
       };
     };
   });
 
   const STATUSES = [
-    { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
-    { key:'sent',     label:'Sent',     cls:'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 border-blue-200 dark:border-blue-800' },
-    { key:'approved', label:'Approved', cls:'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' },
-    { key:'invoiced', label:'Invoiced', cls:'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 border-purple-200 dark:border-purple-800' },
+    { key:'draft',    label:'Draft',    cls:'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700' },
+    { key:'sent',     label:'Sent',     cls:'bg-blue-100 dark:bg-blue-900/40 text-blue-600 border-blue-200 dark:border-blue-800' },
+    { key:'approved', label:'Approved', cls:'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 border-emerald-200 dark:border-emerald-800' },
+    { key:'invoiced', label:'Invoiced', cls:'bg-purple-100 dark:bg-purple-900/40 text-purple-600 border-purple-200 dark:border-purple-800' },
+    { key:'paid',     label:'Paid',     cls:'bg-teal-100 dark:bg-teal-900/40 text-teal-700 border-teal-200 dark:border-teal-800' },
+    { key:'overdue',  label:'Overdue',  cls:'bg-red-100 dark:bg-red-900/40 text-red-700 border-red-200 dark:border-red-800' },
   ];
   const getStatus = (k) => STATUSES.find(s => s.key===k) || STATUSES[0];
 
@@ -344,7 +338,6 @@
     );
   };
 
-  /* ── AI Assist Modal — with mic support ── */
   const AIAssistModal = ({ onClose, onGenerate, isGenerating, docType, apiKey, toggleVoice, listeningField }) => {
     const [prompt, setPrompt] = useState('');
     return (
@@ -389,7 +382,6 @@
     );
   };
 
-  /* ── Licence Editor ── */
   const LicenceEditor = ({ licences, onChange }) => {
     const [editing, setEditing] = useState(null);
     const blankLicence = { type: LICENCE_TYPE_OPTIONS[0], customType: '', number: '', expiry: '', state: '' };
@@ -487,6 +479,7 @@
       phone: profile.phone || '', email: profile.email || '', address: profile.address || '',
       logo: profile.logo || '', licences: profile.licences || [], insurance: profile.insurance || '',
       insurancePolicy: profile.insurancePolicy || '', insuranceExpiry: profile.insuranceExpiry || '',
+      termsAndConditions: profile.termsAndConditions || ''
     });
 
     const handleLogoUpload = async (e) => {
@@ -504,62 +497,57 @@
             <h3 className="font-black text-lg flex items-center gap-2 text-slate-900 dark:text-white"><Building2 size={18} className="text-orange-500"/> Business Profile</h3>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={18}/></button>
           </div>
-          <div className="overflow-y-auto flex-1 no-scrollbar pb-2 pr-1">
+          <div className="overflow-y-auto flex-1 no-scrollbar pb-2 pr-1 space-y-5">
             {expiringLicences.length > 0 && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-3 mb-4 flex items-start gap-2">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-3 flex items-start gap-2">
                 <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
                 <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">{expiringLicences.length} credential{expiringLicences.length > 1 ? 's' : ''} {expiringLicences.some(l => isExpired(l.expiry)) ? 'expired or expiring soon' : 'expiring soon'} — update below.</p>
               </div>
             )}
-            <div className="flex items-center gap-4 mb-5 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
               <div className="w-20 h-20 rounded-2xl bg-white dark:bg-slate-700 border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
                 {form.logo ? <img src={form.logo} className="w-full h-full object-contain p-1" alt="logo"/> : <ImageIcon size={26} className="text-slate-300 dark:text-slate-500"/>}
               </div>
               <div>
                 <p className="font-black text-sm mb-0.5 dark:text-white">Business Logo</p>
-                <p className="text-[10px] text-slate-400 mb-2 font-medium">Appears on all printed reports</p>
+                <p className="text-[10px] text-slate-400 mb-2 font-medium">Appears on printed reports</p>
                 <label className="inline-flex items-center gap-1.5 bg-slate-200 dark:bg-slate-700 px-3 py-1.5 rounded-lg cursor-pointer text-[11px] font-black uppercase hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors dark:text-slate-200"><Upload size={11}/> Upload<input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload}/></label>
                 {form.logo && <button onClick={() => setForm(f=>({...f,logo:''}))} className="text-[10px] text-red-400 font-bold mt-1 ml-2 hover:text-red-600">Remove</button>}
               </div>
             </div>
-            <div className="space-y-3 mb-5">
-              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="e.g. Smith Building Services" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div>
-              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="T/A name (if different)" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/></div>
-              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">ABN</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="e.g. 12 345 678 901" value={form.abn} onChange={e=>setForm(f=>({...f,abn:e.target.value}))}/></div>
+            
+            <div className="space-y-3">
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">ABN</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.abn} onChange={e=>setForm(f=>({...f,abn:e.target.value}))}/></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Phone</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="04xx xxx xxx" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div>
-                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="you@example.com" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div>
+                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Phone</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div>
+                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div>
               </div>
-              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Address</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" placeholder="123 Example St, Sydney NSW 2000" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Address</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Global Terms & Conditions</label><textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-xs h-24 resize-none dark:text-white border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400" placeholder="e.g. Quote valid for 30 days..." value={form.termsAndConditions} onChange={e=>setForm(f=>({...f,termsAndConditions:e.target.value}))}/></div>
             </div>
-            <div className="mb-5">
-              <div className="flex items-center gap-2 mb-3">
-                <BadgeCheck size={15} className="text-emerald-500"/>
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Licences & Credentials</span>
-                {form.licences.length > 0 && <span className="ml-auto bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase">{form.licences.length} saved</span>}
-              </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-3"><BadgeCheck size={15} className="text-emerald-500"/><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Licences & Credentials</span></div>
               <LicenceEditor licences={form.licences} onChange={(updated) => setForm(f => ({ ...f, licences: updated }))}/>
             </div>
-            <div className="mb-2">
-              <div className="flex items-center gap-2 mb-3">
-                <ShieldCheck size={15} className="text-blue-500"/>
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Public Liability Insurance</span>
-              </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-3"><ShieldCheck size={15} className="text-blue-500"/><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Public Liability Insurance</span></div>
               <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
-                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Insurer Name</label><input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. Allianz, QBE, CGU" value={form.insurance} onChange={e=>setForm(f=>({...f,insurance:e.target.value}))}/></div>
+                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Insurer Name</label><input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" value={form.insurance} onChange={e=>setForm(f=>({...f,insurance:e.target.value}))}/></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Number</label><input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="POL-XXXXXXXX" value={form.insurancePolicy} onChange={e=>setForm(f=>({...f,insurancePolicy:e.target.value}))}/></div>
+                  <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Number</label><input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" value={form.insurancePolicy} onChange={e=>setForm(f=>({...f,insurancePolicy:e.target.value}))}/></div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Expiry</label>
                     <input type="date" className={`w-full p-3 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border dark:border-slate-600 ${isExpired(form.insuranceExpiry) ? 'bg-red-50 dark:bg-red-900/20 border-red-300' : isExpiringSoon(form.insuranceExpiry) ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300' : 'bg-white dark:bg-slate-700 border-slate-200'}`} value={form.insuranceExpiry} onChange={e=>setForm(f=>({...f,insuranceExpiry:e.target.value}))}/>
-                    {isExpired(form.insuranceExpiry) && <p className="text-[9px] text-red-500 font-black mt-1 uppercase">Policy Expired</p>}
-                    {!isExpired(form.insuranceExpiry) && isExpiringSoon(form.insuranceExpiry) && <p className="text-[9px] text-amber-500 font-black mt-1 uppercase">Expiring Soon</p>}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div className="flex gap-3 pt-4 mt-1 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
+          <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
             <button onClick={() => { onSave(form); onClose(); showToast('Profile Saved', 'success'); }} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black active:scale-95 transition-all flex items-center justify-center gap-2"><Check size={16}/> Save</button>
           </div>
@@ -689,7 +677,7 @@
     );
   };
 
-  /* ── Settings Modal — refined corners & spacing ── */
+  /* Settings Modal - Cleaned up Google Auth into Advanced section */
   const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
@@ -698,6 +686,7 @@
     const [showTemplates, setShowTemplates] = useState(false);
     const [showMaterials, setShowMaterials] = useState(false);
     const [showBusiness, setShowBusiness] = useState(false);
+    const [showAdvanced, setShowAdvanced] = useState(false);
     const [licenceInput, setLicenceInput] = useState('');
 
     const save = () => { onSave(draftKey, draftModel, draftExtraTax); setGoogleClientId(draftGoogleClientId); onClose(); showToast('Settings Saved', 'success'); };
@@ -722,7 +711,7 @@
               <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Configuration</span>
               <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1.5">Settings</h2>
             </div>
-            <button onClick={onClose} className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white text-[10px] font-black uppercase"><X size={14}/> Cancel</button>
+            <button onClick={onClose} className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white text-[10px] font-black uppercase"><X size={14}/> Close</button>
           </div>
 
           <div className="space-y-5">
@@ -742,7 +731,7 @@
                     </div>
                     {hasBiz && businessProfile.abn && <p className="text-[10px] text-slate-400 font-mono">ABN {businessProfile.abn}</p>}
                     {hasBiz && businessProfile.licences?.length > 0 && <p className="text-[10px] text-slate-400">{businessProfile.licences.length} credential{businessProfile.licences.length !== 1 ? 's' : ''} saved</p>}
-                    {!hasBiz && <p className="text-[10px] text-slate-400">Logo, ABN, licences, insurance</p>}
+                    {!hasBiz && <p className="text-[10px] text-slate-400">Logo, ABN, licences, T&Cs</p>}
                   </div>
                 </div>
                 <Pencil size={14} className="text-slate-400"/>
@@ -757,7 +746,6 @@
                 <input type="range" min="0" max="50" step="0.5" value={draftExtraTax} onChange={e => setDraftExtraTax(e.target.value)} className="flex-1 accent-orange-500"/>
                 <span className="font-black text-slate-700 dark:text-slate-200 w-12 text-right">{draftExtraTax}%</span>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium mt-1.5">Applies an extra percentage on top of the subtotal on all reports.</p>
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
 
@@ -800,29 +788,35 @@
             {/* Gemini API */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
-              <div className="flex items-start gap-3 p-3 mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-xl">
-                <ShieldAlert size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
-                <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium leading-relaxed">Your API key is stored in this browser only. Do not use on shared devices.</p>
-              </div>
               <input type="password" className="w-full p-3.5 mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
               <div className="relative">
                 <Bot size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
+                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-1.5-flash-8b" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
 
-            {/* Google Calendar */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar – Optional/Advanced</label>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
-                <input type="text" className="w-full p-3.5 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="Google Client ID" value={draftGoogleClientId} onChange={e => setDraftGoogleClientId(e.target.value)}/>
-                {isGoogleConnected ? (
-                  <button onClick={() => {disconnectGoogleCalendar(); showToast('Calendar Disconnected','info');}} className="w-full bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2"><X size={16}/> Disconnect Calendar</button>
-                ) : (
-                  <button onClick={() => connectGoogleCalendar(draftGoogleClientId)} disabled={!draftGoogleClientId} className={`w-full font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${draftGoogleClientId ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'}`}><CalendarPlus size={16}/> Connect Google Calendar</button>
-                )}
-                <p className="text-[10px] text-slate-400 font-medium">Enter your OAuth 2.0 Client ID.</p>
-              </div>
+            {/* Advanced Integrations (Hidden by default) */}
+            <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+              <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full p-4 bg-slate-50 dark:bg-slate-800 flex justify-between items-center text-sm font-black text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                Advanced Integrations
+                <ChevronDown size={16} className={`text-slate-400 transition-transform ${showAdvanced ? 'rotate-180' : ''}`}/>
+              </button>
+              
+              {showAdvanced && (
+                <div className="p-4 bg-white dark:bg-slate-900 space-y-4 border-t border-slate-200 dark:border-slate-700">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar Sync</label>
+                    <div className="space-y-3">
+                      <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700" placeholder="Google Client ID" value={draftGoogleClientId} onChange={e => setDraftGoogleClientId(e.target.value)}/>
+                      {isGoogleConnected ? (
+                        <button onClick={() => {disconnectGoogleCalendar(); showToast('Calendar Disconnected','info');}} className="w-full bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"><X size={16}/> Disconnect Calendar</button>
+                      ) : (
+                        <button onClick={() => connectGoogleCalendar(draftGoogleClientId)} disabled={!draftGoogleClientId} className={`w-full font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${draftGoogleClientId ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700'}`}><CalendarPlus size={16}/> Connect Calendar</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
 
@@ -875,7 +869,7 @@
     };
     const start = (e) => { e.preventDefault(); isDrawing.current = true; const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
     const draw = (e) => { if (!isDrawing.current) return; e.preventDefault(); const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
-    const end = () => { if (!isDrawing.current) return; isDrawing.current = false; onSave(canvasRef.current.toDataURL('image/webp', 0.5)); };
+    const end = () => { if (!isDrawing.current) return; isDrawing.current = false; onSave(canvasRef.current.toDataURL('image/webp', 0.5)); }; // Compress Signature heavily
     const clear = () => { if(!canvasRef.current) return; const cvs = canvasRef.current; cvs.getContext('2d').clearRect(0, 0, cvs.width, cvs.height); onSave(null); };
     return (
       <div className="relative border-2 border-slate-300 border-dashed rounded-xl overflow-hidden bg-slate-50 no-print-border inline-block max-w-full touch-none">
@@ -885,10 +879,11 @@
     );
   };
 
-  /* ── New Job Modal — fixed centering ── */
+  /* New Job Modal - Featuring File API fix for PDFs */
   const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast, toggleVoice, listeningField }) => {
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
+    const [phone, setPhone] = useState('');
     const [additionalText, setAdditionalText] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [files, setFiles] = useState([]);
@@ -897,47 +892,37 @@
 
     const handleFiles = (e) => { setFiles(prev => [...prev, ...Array.from(e.target.files)]); e.target.value = ''; };
     const removeFile = (index) => setFiles(prev => prev.filter((_,i) => i!==index));
-    const createManual = () => { if (!addr.trim()) return showToast('Address is required', 'error'); onSave(addr.trim(), client.trim(), [], dueDate); };
+    const createManual = () => { if (!addr.trim()) return showToast('Address is required', 'error'); onSave(addr.trim(), client.trim(), phone.trim(), [], dueDate); };
 
     const createWithAI = async () => {
       if (!apiKey) { showToast('Please save a Gemini API key in Settings first.', 'error'); return; }
       setIsImporting(true);
       try {
-    const fileParts = [];
-    for (const file of files) {
-      if (file.type === 'application/pdf') {
-        // 1. Upload PDFs using the File API to bypass Free Tier payload limits
-        const uploadRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media&key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': file.type },
-          body: file
-        });
-        
-        if (!uploadRes.ok) throw new Error(`PDF Upload failed with status ${uploadRes.status}`);
-        const uploadData = await uploadRes.json();
-        
-        // 2. Pass the lightweight URI to the AI instead of the heavy Base64 data
-        fileParts.push({ fileData: { mimeType: file.type, fileUri: uploadData.file.uri } });
-        
-      } else if (file.type.startsWith('image/')) {
-        // Images are compressed in our app, so they are small enough for inlineData
-        const base64Data = await new Promise((resolve, reject) => { 
-          const reader = new FileReader(); 
-          reader.onload = () => resolve(reader.result.split(',')[1]); 
-          reader.onerror = reject; 
-          reader.readAsDataURL(file); 
-        });
-        fileParts.push({ inlineData: { mimeType: file.type, data: base64Data } });
-      }
-    }
-        const textPrompt = `You are a data extraction AI. Extract job details from the attached files (if any) AND the following source text.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
+        const fileParts = [];
+        for (const file of files) {
+          if (file.type === 'application/pdf') {
+            // FIX: Use the dedicated File API for PDFs to bypass Free Tier Payload restrictions
+            const uploadRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media&key=${apiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': file.type },
+              body: file
+            });
+            if (!uploadRes.ok) throw new Error(`PDF Upload failed with status ${uploadRes.status}`);
+            const uploadData = await uploadRes.json();
+            fileParts.push({ fileData: { mimeType: file.type, fileUri: uploadData.file.uri } });
+          } else if (file.type.startsWith('image/')) {
+            const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
+            fileParts.push({ inlineData: { mimeType: file.type || 'application/pdf', data: base64Data } });
+          }
+        }
+        const textPrompt = `You are a data extraction AI. Extract job details from the attached files (if any) AND the following source text.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "clientPhone", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:textPrompt},...fileParts]}], generationConfig:{temperature:0,response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error(`API error ${res.status}`);
         const data = await res.json();
         const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
         const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
-        onSave(json.address || addr, json.clientName || client, tasks, json.dueDate || dueDate);
+        onSave(json.address || addr, json.clientName || client, json.clientPhone || phone, tasks, json.dueDate || dueDate);
         showToast('Successfully imported via AI!', 'success');
       } catch (err) { showToast(`AI import failed: ${err.message}`, 'error'); }
       finally { setIsImporting(false); }
@@ -956,7 +941,6 @@
             </div>
           )}
 
-          {/* Header */}
           <div className="flex justify-between items-start px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
             <div>
               <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest mb-1.5 ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{isHandover ? 'Completion Report' : 'Job Sheet'}</span>
@@ -965,59 +949,43 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white mt-1"><X size={18}/></button>
           </div>
 
-          {/* Body */}
           <div className="px-5 py-4 space-y-3 max-h-[65vh] overflow-y-auto no-scrollbar">
-            {/* Address */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Job Address *</label>
               <div className="relative">
-                <input
-                  autoFocus
-                  className="w-full px-4 py-3 pr-11 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm"
-                  placeholder="e.g. 42 Acacia Ave, Sydney NSW"
-                  value={addr}
-                  onChange={e => setAddr(e.target.value)}
-                />
+                <input autoFocus className="w-full px-4 py-3 pr-11 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)} />
                 <button type="button" onClick={() => toggleVoice('newJobAddr', setAddr)} className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobAddr'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={15}/></button>
               </div>
             </div>
 
-            {/* Client */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Client Name</label>
-              <div className="relative">
-                <input
-                  className="w-full px-4 py-3 pr-11 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm"
-                  placeholder="e.g. John Smith"
-                  value={client}
-                  onChange={e => setClient(e.target.value)}
-                />
-                <button type="button" onClick={() => toggleVoice('newJobClient', setClient)} className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobClient'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={15}/></button>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Client Name</label>
+                <div className="relative">
+                  <input className="w-full px-4 py-3 pr-9 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" placeholder="John Smith" value={client} onChange={e => setClient(e.target.value)} />
+                  <button type="button" onClick={() => toggleVoice('newJobClient', setClient)} className={`absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobClient'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={13}/></button>
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Client Phone</label>
+                <input className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" placeholder="04xx xxx xxx" value={phone} onChange={e => setPhone(e.target.value)} />
               </div>
             </div>
 
-            {/* Due Date */}
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Due Date (optional)</label>
-              <input
-                type="date"
-                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm"
-                value={dueDate}
-                onChange={e => setDueDate(e.target.value)}
-              />
+              <input type="date" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" value={dueDate} onChange={e => setDueDate(e.target.value)} />
             </div>
 
-            {/* AI divider */}
             <div className="flex items-center gap-3 py-1">
               <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">or use AI</span>
               <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"/>
             </div>
 
-            {/* AI box */}
             <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
               <p className="text-[11px] font-black text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5 mb-0.5"><Sparkles size={12} className="text-orange-500"/> AI Auto-Fill</p>
-              <p className="text-[10px] text-slate-400 mb-3">Attach documents or dictate what you did.</p>
+              <p className="text-[10px] text-slate-400 mb-3">Attach documents (PDF/Img) or dictate what you did.</p>
               <label className="flex items-center gap-2 mb-3 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors text-xs font-black uppercase w-fit"><Upload size={13}/> Add Documents<input ref={fileInputRef} type="file" multiple accept=".pdf,image/jpeg,image/png,image/webp" className="hidden" onChange={handleFiles}/></label>
               {files.length > 0 && (
                 <div className="mb-3 space-y-1">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 px-3 py-2 rounded-lg shadow-sm"><span className="text-[11px] font-medium truncate flex-1 dark:text-white">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400 flex-shrink-0"><X size={13}/></button></div>))}</div>
@@ -1025,7 +993,7 @@
               <div className="relative">
                 <textarea
                   className="w-full px-4 py-3 pr-11 bg-white dark:bg-slate-700 rounded-lg outline-none text-xs font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400 shadow-sm border border-slate-200 dark:border-slate-600"
-                  placeholder="Paste text or tap mic: 'I went to 123 Main st and installed 2 power points...'"
+                  placeholder="Paste text or tap mic..."
                   value={additionalText}
                   onChange={e => setAdditionalText(e.target.value)}
                 />
@@ -1034,13 +1002,8 @@
             </div>
           </div>
 
-          {/* Footer */}
           <div className="flex gap-3 px-5 py-4 border-t border-slate-100 dark:border-slate-800">
-            <button
-              onClick={createManual}
-              disabled={!addr.trim()}
-              className={`flex-1 py-3.5 rounded-xl font-black text-sm shadow-sm transition-all active:scale-95 bg-slate-900 dark:bg-slate-700 text-white ${!addr.trim() ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-800'}`}
-            >Create</button>
+            <button onClick={createManual} disabled={!addr.trim()} className={`flex-1 py-3.5 rounded-xl font-black text-sm shadow-sm transition-all active:scale-95 bg-slate-900 dark:bg-slate-700 text-white ${!addr.trim() ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-800'}`}>Create</button>
             {canUseAI && (
               <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-black text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"><Sparkles size={15}/> Auto-Fill</button>
             )}
@@ -1050,25 +1013,19 @@
     );
   };
 
-  /* ── Print Preview — both dates editable, calendar icon hidden ── */
+  /* Print Preview */
   const PrintPreview = ({ job, extraTaxRate, businessProfile = {}, onClose, onUpdateJob, showToast }) => {
     const [tasks, setTasks] = useState(job.tasks.map(t => ({...t})));
     const [header, setHeader] = useState({
-      address: job.address,
-      clientName: job.clientName,
-      clientRef: job.clientRef || '',
+      address: job.address, clientName: job.clientName, clientRef: job.clientRef || '',
       date: job.date ? new Date(job.date).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
-      dueDate: job.dueDate || '',
-      projectNotes: job.projectNotes || '',
-      projectPhotos: job.projectPhotos || [],
+      dueDate: job.dueDate || '', projectNotes: job.projectNotes || '', projectPhotos: job.projectPhotos || [],
     });
     const [signatureEnabled, setSignatureEnabled] = useState(job.showSignature || false);
     const [signatureData, setSignatureData] = useState(job.signature || null);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-    useEffect(() => {
-      onUpdateJob({ ...job, tasks, date: new Date(header.date).toISOString(), showSignature: signatureEnabled, signature: signatureData });
-    }, [header.date, header.dueDate, signatureEnabled, signatureData, tasks]);
+    useEffect(() => { onUpdateJob({ ...job, tasks, date: new Date(header.date).toISOString(), showSignature: signatureEnabled, signature: signatureData }); }, [header.date, header.dueDate, signatureEnabled, signatureData, tasks]);
 
     const updateTask = (index, field, value) => { const updated = [...tasks]; updated[index] = { ...updated[index], [field]: value }; setTasks(updated); };
     const totals = getQuoteTotals(tasks, job.gstEnabled, extraTaxRate);
@@ -1090,7 +1047,7 @@
           await navigator.share({ files: [file], title: `${docLabel} - ${biz.name || 'JobLog'}` });
         } else {
           window.html2pdf().set(opt).from(element).save();
-          showToast('Downloaded PDF (Sharing unsupported on this device)', 'success');
+          showToast('Downloaded PDF', 'success');
         }
       } catch (err) { showToast('Error generating PDF', 'error'); console.error(err); }
       finally { setIsGeneratingPDF(false); }
@@ -1099,7 +1056,6 @@
     return createPortal(
       <div id="print-container" className="print-preview-overlay fixed inset-0 z-[500] bg-slate-100 dark:bg-slate-900 p-4 sm:p-8 overflow-y-auto pb-safe">
         <div className="max-w-3xl mx-auto">
-          {/* Toolbar */}
           <div className="flex flex-wrap justify-between items-center mb-6 no-print gap-3">
             <h2 className="text-xl font-black text-slate-800 dark:text-white">Preview & Export</h2>
             <div className="flex flex-wrap items-center gap-2">
@@ -1114,10 +1070,7 @@
             </div>
           </div>
 
-          {/* PDF content */}
           <div id="pdf-content" className="bg-white text-black p-6 sm:p-10 shadow-2xl rounded-sm">
-
-            {/* Business Header */}
             {biz.name && (
               <div className="pb-4 mb-4 border-b-2 border-slate-300">
                 <div className="flex justify-between items-start">
@@ -1135,16 +1088,8 @@
                     {biz.address && <p className="text-slate-400 text-xs mb-2">{biz.address}</p>}
                     {(printLicences.length > 0 || hasInsurance) && (
                       <div className="mt-1 pt-2 border-t border-slate-200 inline-block text-right min-w-[150px]">
-                        {printLicences.map((lic, i) => (
-                          <p key={i} className="text-[10px] text-slate-500 font-medium uppercase tracking-wide leading-tight mb-0.5">
-                            {lic.type}: <span className="font-bold text-slate-800 font-mono">{lic.number}</span>
-                          </p>
-                        ))}
-                        {hasInsurance && (
-                          <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide leading-tight">
-                            PLI ({biz.insurance}): <span className="font-bold text-slate-800 font-mono">{biz.insurancePolicy}</span>
-                          </p>
-                        )}
+                        {printLicences.map((lic, i) => <p key={i} className="text-[10px] text-slate-500 font-medium uppercase tracking-wide leading-tight mb-0.5">{lic.type}: <span className="font-bold text-slate-800 font-mono">{lic.number}</span></p>)}
+                        {hasInsurance && <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wide leading-tight">PLI ({biz.insurance}): <span className="font-bold text-slate-800 font-mono">{biz.insurancePolicy}</span></p>}
                       </div>
                     )}
                   </div>
@@ -1152,54 +1097,25 @@
               </div>
             )}
 
-            {/* Document Header */}
             <div className="border-b-2 border-slate-300 pb-3 mb-4">
-              {/* Doc type label + BOTH dates editable */}
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-black uppercase text-slate-500 tracking-widest">{docLabel}</span>
                 <div className="flex items-center gap-3">
-                  {/* Document date */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-black text-slate-400 uppercase">Date:</span>
-                    <input
-                      type="date"
-                      className="bg-transparent border-b border-dashed border-slate-400 text-right outline-none text-slate-800 text-xs font-bold cursor-pointer focus:border-orange-400 focus:outline-none"
-                      style={{ WebkitAppearance: 'none', appearance: 'none' }}
-                      value={header.date}
-                      onChange={e => setHeader({...header, date: e.target.value})}
-                    />
-                  </div>
+                  <div className="flex items-center gap-1.5"><span className="text-[10px] font-black text-slate-400 uppercase">Date:</span><input type="date" className="bg-transparent border-b border-dashed border-slate-400 text-right outline-none text-slate-800 text-xs font-bold cursor-pointer focus:border-orange-400" value={header.date} onChange={e => setHeader({...header, date: e.target.value})}/></div>
                 </div>
               </div>
-
               <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
               {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1 outline-none" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
               <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
-
-              {/* Due date — always shown, always editable */}
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Due Date:</span>
-                <input
-                  type="date"
-                  className="bg-transparent border-b border-dashed border-amber-400 outline-none text-amber-600 font-bold text-sm cursor-pointer focus:border-orange-500"
-                  style={{ WebkitAppearance: 'none', appearance: 'none' }}
-                  value={header.dueDate}
-                  onChange={e => setHeader({...header, dueDate: e.target.value})}
-                />
-                {!header.dueDate && <span className="text-[10px] text-slate-400 italic">optional</span>}
-              </div>
-
+              <div className="flex items-center gap-2 mb-2"><span className="text-xs font-black text-slate-400 uppercase tracking-widest">Due Date:</span><input type="date" className="bg-transparent border-b border-dashed border-amber-400 outline-none text-amber-600 font-bold text-sm cursor-pointer focus:border-orange-500" value={header.dueDate} onChange={e => setHeader({...header, dueDate: e.target.value})}/></div>
               <PrintEditableDiv value={header.projectNotes} onChange={v => setHeader({...header, projectNotes: v})} placeholder="Project notes / Document Summary" className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1"/>
-              {header.projectPhotos?.length > 0 && (
-                <div className="flex gap-2 mt-2 overflow-x-auto">{header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>
-              )}
+              {header.projectPhotos?.length > 0 && <div className="flex gap-2 mt-2 overflow-x-auto">{header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
               <div className="flex gap-4 mt-2 text-sm font-medium text-slate-600">
                 <span>TOTAL TIME: {fmtMins(totalHours)}</span>
                 {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
               </div>
             </div>
 
-            {/* Tasks */}
             {tasks.map((t, idx) => {
               const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
               const mats   = parseFloat(t.materialsCost)||0;
@@ -1214,38 +1130,21 @@
                   <div className="p-6">
                     <PrintEditableDiv value={t.desc} onChange={v => updateTask(idx, 'desc', v)} placeholder="Task description" className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent outline-none"/>
                     <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="p-4 bg-slate-50 rounded-xl border">
-                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
-                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)}/>
-                      </div>
-                      <div className="p-4 bg-slate-50 rounded-xl border">
-                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}</label>
-                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)}/>
-                      </div>
+                      <div className="p-4 bg-slate-50 rounded-xl border"><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label><input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)}/></div>
+                      <div className="p-4 bg-slate-50 rounded-xl border"><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}</label><input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)}/></div>
                       {showCosts && (labour > 0 || mats > 0) && (
                         <>
-                          <div className="p-4 bg-slate-50 rounded-xl border">
-                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
-                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}{t.rate ? ` ($${t.rate}/hr)` : ''}</span>
-                          </div>
-                          <div className="p-4 bg-slate-50 rounded-xl border">
-                            <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label>
-                            <span className="text-[12px] font-bold text-slate-600">{fmtAUD(mats)}</span>
-                          </div>
+                          <div className="p-4 bg-slate-50 rounded-xl border"><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label><span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}{t.rate ? ` ($${t.rate}/hr)` : ''}</span></div>
+                          <div className="p-4 bg-slate-50 rounded-xl border"><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label><span className="text-[12px] font-bold text-slate-600">{fmtAUD(mats)}</span></div>
                         </>
                       )}
                     </div>
-                    {t.images?.length > 0 && (
-                      <div className="print-img-container">
-                        {t.images.map((img,i) => <div key={i} className="rounded-lg overflow-hidden border aspect-[4/3] shadow-sm bg-slate-100"><img src={img} className="w-full h-full object-cover"/></div>)}
-                      </div>
-                    )}
+                    {t.images?.length > 0 && <div className="print-img-container">{t.images.map((img,i) => <div key={i} className="rounded-lg overflow-hidden border aspect-[4/3] shadow-sm bg-slate-100"><img src={img} className="w-full h-full object-cover"/></div>)}</div>}
                   </div>
                 </div>
               );
             })}
 
-            {/* Totals */}
             {showCosts && totals.total > 0 && (
               <div className="mt-6 border-2 border-slate-900 rounded-2xl p-6 flex justify-between items-end">
                 <div>
@@ -1262,11 +1161,18 @@
               </div>
             )}
 
-            {/* Signature */}
             {signatureEnabled && (
               <div className="mt-8 pt-6 border-t-2 border-slate-200 break-inside-avoid">
                 <p className="text-sm font-black text-slate-800 uppercase tracking-widest mb-3">Client Approval / Signature</p>
                 <SignaturePad onSave={(data) => setSignatureData(data)} initialData={signatureData} />
+              </div>
+            )}
+
+            {/* Global T&Cs printed automatically at bottom of PDF */}
+            {biz.termsAndConditions && (
+              <div className="mt-12 pt-4 border-t border-slate-300 text-[10px] text-slate-500 font-medium whitespace-pre-wrap leading-tight break-inside-avoid">
+                <p className="font-bold text-slate-700 uppercase mb-1">Terms & Conditions</p>
+                {biz.termsAndConditions}
               </div>
             )}
           </div>
@@ -1304,111 +1210,182 @@
           <div className="flex gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             {editing && !appointment.isGoogle && (<button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-4 rounded-2xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={20}/></button>)}
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
-            <button onClick={save} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black shadow-lg shadow-orange-500/30 flex justify-center items-center gap-2"><Check size={18}/> Save</button>
+            <button onClick={save} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black shadow-lg flex justify-center items-center gap-2"><Check size={18}/> Save</button>
           </div>
         </div>
       </div>
     );
   };
 
+  /* The New Schedule & Timesheet View combined */
   const ScheduleView = ({ appointments, jobs, googleToken, onSaveAppointment, onDeleteAppointment, isGoogleConnected, showConfirm, onScheduleFromJob, showToast }) => {
+    const [viewTab, setViewTab] = useState('upcoming'); // 'upcoming' | 'timesheet'
     const [weekOffset, setWeekOffset] = useState(0);
     const [apptModal, setApptModal] = useState(null);
     const [googleEvents, setGoogleEvents] = useState([]);
-    const [loadingGoogle, setLoadingGoogle] = useState(false);
+    
     const today = new Date();
     const startOfWeek = getStartOfWeek(today, 1);
     startOfWeek.setDate(startOfWeek.getDate() + (weekOffset * 7));
     startOfWeek.setHours(0,0,0,0);
+    
     const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const days = Array.from({length:7}, (_,i) => { const d = new Date(startOfWeek); d.setDate(d.getDate()+i); return d; });
     const hours = Array.from({length:15}, (_,i) => i+6);
+
     useEffect(() => {
-      if (!googleToken || !isGoogleConnected) return;
+      if (!googleToken || !isGoogleConnected || viewTab !== 'upcoming') return;
       const fetchEvents = async () => {
-        setLoadingGoogle(true);
         try {
           const timeMin = new Date(startOfWeek).toISOString();
           const timeMax = new Date(days[6].getTime() + 24*3600*1000).toISOString();
           const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, { headers: { Authorization: `Bearer ${googleToken.access_token}` } });
           if (res.status === 401) { showToast('Google session expired. Please reconnect.', 'error'); return; }
-          const data = await res.json();
-          setGoogleEvents(data.items || []);
-        } catch (e) { console.error('Failed to fetch Google events', e); }
-        finally { setLoadingGoogle(false); }
+          const data = await res.json(); setGoogleEvents(data.items || []);
+        } catch (e) {}
       };
       fetchEvents();
-    }, [googleToken, weekOffset, isGoogleConnected]);
+    }, [googleToken, weekOffset, isGoogleConnected, viewTab]);
+
+    // Setup Calendar Events
     const localEvents = appointments.map(a => ({ ...a, isLocal: true, start: new Date(a.start), end: new Date(a.end) }));
     const localGoogleIds = new Set(appointments.filter(a => a.googleEventId).map(a => a.googleEventId));
     const externalGoogleEvents = googleEvents.filter(ev => !localGoogleIds.has(ev.id)).map(ev => ({ id: ev.id, title: ev.summary || '(No title)', start: new Date(ev.start.dateTime || ev.start.date), end: new Date(ev.end.dateTime || ev.end.date), isGoogle: true, notes: ev.description || '' }));
     const allEvents = [...localEvents, ...externalGoogleEvents];
     const getEventsForSlot = (day, hour) => { const slotStart = new Date(day); slotStart.setHours(hour,0,0,0); const slotEnd = new Date(slotStart); slotEnd.setHours(hour+1,0,0,0); return allEvents.filter(ev => ev.start < slotEnd && ev.end > slotStart); };
-    const handleSlotClick = (day, hour) => { const defStart = new Date(day); defStart.setHours(hour,0,0,0); const defEnd = new Date(defStart); defEnd.setHours(hour+1,0,0,0); setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString(), end: defEnd.toISOString(), notes: '' } }); };
-    const handleEventClick = (event) => { if (event.isGoogle) return; setApptModal({ appointment: event }); };
+    
     const handleSave = async (data) => {
       if (googleToken && isGoogleConnected && !data.googleEventId) {
         try {
           const gEvent = { summary: data.title, description: data.notes || '', start: { dateTime: new Date(data.start).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }, end: { dateTime: new Date(data.end).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone } };
           const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', { method: 'POST', headers: { Authorization: `Bearer ${googleToken.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(gEvent) });
-          const created = await res.json();
-          data.googleEventId = created.id;
-          showToast('Saved to Google Calendar', 'success');
+          const created = await res.json(); data.googleEventId = created.id; showToast('Saved to Google Calendar', 'success');
         } catch (e) { showToast('Google sync failed', 'error'); }
       } else { showToast('Appointment Saved', 'success'); }
       onSaveAppointment(data); setApptModal(null);
     };
+
     const handleDeleteAppointment = (id) => {
       showConfirm('Delete this appointment?', () => {
         const appt = appointments.find(a => a.id === id);
-        if (appt?.googleEventId && googleToken) { fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${googleToken.access_token}` } }).catch(e => console.error('Failed to delete Google event', e)); }
+        if (appt?.googleEventId && googleToken) { fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${googleToken.access_token}` } }).catch(()=>{}); }
         onDeleteAppointment(id); setApptModal(null); showToast('Appointment Deleted', 'info');
       });
     };
+
+    // Setup Timesheet Calcs
+    const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(endOfWeek.getDate()+7);
+    const fullDayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    let weeklyTotalMins = 0; const dailyMins = [0,0,0,0,0,0,0]; const weeklyLogs = [];
+
+    jobs.forEach(job => {
+      job.tasks.forEach(task => {
+        const tDate = new Date(task.id);
+        if (tDate >= startOfWeek && tDate < endOfWeek) {
+          const m = parseTimeToMinutes(task.time);
+          if (m > 0) {
+            weeklyTotalMins += m;
+            const dIdx = (tDate.getDay() + 6) % 7; 
+            dailyMins[dIdx] += m;
+            weeklyLogs.push({ day: fullDayNames[dIdx], date: tDate.toLocaleDateString(), job: job.address, task: task.title, time: fmtMins(m), rawMins: m });
+          }
+        }
+      });
+    });
+
+    const exportCSV = () => {
+      if (weeklyLogs.length===0) return showToast('No entries to export', 'error');
+      let csv = "Day,Date,Job,Task,Hours\n";
+      weeklyLogs.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(l => { csv += `"${l.day}","${l.date}","${l.job}","${l.task}","${l.time}"\n`; });
+      csv += `\nTotal,,,"${fmtMins(weeklyTotalMins)}"\n`;
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `Timesheet_${startOfWeek.toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
+    };
+
     return (
       <div className="max-w-6xl mx-auto p-4 animate-slide-up pb-24">
-        <div className="flex justify-between items-center mb-4">
-          <button onClick={() => setWeekOffset(o => o-1)} className="p-3 bg-slate-200 dark:bg-slate-800 rounded-xl"><ChevronRight size={18} className="rotate-180"/></button>
-          <h2 className="text-xl font-black uppercase text-center">{days[0].toLocaleDateString('en-AU', {day:'numeric',month:'short'})} – {days[6].toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'})}</h2>
-          <button onClick={() => setWeekOffset(o => o+1)} className="p-3 bg-slate-200 dark:bg-slate-800 rounded-xl"><ChevronRight size={18}/></button>
+        
+        {/* Toggle Bar */}
+        <div className="flex bg-slate-200 dark:bg-slate-800 rounded-xl p-1 mb-6 max-w-sm mx-auto shadow-inner">
+          <button onClick={() => setViewTab('upcoming')} className={`flex-1 py-2 font-black text-sm rounded-lg transition-all ${viewTab==='upcoming'?'bg-white dark:bg-slate-700 shadow text-purple-600 dark:text-purple-400':'text-slate-500'}`}>Appointments</button>
+          <button onClick={() => setViewTab('timesheet')} className={`flex-1 py-2 font-black text-sm rounded-lg transition-all ${viewTab==='timesheet'?'bg-white dark:bg-slate-700 shadow text-purple-600 dark:text-purple-400':'text-slate-500'}`}>Timesheets</button>
         </div>
-        <div className="calendar-grid shadow-sm">
-          <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center">Time</div>
-          {days.map((d,i) => (<div key={i} className={`bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center py-2 ${d.toDateString()===today.toDateString()?'text-orange-500':''}`}>{dayNames[i]}<br/>{d.getDate()}</div>))}
-          {hours.map(hour => (
-            <React.Fragment key={hour}>
-              <div className="calendar-hour">{hour}:00</div>
-              {days.map((day, di) => {
-                const slotEvents = getEventsForSlot(day, hour);
+
+        <div className="flex justify-between items-center mb-4 max-w-sm mx-auto">
+          <button onClick={() => setWeekOffset(o => o-1)} className="p-3 bg-slate-200 dark:bg-slate-800 rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"><ChevronRight size={18} className="rotate-180"/></button>
+          <h2 className="text-xl font-black uppercase text-center">{days[0].toLocaleDateString('en-AU', {day:'numeric',month:'short'})} – {days[6].toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'})}</h2>
+          <button onClick={() => setWeekOffset(o => o+1)} className="p-3 bg-slate-200 dark:bg-slate-800 rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"><ChevronRight size={18}/></button>
+        </div>
+
+        {viewTab === 'upcoming' ? (
+          <>
+            <div className="calendar-grid shadow-sm">
+              <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center">Time</div>
+              {days.map((d,i) => (<div key={i} className={`bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center py-2 ${d.toDateString()===today.toDateString()?'text-orange-500':''}`}>{dayNames[i]}<br/>{d.getDate()}</div>))}
+              {hours.map(hour => (
+                <React.Fragment key={hour}>
+                  <div className="calendar-hour">{hour}:00</div>
+                  {days.map((day, di) => {
+                    const slotEvents = getEventsForSlot(day, hour);
+                    return (
+                      <div key={di} className="calendar-cell" onClick={() => { const defStart=new Date(day); defStart.setHours(hour,0,0,0); const defEnd=new Date(defStart); defEnd.setHours(hour+1,0,0,0); setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString(), end: defEnd.toISOString(), notes: '' } }); }}>
+                        {slotEvents.map(ev => (
+                          <div key={ev.id} onClick={(e) => { e.stopPropagation(); if(!ev.isGoogle) setApptModal({ appointment: ev }); }}
+                            className={`calendar-event ${ev.isGoogle ? 'bg-blue-200 dark:bg-blue-800 text-slate-800 dark:text-blue-200' : ev.isLocal ? 'bg-orange-100 dark:bg-orange-900/60 text-orange-800 dark:text-orange-200' : 'bg-slate-200 dark:bg-slate-600'}`}
+                            style={{ top: `${(ev.start.getMinutes()/60)*100}%`, height: `${Math.min(((ev.end - ev.start)/3600000)*100, 100)}%` }}>
+                            <div className="truncate text-[9px] font-black">{ev.title}</div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </div>
+            <div className="mt-6 bg-white dark:bg-slate-800 rounded-3xl p-5 border dark:border-slate-700 shadow-sm max-w-sm mx-auto">
+              <h3 className="font-black text-sm uppercase tracking-widest mb-3 flex items-center gap-2"><Clock size={14} className="text-orange-500"/> Upcoming Appointments</h3>
+              {allEvents.filter(ev => ev.start >= new Date()).sort((a,b)=>a.start-b.start).slice(0,5).map(ev => (
+                <div key={ev.id} className="flex items-center justify-between py-2 border-b dark:border-slate-700 last:border-0">
+                  <div><p className="font-bold text-sm">{ev.title}</p><p className="text-[10px] text-slate-400">{fmtDateTime(ev.start.toISOString())} – {fmtDateTime(ev.end.toISOString())}</p></div>
+                  {!ev.isGoogle && <button onClick={() => handleDeleteAppointment(ev.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>}
+                </div>
+              ))}
+              {allEvents.length===0 && <p className="text-sm text-slate-400">No upcoming appointments.</p>}
+            </div>
+          </>
+        ) : (
+          <div className="space-y-4 max-w-sm mx-auto">
+            <div className="bg-purple-600 text-white rounded-3xl p-6 flex justify-between items-center shadow-lg">
+              <div><p className="text-purple-200 font-black text-xs uppercase tracking-widest">This Week's Hours</p><h2 className="text-4xl font-black mt-1">{fmtMins(weeklyTotalMins)}</h2></div>
+              <button onClick={exportCSV} className="bg-white/20 hover:bg-white/30 p-3 rounded-xl transition-colors active:scale-95"><FileDown size={24}/></button>
+            </div>
+            <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border dark:border-slate-700 shadow-sm space-y-3">
+              {fullDayNames.map((d,i) => {
+                const logs = weeklyLogs.filter(l => l.day === d);
+                if (logs.length === 0) return null;
                 return (
-                  <div key={di} className="calendar-cell" onClick={() => handleSlotClick(day, hour)}>
-                    {slotEvents.map(ev => (
-                      <div key={ev.id} onClick={(e) => { e.stopPropagation(); handleEventClick(ev); }}
-                        className={`calendar-event ${ev.isGoogle ? 'bg-blue-200 dark:bg-blue-800 text-slate-800 dark:text-blue-200' : ev.isLocal ? 'bg-orange-100 dark:bg-orange-900/60 text-orange-800 dark:text-orange-200' : 'bg-slate-200 dark:bg-slate-600'}`}
-                        style={{ top: `${(ev.start.getMinutes()/60)*100}%`, height: `${Math.min(((ev.end - ev.start)/3600000)*100, 100)}%` }}>
-                        <div className="truncate text-[9px] font-black">{ev.title}</div>
+                  <div key={d} className="border-b dark:border-slate-700 pb-3 last:border-0 last:pb-0">
+                    <div className="flex justify-between items-end mb-2"><h4 className="font-black text-slate-800 dark:text-white">{d}</h4><span className="font-black text-purple-600 text-sm">{fmtMins(dailyMins[i])}</span></div>
+                    {logs.map((l,idx) => (
+                      <div key={idx} className="flex justify-between items-start text-xs bg-slate-50 dark:bg-slate-900 p-2 rounded-lg mb-1 border border-slate-100 dark:border-slate-800">
+                        <div className="min-w-0 pr-2"><p className="font-bold dark:text-slate-300 truncate">{l.job}</p><p className="text-slate-400 truncate">{l.task}</p></div>
+                        <span className="font-bold whitespace-nowrap bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded flex-shrink-0">{l.time}</span>
                       </div>
                     ))}
                   </div>
                 );
               })}
-            </React.Fragment>
-          ))}
-        </div>
-        <div className="mt-6 bg-white dark:bg-slate-800 rounded-3xl p-5 border dark:border-slate-700 shadow-sm">
-          <h3 className="font-black text-sm uppercase tracking-widest mb-3 flex items-center gap-2"><Clock size={14} className="text-orange-500"/> Upcoming Appointments</h3>
-          {allEvents.filter(ev => ev.start >= new Date()).sort((a,b)=>a.start-b.start).slice(0,5).map(ev => (
-            <div key={ev.id} className="flex items-center justify-between py-2 border-b dark:border-slate-700 last:border-0">
-              <div><p className="font-bold text-sm">{ev.title}</p><p className="text-[10px] text-slate-400">{fmtDateTime(ev.start.toISOString())} – {fmtDateTime(ev.end.toISOString())}</p></div>
-              {!ev.isGoogle && <button onClick={() => handleDeleteAppointment(ev.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>}
+              {weeklyTotalMins === 0 && <p className="text-center text-slate-400 text-sm font-bold py-4">No hours logged this week.</p>}
             </div>
-          ))}
-          {allEvents.length===0 && <p className="text-sm text-slate-400">No upcoming appointments.</p>}
-        </div>
+          </div>
+        )}
+
         {apptModal && (<AppointmentFormModal appointment={apptModal.appointment} jobs={jobs} googleToken={googleToken} onSave={handleSave} onDelete={() => handleDeleteAppointment(apptModal.appointment.id)} onClose={() => setApptModal(null)} showToast={showToast}/>)}
       </div>
     );
   };
+
 
   /* ════════════════════════════════════════════
      APP
@@ -1434,12 +1411,7 @@
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
     const [editingTaskId, setEditingTaskId] = useState(null);
     const [dbSize, setDbSize] = useState('0 MB');
-    const [isDarkMode, setIsDarkMode] = useState(() => {
-      const saved = localStorage.getItem('theme');
-      if (saved !== null) return saved === 'dark';
-      // Fallback to system preference if no saved setting
-      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    });
+    const [isDarkMode, setIsDarkMode] = useState(() => { const saved = localStorage.getItem('theme'); if (saved !== null) return saved === 'dark'; return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; });
     const [newJobModal, setNewJobModal] = useState(null);
     const [searchQ, setSearchQ] = useState('');
     const [filterType, setFilterType] = useState('all');
@@ -1450,7 +1422,7 @@
     const [listeningField, setListeningField] = useState(null);
     const recognitionRef = useRef(null);
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
-    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-2.5-flash');
+    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-1.5-flash-8b');
     const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('googleClientId') || '');
     const [googleToken, setGoogleToken] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState(null);
@@ -1463,6 +1435,13 @@
     const [showAIAssistModal, setShowAIAssistModal] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isScanningReceipt, setIsScanningReceipt] = useState(false);
+    const [isProfessionalizing, setIsProfessionalizing] = useState(false);
+
+    // Live Timer
+    const [activeTimer, setActiveTimer] = useState(() => { try { return JSON.parse(localStorage.getItem('joblog-timer') || 'null'); } catch { return null; } });
+    const [now, setNow] = useState(Date.now());
+    useEffect(() => { localStorage.setItem('joblog-timer', JSON.stringify(activeTimer)); }, [activeTimer]);
+    useEffect(() => { if (!activeTimer) return; const int = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(int); }, [activeTimer]);
 
     const EMPTY_TASK = { title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'', images:[] };
     const [taskData, setTaskData] = useState(EMPTY_TASK);
@@ -1578,15 +1557,26 @@
       finally { setIsAiSuggesting(false); }
     };
 
+    const handleProfessionalize = async () => {
+      if (!taskData.desc) return showToast('Enter description first', 'error');
+      if (!apiKey) return showToast('Add Gemini API Key in settings', 'error');
+      setIsProfessionalizing(true);
+      try {
+        const prompt = `Rewrite this rough field note into a professional, concise client-facing description. Return ONLY the rewritten text, no quotes or intro: "${taskData.desc}"`;
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.2} }) });
+        const data = await res.json();
+        setTaskData(p => ({...p, desc: data.candidates[0].content.parts[0].text.trim()}));
+        showToast('Text professionalized!', 'success');
+      } catch (e) { showToast('AI failed', 'error'); } finally { setIsProfessionalizing(false); }
+    };
+
     const handleScanReceipt = async (e) => {
       const file = e.target.files[0]; if (!file) return;
       if (!apiKey) { showToast('Add Gemini API key in Settings to use receipt scanner.', 'error'); return; }
       setIsScanningReceipt(true);
       try {
         const base64Data = await compressImage(file);
-        const textPrompt = `You are an OCR JSON extraction tool. Read this receipt. 
-        Return ONLY a valid JSON object. Do not include markdown formatting or explanations.
-        Format: {"cost": 123.45, "items": "Hammer, Nails, Wood"}`;
+        const textPrompt = `You are an OCR JSON extraction tool. Read this receipt. Return ONLY a valid JSON object. Format: {"cost": 123.45, "items": "Hammer, Nails"}`;
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text: textPrompt},{inlineData: {mimeType: 'image/webp', data: base64Data.split(',')[1]}}]}], generationConfig:{temperature:0, response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error(`API error ${res.status}`);
         const data = await res.json();
@@ -1626,9 +1616,10 @@
       };
       reader.readAsText(file);
     };
-    const handleCreateJob = (address, clientName, tasks = [], dueDate = '') => {
+
+    const handleCreateJob = (address, clientName, clientPhone, tasks = [], dueDate = '') => {
       const now = Date.now();
-      const newJob = { id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now, date: new Date(now).toISOString(), createdAt: now, type: newJobModal, address, clientName, clientRef: '', dueDate: dueDate || '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false, showCosts: newJobModal === 'handover' ? false : true };
+      const newJob = { id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now, date: new Date(now).toISOString(), createdAt: now, type: newJobModal, address, clientName, clientPhone, clientRef: '', dueDate: dueDate || '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false, showCosts: newJobModal === 'handover' ? false : true };
       saveToDB([...jobs, newJob]); setNewJobModal(null); showToast('Project Created', 'success');
     };
     const cycleStatus = (id) => { const j = jobs.find(x=>x.id===id), idx = STATUSES.findIndex(s=>s.key===(j.status||'draft')); saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x)); };
@@ -1637,7 +1628,14 @@
     const startEditHeader = () => { setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] }); setIsEditingHeader(true); };
     const saveHeaderEdit = () => { if (!headerDraft.address.trim()) return; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, dueDate:headerDraft.dueDate, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j)); setIsEditingHeader(false); showToast('Details Updated', 'success'); };
     const handleProjectPhotoUpload = async (e) => { try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setHeaderDraft(d => ({...d,projectPhotos:[...d.projectPhotos,...c]})); } catch { showToast('One or more images could not be processed.', 'error'); } };
-    const handleSaveTask = () => { if (!taskData.title) return showToast('Task title is required.', 'error'); if (!activeJob) return; const updated = editingTaskId ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t) : [...activeJob.tasks, { ...taskData, id: Date.now() }]; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j)); closeModal(); showToast('Entry Saved', 'success'); };
+    
+    const handleSaveTask = () => { 
+      if (!taskData.title) return showToast('Task title is required.', 'error'); 
+      if (!activeJob) return; 
+      const updated = editingTaskId ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t) : [...activeJob.tasks, { ...taskData, id: Date.now() }]; 
+      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j)); 
+      closeModal(); showToast('Entry Saved', 'success'); 
+    };
     const closeModal = () => { recognitionRef.current?.stop(); recognitionRef.current = null; setListeningField(null); setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); setRateError(false); setMatError(false); setIsNamingTemplate(false); };
     const handleImageUpload = async (e) => { try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); } catch { showToast('One or more images could not be processed.', 'error'); } };
     const validateRate = (val) => { const n = parseFloat(val); setRateError(val !== '' && isNaN(n)); };
@@ -1645,6 +1643,7 @@
     const toggleJobSelection = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
     const clearSelection = () => setSelectedJobs([]);
     const selectAllVisible = () => setSelectedJobs(prev => { const e=new Set(prev); return [...prev,...filteredJobs.map(j=>j.id).filter(id=>!e.has(id))].slice(0,MAX_STOPS); });
+    
     const getMyLocation = () => { if (!navigator.geolocation) { setLocStatus('denied'); return; } setLocStatus('loading'); navigator.geolocation.getCurrentPosition((pos) => { setCurrentCoords({lat:pos.coords.latitude,lng:pos.coords.longitude}); setLocStatus('ok'); }, () => { setLocStatus('denied'); setUseMyLocation(false); }); };
     const handleLocToggle = () => { const next=!useMyLocation; setUseMyLocation(next); if (next && locStatus==='idle') getMyLocation(); };
     const openGoogleMaps = () => {
@@ -1659,9 +1658,19 @@
       if (wps) url += `&waypoints=${wps}`;
       window.open(url, '_blank', 'noopener');
     };
+
+    const stopTimer = () => {
+      const elapsedMins = Math.floor((Date.now() - activeTimer.startTime) / 60000);
+      setActiveJobId(activeTimer.jobId);
+      setViewMode('detail');
+      setTaskData({ ...EMPTY_TASK, time: fmtMins(elapsedMins) });
+      setIsTaskFormOpen(true);
+      setActiveTimer(null);
+    };
+
     const atStopLimit = selectedJobs.length >= MAX_STOPS;
     const filteredJobs = jobs
-      .filter(j => filterType==='all' || j.type===filterType)
+      .filter(j => filterType==='all' || (filterType==='unpaid' ? ['sent','approved','invoiced','overdue'].includes(j.status) : j.type===filterType))
       .filter(j => !searchQ.trim() || (j.address || '').toLowerCase().includes(searchQ.toLowerCase()) || (j.clientName||'').toLowerCase().includes(searchQ.toLowerCase()))
       .sort((a,b) => {
         if (sortBy === 'created_desc') return (b.createdAt || 0) - (a.createdAt || 0);
@@ -1695,23 +1704,18 @@
         resetView();
         const cvs = canvasRef.current, ctx = cvs.getContext('2d'), img = new Image();
         img.src = taskData.images[editingImageIdx];
-        img.onload = () => { cvs.width=img.width; cvs.height=img.height; ctx.drawImage(img,0,0,img.width,img.height); setUndoStack([cvs.toDataURL()]); };
+        img.onload = () => { cvs.width=img.width; cvs.height=img.height; ctx.drawImage(img,0,0,img.width,img.height); setUndoStack([cvs.toDataURL('image/webp', 0.8)]); };
       }
     }, [editingImageIdx, taskData.images]);
     const getCoords = (e) => { const cvs=canvasRef.current, r=cvs.getBoundingClientRect(); let cx=e.clientX, cy=e.clientY; if (e.touches?.length>0) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; } return { x:(cx-r.left)*(cvs.width/r.width), y:(cy-r.top)*(cvs.height/r.height) }; };
     const startDraw = (e) => { setIsDrawing(true); drawRef.current=true; const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.strokeStyle=penColor; ctx.lineWidth=Math.max(3,canvasRef.current.width/100); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x,y); };
     const doDraw = (e) => { if (!drawRef.current) return; e.preventDefault(); const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.lineTo(x,y); ctx.stroke(); };
-    const stopDraw = () => { 
-      if (!drawRef.current) return; 
-      setIsDrawing(false); 
-      drawRef.current = false; 
-      setUndoStack(p => [...p.slice(-4), canvasRef.current.toDataURL('image/webp', 0.7)]); 
-    };
+    const stopDraw = () => { if (!drawRef.current) return; setIsDrawing(false); drawRef.current=false; setUndoStack(p=>[...p.slice(-4),canvasRef.current.toDataURL('image/webp',0.7)]); }; // Limited to 5 undos
     const handleUndo = () => { if (undoStack.length<=1) return; const ns=[...undoStack]; ns.pop(); const img=new Image(); img.src=ns[ns.length-1]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack(ns); }; };
     const handleClear = () => { if (undoStack.length<=1) return; const img=new Image(); img.src=undoStack[0]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack([undoStack[0]]); }; };
     const saveAnnotated = () => { if (!canvasRef.current) return; const imgs=[...taskData.images]; imgs[editingImageIdx]=canvasRef.current.toDataURL('image/webp',0.8); setTaskData(p=>({...p,images:imgs})); setEditingImageIdx(null); };
     const dist2 = (t1,t2) => Math.hypot(t1.clientX-t2.clientX, t1.clientY-t2.clientY);
-    const onTouchStart = (e) => { if (e.touches.length===2) { if (drawRef.current) { drawRef.current=false; setIsDrawing(false); setUndoStack(p=>[...p,canvasRef.current.toDataURL()]); } pinchRef.current={ dist:dist2(e.touches[0],e.touches[1]), zoom:zoomRef.current }; } else if (e.touches.length===1) { pinchRef.current=null; if (modeRef.current==='pan') { panStartRef.current={ clientX:e.touches[0].clientX, clientY:e.touches[0].clientY, panX:panRef.current.x, panY:panRef.current.y }; } else startDraw(e); } };
+    const onTouchStart = (e) => { if (e.touches.length===2) { if (drawRef.current) { drawRef.current=false; setIsDrawing(false); setUndoStack(p=>[...p.slice(-4),canvasRef.current.toDataURL('image/webp',0.7)]); } pinchRef.current={ dist:dist2(e.touches[0],e.touches[1]), zoom:zoomRef.current }; } else if (e.touches.length===1) { pinchRef.current=null; if (modeRef.current==='pan') { panStartRef.current={ clientX:e.touches[0].clientX, clientY:e.touches[0].clientY, panX:panRef.current.x, panY:panRef.current.y }; } else startDraw(e); } };
     const onTouchMove = (e) => { e.preventDefault(); if (e.touches.length===2 && pinchRef.current) { const nz=Math.min(Math.max(pinchRef.current.zoom*(dist2(e.touches[0],e.touches[1])/pinchRef.current.dist),1),6); setCanvasZoom(nz); zoomRef.current=nz; } else if (e.touches.length===1) { if (modeRef.current==='pan' && panStartRef.current) { const np={ x:panStartRef.current.panX+(e.touches[0].clientX-panStartRef.current.clientX), y:panStartRef.current.panY+(e.touches[0].clientY-panStartRef.current.clientY) }; setCanvasPan(np); panRef.current=np; } else if (modeRef.current==='draw') doDraw(e); } };
     const onTouchEnd = (e) => { if (e.touches.length<2) pinchRef.current=null; if (e.touches.length===0) { panStartRef.current=null; if (modeRef.current==='draw') stopDraw(); } };
     const toggleMode = () => { const n=modeRef.current==='draw'?'pan':'draw'; setCanvasMode(n); modeRef.current=n; };
@@ -1764,7 +1768,7 @@
         )}
 
         {/* Schedule View */}
-        {viewMode==='schedule' && <ScheduleView appointments={appointments} jobs={jobs} googleToken={googleToken} isGoogleConnected={!!googleToken} onSaveAppointment={handleSaveAppointment} onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm} onScheduleFromJob={openAppointmentForJob} showToast={showToast}/>}
+        {viewMode==='schedule' && <ScheduleView jobs={jobs} appointments={appointments} googleToken={googleToken} isGoogleConnected={!!googleToken} onSaveAppointment={handleSaveAppointment} onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm} onScheduleFromJob={openAppointmentForJob} showToast={showToast}/>}
 
         {/* Dashboard */}
         {viewMode==='dashboard' && (
@@ -1810,11 +1814,13 @@
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
               </div>
             </div>
+            
             <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1">
-              {[{key:'all',label:'All Projects'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'}].map(f => (
-                <button key={f.key} onClick={() => setFilterType(f.key)} className={`px-4 py-2 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border ${filterType===f.key?'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700 shadow-md':'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>{f.label}</button>
+              {[{key:'all',label:'All Projects'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'},{key:'unpaid',label:'Unpaid',icon:<Wallet size={12}/>}].map(f => (
+                <button key={f.key} onClick={() => setFilterType(f.key)} className={`px-4 py-2 flex items-center gap-1.5 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border ${filterType===f.key?'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700 shadow-md':'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>{f.icon}{f.label}</button>
               ))}
             </div>
+
             <div className="grid gap-4">
               {filteredJobs.map(j => {
                 const status = getStatus(j.status||'draft');
@@ -1878,12 +1884,16 @@
               <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-full transition-colors"><ChevronRight size={14} className="rotate-180"/> Dashboard</button>
               <button onClick={() => showConfirm('Permanently delete this project?', () => { saveToDB(jobs.filter(x=>x.id!==activeJobId)); setViewMode('dashboard'); showToast('Project Deleted','success'); }, 'Delete')} className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase"><Trash2 size={14}/> Delete</button>
             </div>
+            
             <div className={`p-5 sm:p-8 rounded-[2rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
                   <div className="flex items-center gap-2 mb-3"><Edit3 size={14} className="text-orange-500"/><span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Editing Job Details</span></div>
                   <input className="w-full text-xl font-black bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e=>setHeaderDraft(d=>({...d,address:e.target.value}))}/>
-                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
+                    <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Phone" value={headerDraft.clientPhone || ''} onChange={e=>setHeaderDraft(d=>({...d,clientPhone:e.target.value}))}/>
+                  </div>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
                   <div className="mb-3"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date</label><input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none font-medium text-sm dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/></div>
                   <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e=>setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
@@ -1899,16 +1909,32 @@
                   <div>
                     <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{activeJob?.address}</h2>
                     <p className="text-slate-500 dark:text-slate-400 font-bold text-sm mt-1">{activeJob?.clientName}</p>
+                    {activeJob?.clientPhone && <p className="text-slate-400 text-xs font-bold mt-1"><Phone size={10} className="inline mr-1"/>{activeJob.clientPhone}</p>}
                     {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
                     {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDate(activeJob.dueDate)}</p>}
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3 whitespace-pre-wrap">{activeJob.projectNotes}</p>}
                     {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
                   </div>
+                  
+                  {/* Action Buttons */}
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     {getTotals(activeJob?.tasks||[]).mins > 0 && <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-sm border border-orange-200 dark:border-orange-800"><Clock size={12}/> {getTotals(activeJob?.tasks||[]).str}</div>}
                     <button onClick={() => cycleStatus(activeJobId)} className={`px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all border ${getStatus(activeJob?.status||'draft').cls}`}>{getStatus(activeJob?.status||'draft').label}</button>
                     <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts?'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400':'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}><DollarSign size={12}/> Costs {activeJob.showCosts?'ON':'OFF'}</button>
+                    
+                    {/* Start/Stop Timer Button */}
+                    {activeTimer?.jobId === activeJobId ? (
+                      <button onClick={stopTimer} className="bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 border border-red-200 dark:border-red-800 animate-pulse uppercase tracking-widest"><Square size={12} fill="currentColor"/> Stop Timer</button>
+                    ) : (
+                      <button onClick={() => setActiveTimer({jobId: activeJobId, startTime: Date.now()})} className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800 uppercase tracking-widest hover:bg-emerald-200 dark:hover:bg-emerald-800/60 transition-colors"><Play size={12} fill="currentColor"/> Start Timer</button>
+                    )}
+
+                    {/* Quick SMS Button */}
+                    {activeJob.clientPhone && (
+                      <a href={`sms:${activeJob.clientPhone}?body=${encodeURIComponent(`Hi ${activeJob.clientName||''}, this is ${businessProfile?.name || 'your tradie'}. I'm on my way to ${activeJob.address} now. ETA is about __ mins.`)}`} className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 uppercase tracking-widest hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors"><Phone size={12}/> SMS On My Way</a>
+                    )}
                   </div>
+
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     <button onClick={startEditHeader} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><Pencil size={16}/> Edit</button>
                     <button onClick={() => openAppointmentForJob(activeJobId)} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><CalendarPlus size={16}/> Schedule</button>
@@ -1996,6 +2022,20 @@
           </div>
         )}
 
+        {/* Global Active Timer Banner */}
+        {activeTimer && (
+          <div className="fixed bottom-[5.5rem] left-4 right-4 bg-emerald-600 text-white rounded-2xl p-4 flex justify-between items-center shadow-2xl z-[45] animate-slide-up cursor-pointer" onClick={() => { setActiveJobId(activeTimer.jobId); setViewMode('detail'); }}>
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-full animate-pulse"><Timer size={18}/></div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-200">Timer Active</p>
+                <p className="font-black text-sm">{fmtMins(Math.floor((now - activeTimer.startTime)/60000))} elapsed</p>
+              </div>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); stopTimer(); }} className="bg-white hover:bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-xs font-black transition-colors"><Square size={14} className="inline mr-1" fill="currentColor"/> Stop</button>
+          </div>
+        )}
+
         {/* Bottom Nav */}
         <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 flex justify-around items-center px-2 pt-2 bottom-nav-safe z-50 no-print">
           <button onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='dashboard' && !selectionMode ? 'text-orange-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Home size={22}/><span className="text-[10px] font-bold mt-1">Home</span></button>
@@ -2003,7 +2043,7 @@
           <button onClick={() => setViewMode('schedule')} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='schedule' ? 'text-purple-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Calendar size={22}/><span className="text-[10px] font-bold mt-1">Schedule</span></button>
           <button onClick={() => setShowSettings(true)} className="flex flex-col items-center p-2 w-16 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors relative">
             <Settings size={22}/>
-            {(!apiKey || expiringLicences.length > 0 || insuranceExpiring) && <span className="absolute top-2 right-4 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-900"/>}
+            {(!apiKey || (businessProfile?.licences || []).filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry)).length > 0) && <span className="absolute top-2 right-4 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-900"/>}
             <span className="text-[10px] font-bold mt-1">Settings</span>
           </button>
         </div>
@@ -2013,7 +2053,6 @@
         {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUnlock={handleUnlockSuccess} showToast={showToast}/>}
         {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast} toggleVoice={toggleVoice} listeningField={listeningField}/>}
 
-        {/* AI Assist — now receives toggleVoice and listeningField */}
         {showAIAssistModal && activeJob && <AIAssistModal onClose={() => setShowAIAssistModal(false)} onGenerate={handleGenerateDocument} isGenerating={isGenerating} docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'} apiKey={apiKey} toggleVoice={toggleVoice} listeningField={listeningField}/>}
 
         {/* Task Form */}
@@ -2108,7 +2147,16 @@
                   
                   <div className="relative">
                     <textarea placeholder="Full details…" className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium h-24 resize-none border border-transparent dark:border-slate-700 dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
-                    <button type="button" onClick={() => toggleVoice('taskDesc', (val) => setTaskData(p => ({...p, desc: typeof val === 'function' ? val(p.desc) : val})))} className={`absolute right-2 bottom-3 p-2 rounded-full text-white shadow-md transition-all ${listeningField==='taskDesc'?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`}><Mic size={14}/></button>
+                    
+                    {/* The New AI Polish and Mic Buttons */}
+                    <div className="absolute right-2 bottom-2 flex flex-col gap-2">
+                      <button type="button" onClick={handleProfessionalize} disabled={isProfessionalizing} className="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 p-2 rounded-lg text-[10px] font-black uppercase flex items-center gap-1 shadow-sm transition-colors hover:bg-purple-200 dark:hover:bg-purple-800">
+                        {isProfessionalizing ? <div className="w-3 h-3 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"/> : <Wand2 size={12}/>} Polish
+                      </button>
+                      <button type="button" onClick={() => toggleVoice('taskDesc', (val) => setTaskData(p => ({...p, desc: typeof val === 'function' ? val(p.desc) : val})))} className={`p-2 rounded-full text-white shadow-md transition-all self-end ${listeningField==='taskDesc'?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`}>
+                        <Mic size={14}/>
+                      </button>
+                    </div>
                   </div>
                   
                   <button onClick={handleAiSuggest} disabled={isAiSuggesting} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-900/20 ${isAiSuggesting ? 'opacity-60 cursor-wait' : ''}`}><Sparkles size={14}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}</button>
@@ -2175,7 +2223,6 @@
           </div>
         )}
 
-        {/* **FIX**: Pass the `onUpdateJob` and `showToast` props to the PrintPreview component */}
         {printPreviewJob && <PrintPreview 
             job={printPreviewJob} 
             extraTaxRate={extraTaxRate} 
