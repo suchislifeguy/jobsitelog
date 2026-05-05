@@ -722,7 +722,7 @@
               <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Configuration</span>
               <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1.5">Settings</h2>
             </div>
-            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
+            <button onClick={onClose} className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white text-[10px] font-black uppercase"><X size={14}/> Cancel</button>
           </div>
 
           <div className="space-y-5">
@@ -844,7 +844,7 @@
               </div>
             </div>
 
-            <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"><Check size={16}/> Save & Close</button>
+            <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"><Check size={16}/> Save Settings</button>
           </div>
           {showBusiness && <BusinessProfileEditor profile={businessProfile || {}} onSave={saveBusinessProfile} onClose={() => setShowBusiness(false)} showToast={showToast}/>}
           {showTemplates && <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)}/>}
@@ -1018,7 +1018,8 @@
           <div className="flex gap-3 px-5 py-4 border-t border-slate-100 dark:border-slate-800">
             <button
               onClick={createManual}
-              className={`flex-1 py-3.5 rounded-xl font-black text-sm shadow-sm transition-all ${addr.trim() ? 'bg-slate-900 dark:bg-slate-700 text-white hover:bg-slate-800 active:scale-95' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+              disabled={!addr.trim()}
+              className={`flex-1 py-3.5 rounded-xl font-black text-sm shadow-sm transition-all active:scale-95 bg-slate-900 dark:bg-slate-700 text-white ${!addr.trim() ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-800'}`}
             >Create</button>
             {canUseAI && (
               <button onClick={createWithAI} disabled={isImporting} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-black text-sm shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"><Sparkles size={15}/> Auto-Fill</button>
@@ -1080,7 +1081,7 @@
         <div className="max-w-3xl mx-auto">
           {/* Toolbar */}
           <div className="flex flex-wrap justify-between items-center mb-6 no-print gap-3">
-            <h2 className="text-xl font-black text-slate-800 dark:text-white">Review Document</h2>
+            <h2 className="text-xl font-black text-slate-800 dark:text-white">Preview & Export</h2>
             <div className="flex flex-wrap items-center gap-2">
               <button onClick={() => setSignatureEnabled(!signatureEnabled)} className={`px-4 py-2 rounded-xl font-black flex items-center gap-2 text-sm transition-colors border ${signatureEnabled ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
                 <Edit3 size={15}/> Signature
@@ -1723,9 +1724,10 @@
 
         {/* Credential expiry warning */}
         {(expiringLicences.length > 0 || insuranceExpiring) && viewMode === 'dashboard' && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700/40 px-4 py-2 flex items-center gap-2 no-print cursor-pointer" onClick={() => setShowSettings(true)}>
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700/40 px-4 py-2.5 flex items-center gap-2 no-print cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors" onClick={() => setShowSettings(true)}>
             <AlertTriangle size={14} className="text-amber-500 flex-shrink-0"/>
-            <p className="text-xs text-amber-700 dark:text-amber-400 font-bold flex-1">{[...expiringLicences.map(l => l.type), ...(insuranceExpiring ? ['Insurance'] : [])].join(', ')} — credential{expiringLicences.length + (insuranceExpiring?1:0) > 1 ? 's' : ''} expiring or expired. Tap to update.</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-bold flex-1">{[...expiringLicences.map(l => l.type), ...(insuranceExpiring ? ['Insurance'] : [])].join(', ')} — credential{expiringLicences.length + (insuranceExpiring?1:0) > 1 ? 's' : ''} expiring or expired</p>
+            <ChevronRight size={14} className="text-amber-500 flex-shrink-0"/>
           </div>
         )}
 
@@ -1814,15 +1816,25 @@
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hrs</span>
-                        <span className="font-black text-slate-900 dark:text-slate-200 text-sm">{getTotals(j.tasks).str}</span>
+                        {getTotals(j.tasks).mins > 0 && <>
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hrs</span>
+                          <span className="font-black text-slate-900 dark:text-slate-200 text-sm">{getTotals(j.tasks).str}</span>
+                        </>}
                         {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && <div className="flex flex-col items-end mt-1"><span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt||handoverQt).total)}</span></div>}
                       </div>
                     </div>
                   </div>
                 );
               })}
-              {filteredJobs.length===0 && <div className="text-center py-10 text-slate-400 text-sm font-bold uppercase tracking-widest">{searchQ?'No results found':'No Projects Found'}</div>}
+              {filteredJobs.length===0 && (
+                <div className="flex flex-col items-center py-16 gap-3">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
+                    <Hammer size={26} className="text-slate-400 dark:text-slate-600"/>
+                  </div>
+                  <p className="text-slate-500 dark:text-slate-400 font-black text-sm uppercase tracking-widest">{searchQ ? 'No Results' : 'No Projects Yet'}</p>
+                  {!searchQ && <p className="text-slate-400 dark:text-slate-500 text-xs text-center font-medium">Create your first quote or completion report above</p>}
+                </div>
+              )}
             </div>
           </main>
         )}
@@ -1831,7 +1843,7 @@
         {viewMode==='detail' && activeJob && (
           <main className="p-4 max-w-2xl mx-auto no-print animate-slide-up">
             <div className="flex justify-between items-center mb-4">
-              <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full"><ChevronRight size={14} className="rotate-180"/> Dashboard</button>
+              <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-full transition-colors"><ChevronRight size={14} className="rotate-180"/> Dashboard</button>
               <button onClick={() => showConfirm('Permanently delete this project?', () => { saveToDB(jobs.filter(x=>x.id!==activeJobId)); setViewMode('dashboard'); showToast('Project Deleted','success'); }, 'Delete')} className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase"><Trash2 size={14}/> Delete</button>
             </div>
             <div className={`p-5 sm:p-8 rounded-[2rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
@@ -1861,7 +1873,7 @@
                     {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
                   </div>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-sm border border-orange-200 dark:border-orange-800"><Clock size={12}/> {getTotals(activeJob?.tasks||[]).str}</div>
+                    {getTotals(activeJob?.tasks||[]).mins > 0 && <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-sm border border-orange-200 dark:border-orange-800"><Clock size={12}/> {getTotals(activeJob?.tasks||[]).str}</div>}
                     <button onClick={() => cycleStatus(activeJobId)} className={`px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all border ${getStatus(activeJob?.status||'draft').cls}`}>{getStatus(activeJob?.status||'draft').label}</button>
                     <button onClick={() => toggleCosts(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts?'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400':'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}><DollarSign size={12}/> Costs {activeJob.showCosts?'ON':'OFF'}</button>
                   </div>
@@ -1906,29 +1918,41 @@
                 const subtotal = labour + mats;
                 const showCosts = activeJob.showCosts;
                 return (
-                  <div key={t.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 border-b dark:border-slate-700 flex justify-between items-center px-4">
-                      <span className="font-black text-slate-400 dark:text-slate-500 text-[10px] tracking-widest uppercase">Entry #{i+1}</span>
-                      <div className="flex gap-2">
-                        <button onClick={() => { setEditingTaskId(t.id); setTaskData({rate:'',materialsCost:'',images:[],...t}); setIsTaskFormOpen(true); }} className="p-1 text-slate-400 hover:text-blue-500"><Pencil size={16}/></button>
-                        <button onClick={() => showConfirm('Delete this log entry?', () => saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j)))} className="p-1 text-slate-400 hover:text-red-500"><Trash2 size={16}/></button>
+                  <div key={t.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm pb-3">
+                    <div className="flex justify-between items-center px-4 py-2.5 border-b border-slate-100 dark:border-slate-700">
+                      <span className="font-black text-slate-400 dark:text-slate-500 text-[9px] tracking-widest uppercase">Entry {i+1}</span>
+                      <div className="flex gap-1.5">
+                        <button onClick={() => { setEditingTaskId(t.id); setTaskData({rate:'',materialsCost:'',images:[],...t}); setIsTaskFormOpen(true); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-blue-50 dark:hover:bg-blue-900/40 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-[10px] font-black uppercase tracking-wide"><Pencil size={11}/> Edit</button>
+                        <button onClick={() => showConfirm('Delete this log entry?', () => saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j)))} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-red-50 dark:hover:bg-red-900/40 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors text-[10px] font-black uppercase tracking-wide"><Trash2 size={11}/> Del</button>
                       </div>
                     </div>
-                    <div className="p-4 sm:p-5">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-black text-lg text-slate-900 dark:text-white leading-tight">{t.title}</h3>
-                        <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-md text-[10px] font-black ml-2 flex-shrink-0">{t.time}</span>
+                    <div className="px-4 pt-3 pb-1">
+                      <div className="flex justify-between items-start gap-2 mb-1.5">
+                        <h3 className="font-black text-base text-slate-900 dark:text-white leading-tight flex-1">{t.title}</h3>
+                        {t.time && <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-md text-[10px] font-black flex-shrink-0 mt-0.5">{t.time}</span>}
                       </div>
-                      <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3 whitespace-pre-wrap">{t.desc}</p>
+                      {t.desc && <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3 whitespace-pre-wrap border-l-4 border-slate-200 dark:border-slate-600 pl-3">{t.desc}</p>}
                       {showCosts && subtotal > 0 && (<div className="flex gap-1.5 mb-3 flex-wrap">{labour>0 && <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md">Labour {fmtAUD(labour)}</span>}{mats>0 && <span className="text-[10px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-1 rounded-md">Mats {fmtAUD(mats)}</span>}<span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-2 py-1 rounded-md">Subtotal {fmtAUD(subtotal)}</span></div>)}
-                      {t.images?.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">{t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}</div>)}
+                      {t.images?.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-3 no-scrollbar">{t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}</div>)}
                     </div>
                   </div>
                 );
               })}
-              {activeJob?.tasks.length===0 && <div className="text-center py-20 text-slate-300 dark:text-slate-700 font-black uppercase tracking-widest">No Log Entries Yet</div>}
+              {activeJob?.tasks.length===0 && (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <Plus size={28} className="text-slate-300 dark:text-slate-600"/>
+                  </div>
+                  <p className="text-slate-400 dark:text-slate-500 font-black text-sm uppercase tracking-widest">No entries yet</p>
+                  <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Tap <span className="font-black">Add Entry</span> below to log your first task</p>
+                </div>
+              )}
             </div>
-            <button onClick={() => setIsTaskFormOpen(true)} className={`fixed right-5 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all z-40 border-[3px] border-white dark:border-slate-800 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`} style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }}><Plus size={28}/></button>
+            <div className="fixed left-0 right-0 z-40 flex justify-center px-4 pointer-events-none" style={{ bottom: 'calc(5.5rem + env(safe-area-inset-bottom))' }}>
+              <button onClick={() => setIsTaskFormOpen(true)} className={`pointer-events-auto flex items-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm shadow-2xl active:scale-95 transition-all text-white ${activeJob?.type==='handover'?'bg-emerald-600 shadow-emerald-900/50':'bg-slate-900 dark:bg-slate-700 shadow-black/40'}`}>
+                <Plus size={18}/> Add Entry
+              </button>
+            </div>
           </main>
         )}
 
@@ -1942,9 +1966,9 @@
 
         {/* Bottom Nav */}
         <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 flex justify-around items-center px-2 pt-2 bottom-nav-safe z-50 no-print">
-          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='dashboard' && !selectionMode ? 'text-orange-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Home size={22} className={viewMode==='dashboard' && !selectionMode ? 'fill-orange-100 dark:fill-orange-900/40' : ''}/><span className="text-[10px] font-bold mt-1">Home</span></button>
-          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(!selectionMode); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${selectionMode ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Map size={22} className={selectionMode ? 'fill-blue-100 dark:fill-blue-900/40' : ''}/><span className="text-[10px] font-bold mt-1">{selectionMode ? 'Done' : 'Route'}</span></button>
-          <button onClick={() => setViewMode('schedule')} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='schedule' ? 'text-purple-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Calendar size={22} className={viewMode==='schedule' ? 'fill-purple-100 dark:fill-purple-900/40' : ''}/><span className="text-[10px] font-bold mt-1">Schedule</span></button>
+          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='dashboard' && !selectionMode ? 'text-orange-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Home size={22}/><span className="text-[10px] font-bold mt-1">Home</span></button>
+          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(!selectionMode); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${selectionMode ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Map size={22}/><span className="text-[10px] font-bold mt-1">{selectionMode ? 'Done' : 'Route'}</span></button>
+          <button onClick={() => setViewMode('schedule')} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='schedule' ? 'text-purple-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Calendar size={22}/><span className="text-[10px] font-bold mt-1">Schedule</span></button>
           <button onClick={() => setShowSettings(true)} className="flex flex-col items-center p-2 w-16 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors relative">
             <Settings size={22}/>
             {(!apiKey || expiringLicences.length > 0 || insuranceExpiring) && <span className="absolute top-2 right-4 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-900"/>}
@@ -1965,16 +1989,16 @@
           <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
             <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-5 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[95vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
               <div className="flex justify-between items-center mb-6 pb-2 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
-                <h2 className="text-xl font-black text-slate-900 dark:text-white">{editingTaskId ? 'Edit' : 'New'} {activeJob?.type==='handover' ? 'Completion Entry' : 'Job Sheet Entry'}</h2>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">{editingTaskId ? 'Edit Entry' : 'New Entry'}</h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
               
               <div className="overflow-y-auto flex-1 no-scrollbar pb-4 pr-1">
                 {/* Template Selection Accordion */}
                 <div className="mb-4">
-                  <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-black text-sm border border-slate-200 dark:border-slate-700 hover:border-purple-400 dark:text-white transition-colors">
+                  <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-black text-sm border border-slate-200 dark:border-slate-700 hover:border-purple-400 text-slate-700 dark:text-white transition-colors">
                     <span className="flex items-center gap-2"><Sparkles size={16} className="text-purple-500"/>Use a Template</span>
-                    <ChevronDown size={16} className={`transition-transform ${showTemplatePop?'rotate-180':''}`}/>
+                    <ChevronDown size={16} className={`text-slate-400 transition-transform ${showTemplatePop?'rotate-180':''}`}/>
                   </button>
                   {showTemplatePop && (
                     <div className="mt-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl max-h-48 overflow-y-auto p-2 w-full">
@@ -2015,7 +2039,7 @@
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
                           <div className="flex items-center gap-1">
                             <input placeholder="Materials $" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm border ${matError?'bg-red-50 dark:bg-red-900/20 border-red-500':'bg-slate-50 dark:bg-slate-800 border-transparent dark:border-slate-700'} dark:text-white dark:placeholder-slate-500`} value={taskData.materialsCost} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,materialsCost:v}));validateMat(v);}} onBlur={e=>validateMat(e.target.value)}/>
-                            <label className={`p-2.5 rounded-lg transition-colors cursor-pointer border dark:border-slate-700 ${isScanningReceipt ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
+                            <label title="Scan receipt with camera" className={`p-2.5 rounded-lg transition-colors cursor-pointer border dark:border-slate-700 ${isScanningReceipt ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
                               <Camera size={16}/>
                               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleScanReceipt}/>
                             </label>
@@ -2055,7 +2079,7 @@
                     <button type="button" onClick={() => toggleVoice('taskDesc', (val) => setTaskData(p => ({...p, desc: typeof val === 'function' ? val(p.desc) : val})))} className={`absolute right-2 bottom-3 p-2 rounded-full text-white shadow-md transition-all ${listeningField==='taskDesc'?'bg-red-500 animate-pulse':'bg-slate-900 dark:bg-slate-700 hover:bg-orange-500'}`}><Mic size={14}/></button>
                   </div>
                   
-                  <button onClick={handleAiSuggest} disabled={isAiSuggesting||!apiKey} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 ${apiKey?'bg-purple-600 hover:bg-purple-500 text-white':'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}><Sparkles size={14}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}</button>
+                  <button onClick={handleAiSuggest} disabled={isAiSuggesting} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-900/20 ${isAiSuggesting ? 'opacity-60 cursor-wait' : ''}`}><Sparkles size={14}/> {isAiSuggesting?'Thinking…':'AI Suggest Details'}</button>
                   
                   <div className="flex gap-2 pb-2">
                     <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 border border-transparent dark:border-slate-700 transition-colors uppercase"><Bookmark size={14}/> Template</button>
@@ -2065,7 +2089,7 @@
               </div>
               
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
-                <button onClick={handleSaveTask} className={`w-full text-white p-4 rounded-xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02] ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800'}`}><Save size={18}/> SAVE ENTRY</button>
+                <button onClick={handleSaveTask} className={`w-full text-white p-4 rounded-2xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 hover:opacity-90 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`}><Save size={18}/> Save Entry</button>
               </div>
             </div>
           </div>
@@ -2107,7 +2131,7 @@
             </div>
             <div className="bg-slate-900 border-t border-slate-800 p-4 z-10 flex-shrink-0">
               <div className="flex justify-between items-center">
-                <div className="flex gap-3 items-center">{COLORS.map(c => <button key={c.name} onClick={() => setPenColor(c.hex)} className={`w-8 h-8 rounded-full shadow-inner transition-transform ${penColor===c.hex?'scale-125 ring-2 ring-white ring-offset-1 ring-offset-slate-900':'opacity-70 hover:opacity-100'}`} style={{backgroundColor:c.hex}}/>)}</div>
+                <div className="flex gap-3 items-center">{COLORS.map(c => <button key={c.name} onClick={() => setPenColor(c.hex)} className={`w-8 h-8 rounded-full shadow-inner transition-transform border-2 ${c.hex==='#ffffff'?'border-slate-500 dark:border-slate-400':'border-transparent'} ${penColor===c.hex?'scale-125 ring-2 ring-white ring-offset-2 ring-offset-slate-900':'opacity-70 hover:opacity-100'}`} style={{backgroundColor:c.hex}}/>)}</div>
                 <div className="flex items-center gap-3">
                   <button onClick={toggleMode} className={`flex flex-col items-center gap-1 text-[10px] font-black uppercase transition-colors px-3 py-2 rounded-xl ${canvasMode==='pan'?'bg-blue-500/20 text-blue-400':'text-slate-400 hover:text-white'}`}>{canvasMode==='draw'?<Move size={20}/>:<Pencil size={20}/>} {canvasMode==='draw'?'Pan':'Draw'}</button>
                   {canvasZoom>1 && <button onClick={() => {setCanvasZoom(1);zoomRef.current=1;setCanvasPan({x:0,y:0});panRef.current={x:0,y:0};}} className="flex flex-col items-center gap-1 text-[10px] font-black uppercase text-slate-400 hover:text-white"><ZoomIn size={20}/>Reset</button>}
