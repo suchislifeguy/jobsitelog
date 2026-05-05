@@ -2138,47 +2138,48 @@
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{activeJob?.address}</h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold text-sm mt-1">{activeJob?.clientName}</p>
-                    {activeJob?.clientPhone && <p className="text-slate-400 text-xs font-bold mt-1"><Phone size={10} className="inline mr-1"/>{activeJob.clientPhone}</p>}
-                    {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
-                    {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDate(activeJob.dueDate)}</p>}
-                    {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3 whitespace-pre-wrap">{activeJob.projectNotes}</p>}
-                    {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
-                  </div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <button 
-                      onClick={() => cycleStatus(activeJobId)} 
-                      className={`w-[84px] text-center px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all border ${getStatus(activeJob?.status || 'draft').cls}`}
-                    >
-                      {getStatus(activeJob?.status || 'draft').label}
-                    </button>
+                <>
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{activeJob?.address}</h2>
+                      <p className="text-slate-500 dark:text-slate-400 font-bold text-sm mt-1">{activeJob?.clientName}</p>
+                      {activeJob?.clientPhone && <p className="text-slate-400 text-xs font-bold mt-1"><Phone size={10} className="inline mr-1"/>{activeJob.clientPhone}</p>}
+                      {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
+                      {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {fmtDate(activeJob.dueDate)}</p>}
+                      {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3 whitespace-pre-wrap">{activeJob.projectNotes}</p>}
+                      {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
+                    </div>
                     
-                    {/* Log Time directly to Timesheet from Job */}
-                    <button onClick={() => openTimeEntryForJob(activeJobId)} className="bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 border border-purple-200 dark:border-purple-800 uppercase tracking-widest hover:bg-purple-200 dark:hover:bg-purple-800/60 transition-colors">
-                      <Timer size={12}/> Log Time
-                    </button>
-                  
-                    {/* Quick SMS Button */}
-                    {activeJob.clientPhone && (
-                      <a href={`sms:${activeJob.clientPhone}?body=${encodeURIComponent(`Hi ${activeJob.clientName||''}, this is ${businessProfile?.name || 'your tradie'}. I'm on my way to ${activeJob.address} now. ETA is about __ mins.`)}`} className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 uppercase tracking-widest hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors">
-                        <Phone size={12}/> SMS On My Way
-                      </a>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button onClick={() => cycleStatus(activeJobId)} className={`w-[84px] text-center px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all border ${getStatus(activeJob?.status || 'draft').cls}`}>
+                        {getStatus(activeJob?.status || 'draft').label}
+                      </button>
+                      <button onClick={() => toggleCosts(activeJobId)} className={`w-[90px] text-center flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.showCosts ? 'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
+                        <DollarSign size={12}/> Costs {activeJob.showCosts ? 'ON' : 'OFF'}
+                      </button>
+                      <button onClick={() => toggleGST(activeJobId)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest border transition-all active:scale-95 ${activeJob.gstEnabled ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
+                        <Receipt size={12}/> GST {activeJob.gstEnabled ? 'On' : 'Off'}
+                      </button>
+                      <button onClick={() => openTimeEntryForJob(activeJobId)} className="bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 border border-purple-200 dark:border-purple-800 uppercase tracking-widest hover:bg-purple-200 dark:hover:bg-purple-800/60 transition-colors">
+                        <Timer size={12}/> Log Time
+                      </button>
+                      {activeJob.clientPhone && (
+                        <a href={`sms:${activeJob.clientPhone}?body=${encodeURIComponent(`Hi ${activeJob.clientName||''}, this is ${businessProfile?.name || 'your tradie'}. I'm on my way to ${activeJob.address} now. ETA is about __ mins.`)}`} className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 border border-blue-200 dark:border-blue-800 uppercase tracking-widest hover:bg-blue-200 dark:hover:bg-blue-800/60 transition-colors">
+                          <Phone size={12}/> SMS On My Way
+                        </a>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2">
+                      <button onClick={startEditHeader} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><Pencil size={16}/> Edit</button>
+                      <button onClick={() => openAppointmentForJob(activeJobId)} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><CalendarPlus size={16}/> Schedule</button>
+                      <button onClick={() => setShowAIAssistModal(true)} className="bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 border border-purple-100 dark:border-purple-800 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-600 dark:text-purple-400 flex flex-col items-center gap-1 transition-colors"><Sparkles size={16}/> AI Assist</button>
+                    </div>
                   </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 mt-2">
-                    <button onClick={startEditHeader} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><Pencil size={16}/> Edit</button>
-                    <button onClick={() => openAppointmentForJob(activeJobId)} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><CalendarPlus size={16}/> Schedule</button>
-                    <button onClick={() => setShowAIAssistModal(true)} className="bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 border border-purple-100 dark:border-purple-800 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-600 dark:text-purple-400 flex flex-col items-center gap-1 transition-colors"><Sparkles size={16}/> AI Assist</button>
-                  </div>
-                </div>
+                </>
               )}
             </div>
+
             
             {/* Cost summary */}
             {activeJob?.showCosts && activeJob && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total > 0 && (
