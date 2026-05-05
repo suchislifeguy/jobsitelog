@@ -2150,8 +2150,11 @@
                   </div>
                   
                   {/* Action Buttons */}
-                  <button onClick={() => cycleStatus(activeJobId)} className={`w-[84px] text-center px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all border ${getStatus(activeJob?.status||'draft').cls}`}>
-                    {getStatus(activeJob?.status||'draft').label}
+                  <button 
+                    onClick={() => cycleStatus(activeJobId)} 
+                    className={`w-[84px] text-center px-3 py-1.5 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all border ${getStatus(activeJob?.status || 'draft').cls}`}
+                  >
+                    {getStatus(activeJob?.status || 'draft').label}
                   </button>
                     
                     {/* Log Time directly to Timesheet from Job */}
