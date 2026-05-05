@@ -169,14 +169,17 @@
   const isExpired = (expiryStr) => { if (!expiryStr) return false; return new Date(expiryStr) < new Date(); };
 
   // --- Core AI "Smart Router" & Waterfall ---
-  const smartFetchAI = async (taskType, contents, generationConfig, apiKey) => {
+  const smartFetchAI = async (taskType, contents, generationConfig, apiKey, userModel) => {
     // Determine the optimal route path.
-    const heavyModels = ['gemini-3-flash', 'gemini-2.5-flash', 'gemini-3.1-flash-lite'];
-    const lightModels = ['gemini-3.1-flash-lite', 'gemini-3-flash', 'gemini-2.5-flash'];
+    const heavyModels = [userModel, 'gemini-1.5-pro', 'gemini-1.5-flash'];
+    const lightModels = [userModel, 'gemini-1.5-flash-8b', 'gemini-1.5-flash'];
+    
     const models = taskType === 'heavy' ? heavyModels : lightModels;
+    // Deduplicate in case userModel is already in the list
+    const uniqueModels = [...new Set(models)].filter(Boolean);
 
     let lastError;
-    for (const model of models) {
+    for (const model of uniqueModels) {
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
           method: 'POST',
@@ -189,6 +192,12 @@
           lastError = new Error(`429 Too Many Requests on ${model}`);
           continue;
         }
+
+        if (res.status === 404) {
+          console.warn(`[AI] 404 Model Not Found (${model}). Gracefully falling back...`);
+          lastError = new Error(`404 Model Not Found (${model})`);
+          continue;
+        }
         
         if (!res.ok) {
           const errText = await res.text();
@@ -197,7 +206,7 @@
         
         return await res.json();
       } catch (err) {
-        if (err.message.includes('429')) {
+        if (err.message.includes('429') || err.message.includes('404')) {
           lastError = err;
           continue;
         }
@@ -326,13 +335,16 @@
   };
 
   const ToastMessage = ({ message, type, onClose }) => {
-    useEffect(() => { const timer = setTimeout(onClose, 3500); return () => clearTimeout(timer); }, [onClose]);
-    const icons = { success: <CheckCircle2 size={18} className="text-emerald-500"/>, error: <AlertTriangle size={18} className="text-red-500"/>, info: <Info size={18} className="text-blue-500"/> };
+    useEffect(() => { const timer = setTimeout(onClose, 4000); return () => clearTimeout(timer); }, [onClose]);
+    const icons = { success: <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0"/>, error: <AlertTriangle size={18} className="text-red-500 flex-shrink-0"/>, info: <Info size={18} className="text-blue-500 flex-shrink-0"/> };
     return (
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[90%] max-w-sm animate-slide-down">
-        <div className="bg-slate-900 dark:bg-slate-800 text-white rounded-2xl shadow-2xl p-4 flex items-center gap-3 border border-slate-700">
-          {icons[type]}<p className="text-sm font-bold flex-1">{message}</p>
-          <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={16}/></button>
+        <div className="bg-slate-900 dark:bg-slate-800 text-white rounded-2xl shadow-2xl p-4 flex items-start sm:items-center gap-3 border border-slate-700">
+          <div className="mt-0.5 sm:mt-0">{icons[type]}</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold break-words leading-tight">{message}</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white flex-shrink-0 p-1"><X size={16}/></button>
         </div>
       </div>
     );
@@ -722,8 +734,9 @@
     );
   };
 
-  const SettingsModal = ({ apiKey, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
+  const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
+    const [draftModel, setDraftModel] = useState(geminiModel);
     const [draftExtraTax, setDraftExtraTax] = useState(extraTaxRate);
     const [draftGoogleClientId, setDraftGoogleClientId] = useState(googleClientId);
     const [showTemplates, setShowTemplates] = useState(false);
@@ -732,7 +745,7 @@
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [licenceInput, setLicenceInput] = useState('');
 
-    const save = () => { onSave(draftKey, draftExtraTax); setGoogleClientId(draftGoogleClientId); onClose(); showToast('Settings Saved', 'success'); };
+    const save = () => { onSave(draftKey, draftModel, draftExtraTax); setGoogleClientId(draftGoogleClientId); onClose(); showToast('Settings Saved', 'success'); };
     const hasBiz = !!businessProfile?.name;
 
     const handleLicenceUnlock = () => {
@@ -832,9 +845,10 @@
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
               <p className="text-[10px] text-slate-400 font-medium mb-3">JobLog uses a smart routing AI framework. Ensure your API key is active. Free tier requests are handled via intelligent fallback models.</p>
+              <input type="password" className="w-full p-3.5 mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
               <div className="relative">
                 <Bot size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="password" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
+                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-1.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
 
@@ -922,7 +936,7 @@
     );
   };
 
-  const NewJobModal = ({ type, onSave, onClose, apiKey, showToast, toggleVoice, listeningField }) => {
+  const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast, toggleVoice, listeningField }) => {
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
     const [phone, setPhone] = useState('');
@@ -978,7 +992,8 @@
           'heavy',
           [{ parts: [{ text: textPrompt }, ...fileParts] }],
           { temperature: 0, response_mime_type: 'application/json' },
-          apiKey
+          apiKey,
+          geminiModel
         );
         
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -1587,6 +1602,7 @@
     const [listeningField, setListeningField] = useState(null);
     const recognitionRef = useRef(null);
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
+    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-1.5-flash');
     const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('googleClientId') || '');
     const [googleToken, setGoogleToken] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState(null);
@@ -1601,6 +1617,12 @@
     const [isGenerating, setIsGenerating] = useState(false);
     const [isScanningReceipt, setIsScanningReceipt] = useState(false);
     const [isProfessionalizing, setIsProfessionalizing] = useState(false);
+
+    // Live Timer
+    const [activeTimer, setActiveTimer] = useState(() => { try { return JSON.parse(localStorage.getItem('joblog-timer') || 'null'); } catch { return null; } });
+    const [now, setNow] = useState(Date.now());
+    useEffect(() => { localStorage.setItem('joblog-timer', JSON.stringify(activeTimer)); }, [activeTimer]);
+    useEffect(() => { if (!activeTimer) return; const int = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(int); }, [activeTimer]);
 
     const EMPTY_TASK = { title:'', time:'', rate:'', materialsCost:'', materials:'', tools:'', desc:'', images:[] };
     const [taskData, setTaskData] = useState(EMPTY_TASK);
@@ -1698,7 +1720,8 @@
           'heavy',
           [{ parts: [{ text: prompt }] }],
           { temperature: 0.3, response_mime_type: 'application/json' },
-          apiKey
+          apiKey,
+          geminiModel
         );
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const result = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
@@ -1738,7 +1761,8 @@
           'light',
           [{ parts: [{ text: prompt }] }],
           { temperature: 0.3, response_mime_type: 'application/json' },
-          apiKey
+          apiKey,
+          geminiModel
         );
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
@@ -1758,7 +1782,8 @@
           'light',
           [{ parts: [{ text: prompt }] }],
           { temperature: 0.2 },
-          apiKey
+          apiKey,
+          geminiModel
         );
         const text = resData.candidates[0].content.parts[0].text.trim();
         setTaskData(p => ({...p, desc: text}));
@@ -1778,7 +1803,8 @@
           'light',
           [{ parts: [{ text: textPrompt }, { inlineData: { mimeType: 'image/webp', data: base64Data.split(',')[1] } }] }],
           { temperature: 0, response_mime_type: 'application/json' },
-          apiKey
+          apiKey,
+          geminiModel
         );
         
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -1858,6 +1884,15 @@
       let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=driving`;
       if (wps) url += `&waypoints=${wps}`;
       window.open(url, '_blank', 'noopener');
+    };
+
+    const stopTimer = () => {
+      const elapsedMins = Math.floor((Date.now() - activeTimer.startTime) / 60000);
+      setActiveJobId(activeTimer.jobId);
+      setViewMode('detail');
+      setTaskData({ ...EMPTY_TASK, time: fmtMins(elapsedMins) });
+      setIsTaskFormOpen(true);
+      setActiveTimer(null);
     };
 
     const atStopLimit = selectedJobs.length >= MAX_STOPS;
@@ -2084,7 +2119,7 @@
                   <input className="w-full text-xl font-black bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e=>setHeaderDraft(d=>({...d,address:e.target.value}))}/>
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
-                    <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xlpx-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Phone" value={headerDraft.clientPhone || ''} onChange={e=>setHeaderDraft(d=>({...d,clientPhone:e.target.value}))}/>
+                    <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Phone" value={headerDraft.clientPhone || ''} onChange={e=>setHeaderDraft(d=>({...d,clientPhone:e.target.value}))}/>
                   </div>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
                   <div className="mb-3"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date</label><input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none font-medium text-sm dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/></div>
@@ -2223,11 +2258,12 @@
         </div>
 
         {/* Modals */}
-        {showSettings && <SettingsModal apiKey={apiKey} extraTaxRate={extraTaxRate} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} googleClientId={googleClientId} setGoogleClientId={setGoogleClientId} isGoogleConnected={!!googleToken} googleToken={googleToken} connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar} onSave={(k,t) => { setApiKey(k); setExtraTaxRate(Number(t)); localStorage.setItem('geminiApiKey',k); localStorage.setItem('joblog-extratax', t); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
+        {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} googleClientId={googleClientId} setGoogleClientId={setGoogleClientId} isGoogleConnected={!!googleToken} googleToken={googleToken} connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar} onSave={(k,m,t) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
         {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUnlock={handleUnlockSuccess} showToast={showToast}/>}
-        {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast} toggleVoice={toggleVoice} listeningField={listeningField}/>}
+        {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast} toggleVoice={toggleVoice} listeningField={listeningField}/>}
 
         {showAIAssistModal && activeJob && <AIAssistModal onClose={() => setShowAIAssistModal(false)} onGenerate={handleGenerateDocument} isGenerating={isGenerating} docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'} apiKey={apiKey} toggleVoice={toggleVoice} listeningField={listeningField}/>}
+
 
         {/* Task Form */}
         {isTaskFormOpen && (
