@@ -902,11 +902,15 @@
         for (const file of files) {
           if (file.type === 'application/pdf') {
             // FIX: Use the dedicated File API for PDFs to bypass Free Tier Payload restrictions
-            const uploadRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media&key=${apiKey}`, {
-              method: 'POST',
-              headers: { 'Content-Type': file.type },
-              body: file
-            });
+    const uploadRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?uploadType=media&key=${apiKey}`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': file.type,
+        'X-Goog-Upload-Content-Type': file.type,
+        'X-Goog-Upload-Protocol': 'raw'
+      },
+      body: file
+    });
             if (!uploadRes.ok) throw new Error(`PDF Upload failed with status ${uploadRes.status}`);
             const uploadData = await uploadRes.json();
             fileParts.push({ fileData: { mimeType: file.type, fileUri: uploadData.file.uri } });
