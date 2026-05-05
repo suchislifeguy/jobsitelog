@@ -1434,7 +1434,12 @@
     const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
     const [editingTaskId, setEditingTaskId] = useState(null);
     const [dbSize, setDbSize] = useState('0 MB');
-    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+      const saved = localStorage.getItem('theme');
+      if (saved !== null) return saved === 'dark';
+      // Fallback to system preference if no saved setting
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    });
     const [newJobModal, setNewJobModal] = useState(null);
     const [searchQ, setSearchQ] = useState('');
     const [filterType, setFilterType] = useState('all');
@@ -1579,7 +1584,9 @@
       setIsScanningReceipt(true);
       try {
         const base64Data = await compressImage(file);
-        const textPrompt = `Analyze this receipt. Extract the materials/items purchased and the TOTAL cost. Return ONLY valid JSON: {"cost": "numeric total", "items": "comma separated list of item names"}`;
+        const textPrompt = `You are an OCR JSON extraction tool. Read this receipt. 
+        Return ONLY a valid JSON object. Do not include markdown formatting or explanations.
+        Format: {"cost": 123.45, "items": "Hammer, Nails, Wood"}`;
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ contents:[{parts:[{text: textPrompt},{inlineData: {mimeType: 'image/webp', data: base64Data.split(',')[1]}}]}], generationConfig:{temperature:0, response_mime_type:'application/json'} }) });
         if (!res.ok) throw new Error(`API error ${res.status}`);
         const data = await res.json();
