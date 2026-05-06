@@ -1975,16 +1975,11 @@
             </div>
           )}
 
-          {/* Bottom Row: Mascot & Mic */}
+          {/* Bottom Row: Status & Mic */}
           <div className="flex items-center justify-between px-2">
-            <div className="flex items-center gap-3">
-              <div className={status === 'listening' ? 'animate-pulse' : ''}>
-                <JimMascot size={48} state={mascotState}/>
-              </div>
-              <p className={`text-xs font-bold tracking-wide uppercase ${status === 'error' ? 'text-red-400' : status === 'speaking' ? 'text-orange-400' : status === 'listening' ? 'text-emerald-400' : 'text-slate-400'}`}>
-                {statusLabel[status] || '...'}
-              </p>
-            </div>
+            <p className={`text-xs font-bold tracking-wide uppercase ${status === 'error' ? 'text-red-400' : status === 'speaking' ? 'text-orange-400' : status === 'listening' ? 'text-emerald-400' : 'text-slate-400'}`}>
+              {statusLabel[status] || '...'}
+            </p>
 
             <button
               onClick={onMicTap}
@@ -1999,6 +1994,35 @@
     };
 
 
+
+  /* ════════════════════════════════════════════
+     FLOATING JIM (phone call only)
+  ════════════════════════════════════════════ */
+  const FloatingJimMascot = ({ status }) => {
+    const mascotState = status === 'error' ? 'error' : status === 'speaking' ? 'thinking' : status === 'listening' ? 'wave' : 'idle';
+    const [pos, setPos] = useState({ x: 16, y: 90 });
+    useEffect(() => {
+      const move = () => {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const sz = 64;
+        const maxX = Math.max(8, vw - sz - 24);
+        const minY = 72;
+        const maxY = Math.max(minY + sz, vh - 260);
+        setPos({
+          x: Math.floor(Math.random() * maxX),
+          y: Math.floor(minY + Math.random() * (maxY - minY))
+        });
+      };
+      const id = setInterval(move, 2500);
+      return () => clearInterval(id);
+    }, []);
+    return (
+      <div style={{ position: 'fixed', left: pos.x, top: pos.y, transition: 'left 1.4s ease-in-out, top 1.4s ease-in-out', zIndex: 590, pointerEvents: 'none' }}>
+        <JimMascot size={56} state={mascotState}/>
+      </div>
+    );
+  };
 
   /* ════════════════════════════════════════════
      APP
@@ -2679,11 +2703,12 @@ ${weekSheets || '  No time entries this week.'}`;
       <div className="min-h-screen nav-spacing relative">
         {toast && <ToastMessage message={toast.message} type={toast.type} onClose={() => setToast(null)}/>}
         {confirmDialog && <ConfirmDialog message={confirmDialog.message} confirmLabel={confirmDialog.confirmLabel} danger={confirmDialog.danger} onConfirm={() => { confirmDialog.onConfirm(); dismissConfirm(); }} onCancel={dismissConfirm}/>}
+        {jimLiveOpen && <FloatingJimMascot status={jimLiveStatus}/>}
 
         {/* Top Header */}
         <header className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md text-slate-900 dark:text-white px-4 py-3 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
-            {businessProfile?.logo ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5" alt=""/> : <JimMascot size={36} state="idle"/>}
+            {businessProfile?.logo ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5" alt=""/> : (!jimLiveOpen && !(viewMode === 'dashboard' && jobs.length > 0)) ? <JimMascot size={36} state="idle"/> : null}
             <h1 className="font-black text-lg tracking-tight uppercase">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'J.I.M. jobs invoices manager')}</h1>
           </div>
           <div className="flex items-center gap-2">
@@ -2741,7 +2766,7 @@ ${weekSheets || '  No time entries this week.'}`;
                 {/* JIM Insight Card */}
                 {jobs.length > 0 && (
                   <div className={`flex items-center gap-3 p-4 rounded-2xl mb-3 border ${jimInsight.state==='error' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'}`}>
-                    <div className="flex-shrink-0"><JimMascot size={36} state={jimInsight.state}/></div>
+                    {!jimLiveOpen && <div className="flex-shrink-0"><JimMascot size={36} state={jimInsight.state}/></div>}
                     <p className={`text-sm font-bold leading-snug ${jimInsight.state==='error' ? 'text-red-700 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}`}>{jimInsight.msg}</p>
                   </div>
                 )}
