@@ -1938,39 +1938,84 @@
   /* ════════════════════════════════════════════
      JIM LIVE PANEL
   ════════════════════════════════════════════ */
-  const JimLivePanel = ({ status, transcript, onStop }) => {
-    const transcriptRef = useRef(null);
-    useEffect(() => { if (transcriptRef.current) transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight; }, [transcript]);
-    const mascotState = status === 'error' ? 'error' : status === 'speaking' ? 'thinking' : status === 'listening' ? 'wave' : 'idle';
-    const statusLabel = { connecting: 'Connecting...', listening: 'Listening — speak now', speaking: 'JIM is speaking...', error: 'Connection error', idle: 'Disconnected' };
-    const statusColor = status === 'error' ? 'text-red-400' : status === 'speaking' ? 'text-purple-400' : status === 'listening' ? 'text-emerald-400' : 'text-slate-400';
-    return (
-      <div className="fixed inset-0 z-[500] bg-slate-950/98 backdrop-blur-xl flex flex-col items-center justify-between p-6 pb-10 animate-slide-up">
-        <div className="w-full flex justify-center relative mt-2">
-          <h2 className="text-white font-black text-xl tracking-tight">Talk to JIM</h2>
-        </div>
-        <div className="flex flex-col items-center gap-5">
-          <div className={status === 'listening' ? 'animate-pulse' : ''}>
-            <JimMascot size={140} state={mascotState}/>
+    const JimLivePanel = ({ status, transcript, onStop }) => {
+      const transcriptRef = useRef(null);
+      useEffect(() => { if (transcriptRef.current) transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight; }, [transcript]);
+      
+      const mascotState = status === 'error' ? 'error' : status === 'speaking' ? 'thinking' : status === 'listening' ? 'wave' : 'idle';
+      const statusLabel = { 
+        connecting: 'Initialising...', 
+        listening: 'Listening... speak now', 
+        speaking: 'JIM is speaking', 
+        error: 'Connection error', 
+        idle: 'Tap mic to start' 
+      };
+      
+      return (
+        <div className="fixed inset-0 z-[500] bg-slate-900 backdrop-blur-xl flex flex-col items-center justify-between p-6 pb-10 animate-slide-up">
+          <div className="w-full flex justify-between items-center">
+            <div className="w-10" />
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${status === 'listening' ? 'bg-emerald-500 animate-pulse' : status === 'speaking' ? 'bg-orange-500' : 'bg-slate-600'}`} />
+              <h2 className="text-white font-black text-lg tracking-tight">JIM Voice Assistant</h2>
+            </div>
+            <button onClick={onStop} className="text-slate-400 hover:text-white p-2 rounded-full">
+              <X size={20} />
+            </button>
           </div>
-          <p className={`text-sm font-bold tracking-wide ${statusColor}`}>{statusLabel[status] || '...'}</p>
-        </div>
-        {transcript.length > 0 && (
-          <div ref={transcriptRef} className="w-full max-w-sm max-h-36 overflow-y-auto custom-scrollbar bg-slate-900 rounded-2xl p-4 space-y-2 border border-slate-800">
-            {transcript.map((t, i) => (
-              <p key={i} className={`text-sm leading-relaxed ${t.role === 'jim' ? 'text-purple-300 font-semibold' : 'text-slate-300'}`}>
-                {t.role === 'jim' ? '🤖 ' : '👤 '}{t.text}
-              </p>
-            ))}
+          
+          <div className="flex flex-col items-center gap-5">
+            <div className={status === 'listening' ? 'animate-pulse' : ''}>
+              <JimMascot size={140} state={mascotState}/>
+            </div>
+            <p className={`text-sm font-bold tracking-wide ${status === 'error' ? 'text-red-400' : status === 'speaking' ? 'text-orange-400' : status === 'listening' ? 'text-emerald-400' : 'text-slate-400'}`}>
+              {statusLabel[status] || '...'}
+            </p>
           </div>
-        )}
-        {transcript.length === 0 && <div className="w-full max-w-sm text-center text-slate-600 text-xs">Ask about jobs, invoices, revenue...</div>}
-        <button onClick={onStop} className="w-20 h-20 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-all border-4 border-red-400/30">
-          <MicOff size={32} className="text-white"/>
-        </button>
-      </div>
-    );
-  };
+          
+          {transcript.length > 0 && (
+            <div ref={transcriptRef} className="w-full max-w-sm max-h-48 overflow-y-auto custom-scrollbar bg-slate-800/50 rounded-2xl p-4 space-y-2 border border-slate-700">
+              {transcript.map((t, i) => (
+                <div key={i} className={`flex items-start gap-2 ${t.role === 'jim' ? 'justify-start' : 'justify-end'}`}>
+                  {t.role === 'jim' && (
+                    <div className="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-black text-white">J</span>
+                    </div>
+                  )}
+                  <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                    t.role === 'jim' 
+                      ? 'bg-orange-600/20 border border-orange-500/30 text-orange-100' 
+                      : 'bg-slate-700 text-slate-200'
+                  }`}>
+                    {t.text}
+                  </div>
+                  {t.role === 'user' && (
+                    <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] font-black text-white">U</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {transcript.length === 0 && (
+            <div className="w-full max-w-sm text-center text-slate-500 text-sm">
+              <p>Ask about jobs, invoices, or revenue...</p>
+              <p className="text-xs mt-2 text-slate-600">"How many jobs are outstanding?"</p>
+            </div>
+          )}
+          
+          <button 
+            onClick={onStop} 
+            className="w-16 h-16 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-all"
+          >
+            <MicOff size={28} className="text-white"/>
+          </button>
+        </div>
+      );
+    };
+
 
   /* ════════════════════════════════════════════
      APP
@@ -2205,106 +2250,141 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
       }
       
       setJimLiveOpen(true);
-      setJimLiveStatus('listening');
+      setJimLiveStatus('connecting');
       setJimLiveTranscript([]);
+      jimCancelledRef.current = false;
       
-      // Start speech recognition
+      // Wait for voices to load
+      const loadVoices = () => {
+        return new Promise((resolve) => {
+          const voices = window.speechSynthesis.getVoices();
+          if (voices.length) {
+            resolve(voices);
+          } else {
+            window.speechSynthesis.onvoiceschanged = () => {
+              resolve(window.speechSynthesis.getVoices());
+            };
+          }
+        });
+      };
+      
+      const voices = await loadVoices();
+      
+      // Find a deep male voice
+      const maleVoice = voices.find(v => 
+        (v.name.toLowerCase().includes('male') || 
+         v.name.toLowerCase().includes('deep') ||
+         v.name.toLowerCase().includes('william') ||
+         v.name.toLowerCase().includes('daniel') ||
+         v.name.toLowerCase().includes('chris')) &&
+        !v.name.toLowerCase().includes('female')
+      ) || voices.find(v => 
+        v.lang.includes('en-AU') || 
+        v.lang.includes('en-GB')
+      ) || voices[0];
+      
+      setJimLiveStatus('listening');
+      
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        showToast('Speech recognition not supported in this browser', 'error');
+        showToast('Speech recognition not supported', 'error');
         setJimLiveOpen(false);
         return;
       }
       
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.continuous = true;
+      recognition.interimResults = true;
       recognition.lang = 'en-AU';
+      
+      let interimText = '';
       
       recognition.onstart = () => {
         setJimLiveStatus('listening');
       };
       
       recognition.onresult = async (event) => {
-        const userText = event.results[0][0].transcript;
-        setJimLiveTranscript(prev => [...prev, { role: 'user', text: userText }]);
-        setJimLiveStatus('thinking');
+        let finalText = '';
+        interimText = '';
         
-        // Call Gemini API
-        try {
-          const context = buildJimContext();
-          const fullPrompt = `${context}\n\nUser asked: "${userText}"\n\nRespond conversationally as JIM, the Australian tradie assistant. Keep it brief and helpful (2-3 sentences max).`;
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalText += transcript;
+          } else {
+            interimText = transcript;
+          }
+        }
+        
+        if (finalText.trim()) {
+          setJimLiveStatus('thinking');
+          setJimLiveTranscript(prev => [...prev, { role: 'user', text: finalText }]);
           
-          const response = await smartFetchAI(
-            'light',
-            [{ parts: [{ text: fullPrompt }] }],
-            { temperature: 0.7, maxOutputTokens: 150 },
-            apiKey,
-            geminiModel
-          );
-          
-          const jimResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process that.";
-          
-          setJimLiveTranscript(prev => [...prev, { role: 'jim', text: jimResponse }]);
-          
-          // Speak the response
-          const utterance = new SpeechSynthesisUtterance(jimResponse);
-          utterance.rate = 0.9;
-          utterance.pitch = 1.0;
-          utterance.lang = 'en-AU';
-          
-          const voices = window.speechSynthesis.getVoices();
-          const aussieVoice = voices.find(v => v.lang.includes('en-AU') || v.name.includes('Karen') || v.name.includes('Google UK'));
-          if (aussieVoice) utterance.voice = aussieVoice;
-          
-     utterance.onstart = () => setJimLiveStatus('speaking');
-          utterance.onend = () => {
-            setJimLiveStatus('listening');
-            // Restart recognition for continuous conversation
-            if (jimLiveOpen && !jimCancelledRef.current) {
-              setTimeout(() => {
-                if (jimLiveOpen && !jimCancelledRef.current) {
-                  recognition.start();
-                }
-              }, 500);
-            }
-          };
-          utterance.onerror = () => setJimLiveStatus('listening');
-          
-          window.speechSynthesis.speak(utterance);
-          
-        } catch (err) {
-          console.error('JIM error:', err);
-          setJimLiveTranscript(prev => [...prev, { role: 'jim', text: `Sorry, error: ${err.message}` }]);
-          setJimLiveStatus('error');
-          setTimeout(() => {
-            if (jimLiveOpen && !jimCancelledRef.current) {
+          try {
+            const context = buildJimContext();
+            const fullPrompt = `${context}\n\nUser said: "${finalText}"\n\nRespond conversationally as JIM - a blokey, experienced Aussie tradie who runs a construction business. Use casual Australian expressions like "mate", "no worries", "ripper". Keep responses to 2-3 short sentences. Be helpful and direct.`;
+            
+            const response = await smartFetchAI(
+              'light',
+              [{ parts: [{ text: fullPrompt }] }],
+              { temperature: 0.7, maxOutputTokens: 200 },
+              apiKey,
+              geminiModel
+            );
+            
+            let jimResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry mate, I'm having a bit of trouble. Can you try again?";
+            
+            // Clean up response
+            jimResponse = jimResponse.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').trim();
+            
+            setJimLiveTranscript(prev => [...prev, { role: 'jim', text: jimResponse }]);
+            
+            // Speak with male voice
+            const utterance = new SpeechSynthesisUtterance(jimResponse);
+            utterance.rate = 0.85;
+            utterance.pitch = 0.7;  // Lower pitch for deeper voice
+            utterance.volume = 1;
+            
+            if (maleVoice) utterance.voice = maleVoice;
+            
+            utterance.onstart = () => setJimLiveStatus('speaking');
+            utterance.onend = () => {
+              if (!jimCancelledRef.current && jimLiveOpen) {
+                setJimLiveStatus('listening');
+              }
+            };
+            utterance.onerror = () => {
               setJimLiveStatus('listening');
-              recognition.start();
-            }
-          }, 2000);
+            };
+            
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+            
+          } catch (err) {
+            console.error('JIM error:', err);
+            setJimLiveTranscript(prev => [...prev, { role: 'jim', text: `Sorry mate, got an error: ${err.message}. Check your API key.` }]);
+            setJimLiveStatus('listening');
+          }
         }
       };
       
       recognition.onerror = (event) => {
         console.error('Recognition error:', event.error);
         if (event.error === 'not-allowed') {
-          showToast('Microphone access denied', 'error');
+          showToast('Please allow microphone access', 'error');
           setJimLiveOpen(false);
-        } else {
+        } else if (event.error !== 'no-speech') {
           setJimLiveStatus('error');
           setTimeout(() => {
-            if (jimLiveOpen && !jimCancelledRef.current) {
+            if (!jimCancelledRef.current && jimLiveOpen) {
               setJimLiveStatus('listening');
-              recognition.start();
             }
           }, 2000);
         }
       };
       
       recognition.onend = () => {
-        if (jimLiveOpen && !jimCancelledRef.current && jimLiveStatus !== 'speaking') {
-          // Restart if still open
+        if (!jimCancelledRef.current && jimLiveOpen && jimLiveStatus !== 'speaking') {
           recognition.start();
         }
       };
@@ -2621,8 +2701,11 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
                 <button onClick={() => setPrintPreviewJob(activeJob)} className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-black text-xs active:scale-95 shadow-md"><Printer size={14}/> Print PDF</button>
               </>
             )}
-            <button onClick={() => startJimLive()} title="Talk to JIM" className="flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-xs active:scale-95 shadow-md transition-colors">
-              <Radio size={14}/> Ask JIM
+            <button 
+              onClick={() => startJimLive()} 
+              className="flex items-center gap-1.5 px-3 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-black text-xs active:scale-95 shadow-md transition-colors"
+            >
+              <Mic size={14}/> CALL JIM
             </button>
           </div>
         </header>
