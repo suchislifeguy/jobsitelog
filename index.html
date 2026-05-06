@@ -42,7 +42,6 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
       @keyframes jimIdleFloat {
         0%, 100% { transform: translateY(0); }
@@ -169,7 +168,7 @@
   <body class="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
     <div id="root"></div>
     <script type="text/babel" data-type="module">
-  import React, { useState, useEffect, useRef, Component } from 'react';
+  import React, { useState, useEffect, useRef, Component, useMemo } from 'react';
   import ReactDOM from 'react-dom/client';
   import { createPortal } from 'react-dom';
   import { get, set } from 'idb-keyval';
@@ -180,7 +179,7 @@
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt, Home, Info,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert, Lock,
     Bookmark, Package, PlusCircle, Calendar, Building2, CalendarPlus, Award,
-    ShieldCheck, BadgeCheck, FileCheck, Camera, Wand2, Play, Square, Phone, Wallet, Timer, FileDown
+    ShieldCheck, BadgeCheck, FileCheck, Camera, Wand2, Play, Square, Phone, Wallet, Timer, FileDown, Users, TrendingUp, CreditCard, MicOff, Radio
   } from 'lucide-react';
 
   const JimMascot = ({ size = 36, state = 'idle' }) => {
@@ -416,8 +415,8 @@
 
   // --- Core AI "Smart Router" & Waterfall ---
   const smartFetchAI = async (taskType, contents, generationConfig, apiKey, userModel) => {
-    const heavyModels = [userModel, 'gemini-3.0-pro', 'gemini-3.0-flash', 'gemini-2.5-pro', 'gemini-2.5-flash'];
-    const lightModels = [userModel, 'gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+    const heavyModels = [userModel, 'gemini-3.1-flash-lite', 'gemini-3.0-flash', 'gemini-2.5-flash'];
+    const lightModels = [userModel, 'gemini-3.1-flash-lite', 'gemini-3.0-flash', 'gemini-2.5-flash-lite'];
 
     const models = taskType === 'heavy' ? heavyModels : lightModels;
     const uniqueModels = [...new Set(models)].filter(Boolean);
@@ -573,16 +572,21 @@
   };
 
   const ToastMessage = ({ message, type, onClose }) => {
-    useEffect(() => { const timer = setTimeout(onClose, type === 'error' ? 10000 : 4000); return () => clearTimeout(timer); }, [onClose, type]);
-    const icons = { success: <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0"/>, error: <AlertTriangle size={18} className="text-red-500 flex-shrink-0"/>, info: <Info size={18} className="text-blue-500 flex-shrink-0"/> };
+    useEffect(() => { const timer = setTimeout(onClose, type === 'error' ? 10000 : type === 'success' ? 3000 : 4000); return () => clearTimeout(timer); }, [onClose, type]);
+    const styles = {
+      success: { wrap: 'bg-emerald-600 border-emerald-500', icon: <CheckCircle2 size={20} className="text-white flex-shrink-0"/>, text: 'text-white' },
+      error:   { wrap: 'bg-red-600 border-red-500', icon: <AlertTriangle size={20} className="text-white flex-shrink-0"/>, text: 'text-white' },
+      info:    { wrap: 'bg-slate-800 border-slate-700', icon: <Info size={20} className="text-blue-400 flex-shrink-0"/>, text: 'text-white' },
+    };
+    const s = styles[type] || styles.info;
     return (
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] w-[90%] max-w-lg animate-slide-down pointer-events-auto">
-        <div className="bg-slate-900 dark:bg-slate-800 text-white rounded-2xl shadow-2xl p-4 sm:p-5 flex items-start gap-3 border border-slate-700">
-          <div className="mt-0.5">{icons[type]}</div>
-          <div className="flex-1 min-w-0 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-            <p className="text-sm font-bold break-all leading-relaxed whitespace-pre-wrap">{message}</p>
+      <div className="fixed bottom-24 inset-x-4 z-[9999] flex justify-center pointer-events-auto animate-slide-up">
+        <div className={`w-full max-w-sm rounded-2xl shadow-2xl p-4 flex items-start gap-3 border ${s.wrap}`}>
+          <div className="mt-0.5">{s.icon}</div>
+          <div className="flex-1 min-w-0 max-h-[40vh] overflow-y-auto custom-scrollbar">
+            <p className={`text-sm font-semibold leading-relaxed whitespace-pre-wrap break-words ${s.text}`}>{message}</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white flex-shrink-0 p-1.5 bg-slate-800/50 hover:bg-slate-700 rounded-lg transition-colors"><X size={16}/></button>
+          <button onClick={onClose} className="text-white/70 hover:text-white flex-shrink-0 p-1 rounded-lg transition-colors"><X size={16}/></button>
         </div>
       </div>
     );
@@ -901,19 +905,17 @@
     );
   };
 
-  const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, countryCode, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
+  const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, countryCode, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, showToast, dbSize, isPro, onUnlockPro }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
     const [draftExtraTax, setDraftExtraTax] = useState(extraTaxRate);
     const [draftCountry, setDraftCountry] = useState(countryCode || 'AU');
-    const [draftGoogleClientId, setDraftGoogleClientId] = useState(googleClientId);
     const [showTemplates, setShowTemplates] = useState(false);
     const [showMaterials, setShowMaterials] = useState(false);
     const [showBusiness, setShowBusiness] = useState(false);
-    const [showAdvanced, setShowAdvanced] = useState(false);
     const [licenceInput, setLicenceInput] = useState('');
 
-    const save = () => { onSave(draftKey, draftModel, draftExtraTax, draftCountry); setGoogleClientId(draftGoogleClientId); onClose(); showToast('Settings Saved', 'success'); };
+    const save = () => { onSave(draftKey, draftModel, draftExtraTax, draftCountry); onClose(); showToast('Settings Saved', 'success'); };
     const hasBiz = !!businessProfile?.name;
 
     const handleLicenceUnlock = () => {
@@ -924,8 +926,7 @@
       onUnlockPro(found); setLicenceInput(''); showToast('Full version unlocked!', 'success');
     };
 
-    const expiringCount = (businessProfile?.licences || []).filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry)).length
-      + (isExpiringSoon(businessProfile?.insuranceExpiry) || isExpired(businessProfile?.insuranceExpiry) ? 1 : 0);
+    const expiringCount = (businessProfile?.credentials || []).filter(c => isExpiringSoon(c.expiry) || isExpired(c.expiry)).length;
 
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
@@ -1035,34 +1036,10 @@
               <input type="password" className="w-full p-3.5 mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
               <div className="relative">
                 <Bot size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-3.0-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
+                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-3.1-flash-lite" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
 
-            {/* Advanced Integrations (Hidden by default) */}
-            <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
-              <button onClick={() => setShowAdvanced(!showAdvanced)} className="w-full p-4 bg-slate-50 dark:bg-slate-800 flex justify-between items-center text-sm font-black text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                Advanced Integrations
-                <ChevronDown size={16} className={`text-slate-400 transition-transform ${showAdvanced ? 'rotate-180' : ''}`}/>
-              </button>
-
-              {showAdvanced && (
-                <div className="p-4 bg-white dark:bg-slate-900 space-y-4 border-t border-slate-200 dark:border-slate-700">
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google Calendar Sync</label>
-                    <div className="space-y-3">
-                      <input type="text" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700" placeholder="Google Client ID" value={draftGoogleClientId} onChange={e => setDraftGoogleClientId(e.target.value)}/>
-                      {isGoogleConnected ? (
-                        <button onClick={() => {disconnectGoogleCalendar(); showToast('Calendar Disconnected','info');}} className="w-full bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/30 font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"><X size={16}/> Disconnect Calendar</button>
-                      ) : (
-                        <button onClick={() => connectGoogleCalendar(draftGoogleClientId)} disabled={!draftGoogleClientId} className={`w-full font-black text-sm py-3 rounded-xl flex items-center justify-center gap-2 transition-all ${draftGoogleClientId ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700'}`}><CalendarPlus size={16}/> Connect Calendar</button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
 
             {/* Pro Licence */}
             <div>
@@ -1123,10 +1100,19 @@
     );
   };
 
-  const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast, toggleVoice, listeningField }) => {
+  const NewJobModal = ({ type, onSave, onClose, apiKey, geminiModel, showToast, toggleVoice, listeningField, jobs }) => {
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
     const [phone, setPhone] = useState('');
+    const [showClientSuggestions, setShowClientSuggestions] = useState(false);
+
+    const existingClients = useMemo(() => {
+      const map = {};
+      (jobs||[]).forEach(j => { if (j.clientName) { const k = j.clientName.toLowerCase(); if (!map[k]) map[k] = { name: j.clientName, phone: j.clientPhone||'' }; } });
+      return Object.values(map);
+    }, [jobs]);
+
+    const clientSuggestions = client.trim().length >= 1 ? existingClients.filter(c => c.name.toLowerCase().includes(client.toLowerCase())) : [];
     const [additionalText, setAdditionalText] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [files, setFiles] = useState([]);
@@ -1241,8 +1227,19 @@
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Client Name</label>
                 <div className="relative">
-                  <input className="w-full px-4 py-3 pr-9 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" placeholder="John Smith" value={client} onChange={e => setClient(e.target.value)} />
+                  <input className="w-full px-4 py-3 pr-9 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" placeholder="John Smith" value={client} onChange={e => { setClient(e.target.value); setShowClientSuggestions(true); }} onFocus={() => setShowClientSuggestions(true)} />
                   <button type="button" onClick={() => toggleVoice('newJobClient', setClient)} className={`absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobClient'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={13}/></button>
+                  {showClientSuggestions && clientSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 mt-1 overflow-hidden">
+                      {clientSuggestions.slice(0,5).map((c,i) => (
+                        <button key={i} type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setClient(c.name); if (c.phone) setPhone(c.phone); setShowClientSuggestions(false); }}
+                          className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-colors">
+                          <p className="font-bold text-sm dark:text-white">{c.name}</p>
+                          {c.phone && <p className="text-[10px] text-slate-400">{c.phone}</p>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div>
@@ -1490,7 +1487,7 @@
     );
   };
 
-  const AppointmentFormModal = ({ appointment, jobs, googleToken, onSave, onDelete, onClose, showToast }) => {
+  const AppointmentFormModal = ({ appointment, jobs, onSave, onDelete, onClose, showToast }) => {
     const editing = !!appointment.id;
     const [form, setForm] = useState({ title: appointment.title || '', jobId: appointment.jobId || '', start: appointment.start ? formatLocal(appointment.start, 'iso-datetime') : '', end: appointment.end ? formatLocal(appointment.end, 'iso-datetime') : '', notes: appointment.notes || '' });
     const save = () => {
@@ -1516,7 +1513,7 @@
             <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label><textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-medium h-24 resize-none dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="Additional details..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/></div>
           </div>
           <div className="flex gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
-            {editing && !appointment.isGoogle && (<button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-4 rounded-2xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={20}/></button>)}
+            {editing && (<button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-4 rounded-2xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={20}/></button>)}
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl font-black text-slate-600 dark:text-slate-300">Cancel</button>
             <button onClick={save} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black shadow-lg flex justify-center items-center gap-2"><Check size={18}/> Save</button>
           </div>
@@ -1714,11 +1711,10 @@
     );
   };
 
-  const ScheduleView = ({ appointments, timesheets, jobs, googleToken, onSaveAppointment, onDeleteAppointment, isGoogleConnected, showConfirm, onScheduleFromJob, showToast, onNewTimeEntry, onEditTimeEntry, businessProfile }) => {
-    const [viewTab, setViewTab] = useState('upcoming'); // 'upcoming' | 'timesheet'
+  const ScheduleView = ({ appointments, timesheets, jobs, onSaveAppointment, onDeleteAppointment, showConfirm, onScheduleFromJob, showToast, onNewTimeEntry, onEditTimeEntry, businessProfile }) => {
+    const [viewTab, setViewTab] = useState('upcoming');
     const [weekOffset, setWeekOffset] = useState(0);
     const [apptModal, setApptModal] = useState(null);
-    const [googleEvents, setGoogleEvents] = useState([]);
     const [showTimesheetPrint, setShowTimesheetPrint] = useState(false);
 
     const today = new Date();
@@ -1730,42 +1726,16 @@
     const days = Array.from({length:7}, (_,i) => { const d = new Date(startOfWeek); d.setDate(d.getDate()+i); return d; });
     const hours = Array.from({length:15}, (_,i) => i+6);
 
-    useEffect(() => {
-      if (!googleToken || !isGoogleConnected || viewTab !== 'upcoming') return;
-      const fetchEvents = async () => {
-        try {
-          const timeMin = new Date(startOfWeek).toISOString();
-          const timeMax = new Date(days[6].getTime() + 24*3600*1000).toISOString();
-          const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime`, { headers: { Authorization: `Bearer ${googleToken.access_token}` } });
-          if (res.status === 401) { showToast('Google session expired. Please reconnect.', 'error'); return; }
-          const data = await res.json(); setGoogleEvents(data.items || []);
-        } catch (e) {}
-      };
-      fetchEvents();
-    }, [googleToken, weekOffset, isGoogleConnected, viewTab]);
-
-    // Setup Calendar Events
-    const localEvents = appointments.map(a => ({ ...a, isLocal: true, start: new Date(a.start), end: new Date(a.end) }));
-    const localGoogleIds = new Set(appointments.filter(a => a.googleEventId).map(a => a.googleEventId));
-    const externalGoogleEvents = googleEvents.filter(ev => !localGoogleIds.has(ev.id)).map(ev => ({ id: ev.id, title: ev.summary || '(No title)', start: new Date(ev.start.dateTime || ev.start.date), end: new Date(ev.end.dateTime || ev.end.date), isGoogle: true, notes: ev.description || '' }));
-    const allEvents = [...localEvents, ...externalGoogleEvents];
+    // Setup Calendar Events (local only)
+    const allEvents = appointments.map(a => ({ ...a, isLocal: true, start: new Date(a.start), end: new Date(a.end) }));
     const getEventsForSlot = (day, hour) => { const slotStart = new Date(day); slotStart.setHours(hour,0,0,0); const slotEnd = new Date(slotStart); slotEnd.setHours(hour+1,0,0,0); return allEvents.filter(ev => ev.start < slotEnd && ev.end > slotStart); };
 
-    const handleSave = async (data) => {
-      if (googleToken && isGoogleConnected && !data.googleEventId) {
-        try {
-          const gEvent = { summary: data.title, description: data.notes || '', start: { dateTime: new Date(data.start).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }, end: { dateTime: new Date(data.end).toISOString(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone } };
-          const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', { method: 'POST', headers: { Authorization: `Bearer ${googleToken.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(gEvent) });
-          const created = await res.json(); data.googleEventId = created.id; showToast('Saved to Google Calendar', 'success');
-        } catch (e) { showToast('Google sync failed', 'error'); }
-      } else { showToast('Appointment Saved', 'success'); }
-      onSaveAppointment(data); setApptModal(null);
+    const handleSave = (data) => {
+      onSaveAppointment(data); setApptModal(null); showToast('Appointment Saved', 'success');
     };
 
     const handleDeleteAppointment = (id) => {
       showConfirm('Delete this appointment?', () => {
-        const appt = appointments.find(a => a.id === id);
-        if (appt?.googleEventId && googleToken) { fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${appt.googleEventId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${googleToken.access_token}` } }).catch(()=>{}); }
         onDeleteAppointment(id); setApptModal(null); showToast('Appointment Deleted', 'info');
       });
     };
@@ -1856,7 +1826,7 @@
                       <div key={di} className="calendar-cell" onClick={() => { const defStart=new Date(day); defStart.setHours(hour,0,0,0); const defEnd=new Date(defStart); defEnd.setHours(hour+1,0,0,0); setApptModal({ appointment: { id: null, title: '', jobId: '', start: defStart.toISOString(), end: defEnd.toISOString(), notes: '' } }); }}>
                         {slotEvents.map(ev => (
                           <div key={ev.id} onClick={(e) => { e.stopPropagation(); if(!ev.isGoogle) setApptModal({ appointment: ev }); }}
-                            className={`calendar-event ${ev.isGoogle ? 'bg-blue-200 dark:bg-blue-800 text-slate-800 dark:text-blue-200' : ev.isLocal ? 'bg-orange-100 dark:bg-orange-900/60 text-orange-800 dark:text-orange-200' : 'bg-slate-200 dark:bg-slate-600'}`}
+                            className="calendar-event bg-orange-100 dark:bg-orange-900/60 text-orange-800 dark:text-orange-200"
                             style={{ top: `${(ev.start.getMinutes()/60)*100}%`, height: `${Math.min(((ev.end - ev.start)/3600000)*100, 100)}%` }}>
                             <div className="truncate text-[9px] font-black">{ev.title}</div>
                           </div>
@@ -1872,7 +1842,7 @@
               {allEvents.filter(ev => ev.start >= new Date()).sort((a,b)=>a.start-b.start).slice(0,5).map(ev => (
                 <div key={ev.id} className="flex items-center justify-between py-2 border-b dark:border-slate-700 last:border-0">
                   <div><p className="font-bold text-sm">{ev.title}</p><p className="text-[10px] text-slate-400">{formatLocal(ev.start.toISOString(), 'datetime')} – {formatLocal(ev.end.toISOString(), 'datetime')}</p></div>
-                  {!ev.isGoogle && <button onClick={() => handleDeleteAppointment(ev.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>}
+                  <button onClick={() => handleDeleteAppointment(ev.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>
                 </div>
               ))}
               {allEvents.length===0 && <p className="text-sm text-slate-400">No upcoming appointments.</p>}
@@ -1920,7 +1890,7 @@
           </div>
         )}
 
-        {apptModal && (<AppointmentFormModal appointment={apptModal.appointment} jobs={jobs} googleToken={googleToken} onSave={handleSave} onDelete={() => handleDeleteAppointment(apptModal.appointment.id)} onClose={() => setApptModal(null)} showToast={showToast}/>)}
+        {apptModal && (<AppointmentFormModal appointment={apptModal.appointment} jobs={jobs} onSave={handleSave} onDelete={() => handleDeleteAppointment(apptModal.appointment.id)} onClose={() => setApptModal(null)} showToast={showToast}/>)}
         {showTimesheetPrint && (
           <TimesheetPrintPreview
             weekLabel={`${days[0].toLocaleDateString('en-AU', {day:'numeric',month:'short'})} – ${days[6].toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'numeric'})}`}
@@ -1937,6 +1907,43 @@
     );
   };
 
+
+  /* ════════════════════════════════════════════
+     JIM LIVE PANEL
+  ════════════════════════════════════════════ */
+  const JimLivePanel = ({ status, transcript, onStop }) => {
+    const transcriptRef = useRef(null);
+    useEffect(() => { if (transcriptRef.current) transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight; }, [transcript]);
+    const mascotState = status === 'error' ? 'error' : status === 'speaking' ? 'thinking' : status === 'listening' ? 'wave' : 'idle';
+    const statusLabel = { connecting: 'Connecting...', listening: 'Listening — speak now', speaking: 'JIM is speaking...', error: 'Connection error', idle: 'Disconnected' };
+    const statusColor = status === 'error' ? 'text-red-400' : status === 'speaking' ? 'text-purple-400' : status === 'listening' ? 'text-emerald-400' : 'text-slate-400';
+    return (
+      <div className="fixed inset-0 z-[500] bg-slate-950/98 backdrop-blur-xl flex flex-col items-center justify-between p-6 pb-10 animate-slide-up">
+        <div className="w-full flex justify-center relative mt-2">
+          <h2 className="text-white font-black text-xl tracking-tight">Talk to JIM</h2>
+        </div>
+        <div className="flex flex-col items-center gap-5">
+          <div className={status === 'listening' ? 'animate-pulse' : ''}>
+            <JimMascot size={140} state={mascotState}/>
+          </div>
+          <p className={`text-sm font-bold tracking-wide ${statusColor}`}>{statusLabel[status] || '...'}</p>
+        </div>
+        {transcript.length > 0 && (
+          <div ref={transcriptRef} className="w-full max-w-sm max-h-36 overflow-y-auto custom-scrollbar bg-slate-900 rounded-2xl p-4 space-y-2 border border-slate-800">
+            {transcript.map((t, i) => (
+              <p key={i} className={`text-sm leading-relaxed ${t.role === 'jim' ? 'text-purple-300 font-semibold' : 'text-slate-300'}`}>
+                {t.role === 'jim' ? '🤖 ' : '👤 '}{t.text}
+              </p>
+            ))}
+          </div>
+        )}
+        {transcript.length === 0 && <div className="w-full max-w-sm text-center text-slate-600 text-xs">Ask about jobs, invoices, revenue...</div>}
+        <button onClick={onStop} className="w-20 h-20 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-all border-4 border-red-400/30">
+          <MicOff size={32} className="text-white"/>
+        </button>
+      </div>
+    );
+  };
 
   /* ════════════════════════════════════════════
      APP
@@ -1975,9 +1982,7 @@
     const [listeningField, setListeningField] = useState(null);
     const recognitionRef = useRef(null);
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
-    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-3.0-flash');
-    const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('googleClientId') || '');
-    const [googleToken, setGoogleToken] = useState(null);
+    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-3.1-flash-lite');
     const [confirmDialog, setConfirmDialog] = useState(null);
     const [printPreviewJob, setPrintPreviewJob] = useState(null);
     const [selectedJobs, setSelectedJobs] = useState([]);
@@ -2018,9 +2023,17 @@
     const COLORS = [{ hex:'#ef4444', name:'Red' }, { hex:'#22c55e', name:'Green' }, { hex:'#eab308', name:'Yellow' }, { hex:'#ffffff', name:'White' }, { hex:'#000000', name:'Black' }];
     const [showTemplatePop, setShowTemplatePop] = useState(false);
     const [showMaterialPop, setShowMaterialPop] = useState(false);
+    const [jimLiveOpen, setJimLiveOpen] = useState(false);
+    const [jimLiveStatus, setJimLiveStatus] = useState('idle');
+    const [jimLiveTranscript, setJimLiveTranscript] = useState([]);
+    const jimWsRef = useRef(null);
+    const jimStreamRef = useRef(null);
+    const jimAudioCtxRef = useRef(null);
+    const jimMicCtxRef = useRef(null);
+    const jimNextPlayTimeRef = useRef(0);
     const showToast = (message, type = 'info') => setToast({ message, type });
 
-    const loadJobs = async () => { const d = await get(DB_KEY_JOBS) || []; const migrated = d.map(j => { const mj = { ...j }; if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false; if (mj.type === 'quote' && mj.showCosts === undefined) mj.showCosts = true; if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now(); return mj; }); setJobs(migrated); updMetric(migrated); setIsLoading(false); };
+    const loadJobs = async () => { const d = await get(DB_KEY_JOBS) || []; const migrated = d.map(j => { const mj = { ...j }; if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false; if (mj.type === 'quote' && mj.showCosts === undefined) mj.showCosts = true; if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now(); if (mj.invoiceNumber === undefined) mj.invoiceNumber = ''; if (mj.amountPaid === undefined) mj.amountPaid = 0; return mj; }); setJobs(migrated); updMetric(migrated); setIsLoading(false); };
     const loadTemplates = async () => setUserTemplates(await get(DB_KEY_TEMPL) || []);
     const loadMaterials = async () => setUserMaterials(await get(DB_KEY_MATS) || []);
     const loadAppointments = async () => setAppointments(await get(DB_KEY_APPOINTMENTS) || []);
@@ -2037,15 +2050,47 @@
     useEffect(() => { const root = document.documentElement; if (isDarkMode) { root.classList.add('dark'); document.getElementById('theme-color-meta').setAttribute('content','#020617'); localStorage.setItem('theme','dark'); } else { root.classList.remove('dark'); document.getElementById('theme-color-meta').setAttribute('content','#ffffff'); localStorage.setItem('theme','light'); } }, [isDarkMode]);
 
     const activeJob = jobs.find(j => j.id === activeJobId);
+
+    const revenueStats = useMemo(() => {
+      let quoted = 0, outstanding = 0, received = 0, overdueCount = 0, invoicedCount = 0;
+      jobs.forEach(j => {
+        const total = getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate).total;
+        if (!total) return;
+        const s = j.status || 'draft';
+        if (['draft','sent','approved'].includes(s)) quoted += total;
+        if (['invoiced','overdue'].includes(s)) { outstanding += total; if (s==='overdue') overdueCount++; else invoicedCount++; }
+        if (s === 'paid') received += (parseFloat(j.amountPaid) || total);
+      });
+      return { quoted, outstanding, received, overdueCount, invoicedCount };
+    }, [jobs, extraTaxRate]);
+
+    const jimInsight = useMemo(() => {
+      if (jobs.length === 0) return { state: 'wave', msg: "G'day! Create your first quote or completion report to get started." };
+      const overdue = jobs.filter(j => j.status === 'overdue');
+      const invoiced = jobs.filter(j => j.status === 'invoiced');
+      const draftOld = jobs.filter(j => (j.status === 'draft' || !j.status) && j.createdAt < Date.now() - 7*24*60*60*1000);
+      const expiringCreds = (businessProfile?.credentials || []).filter(c => isExpiringSoon(c.expiry) || isExpired(c.expiry));
+      if (overdue.length) return { state: 'error', msg: `${overdue.length} invoice${overdue.length>1?'s':''} overdue — chase those payments!` };
+      if (expiringCreds.length) return { state: 'error', msg: `${expiringCreds.length} credential${expiringCreds.length>1?'s':''} expired or expiring soon — update in Settings.` };
+      if (invoiced.length) return { state: 'idle', msg: `${invoiced.length} invoice${invoiced.length>1?'s':''} awaiting payment. Outstanding: ${fmtAUD(revenueStats.outstanding)}` };
+      if (draftOld.length) return { state: 'idle', msg: `${draftOld.length} old draft${draftOld.length>1?'s':''} haven\'t been sent yet — ready to invoice?` };
+      return { state: 'wave', msg: `All looking good! ${jobs.length} project${jobs.length>1?'s':''} on the books.` };
+    }, [jobs, businessProfile, revenueStats]);
+
+    const clientsData = useMemo(() => {
+      const map = {};
+      jobs.forEach(j => {
+        const key = j.clientName || '—';
+        if (!map[key]) map[key] = { name: key, phone: j.clientPhone||'', jobs: [], totalValue: 0, unpaidCount: 0 };
+        map[key].jobs.push(j);
+        const total = getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate).total;
+        map[key].totalValue += total;
+        if (['sent','approved','invoiced','overdue'].includes(j.status)) map[key].unpaidCount++;
+      });
+      return Object.values(map).sort((a,b) => b.totalValue - a.totalValue);
+    }, [jobs, extraTaxRate]);
     const getTotals = (tasks) => { const m=(tasks||[]).reduce((a,t)=>a+parseTimeToMinutes(t.time),0); return { mins:m, str:fmtMins(m) }; };
 
-    const connectGoogleCalendar = (clientId) => {
-      if (!clientId) return;
-      const tokenClient = google.accounts.oauth2.initTokenClient({ client_id: clientId, scope: 'https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.readonly', callback: (response) => { if (response.error) return showToast('Google sign-in failed', 'error'); setGoogleToken(response); localStorage.setItem('googleToken', JSON.stringify(response)); localStorage.setItem('googleClientId', clientId); showToast('Google Calendar Connected!', 'success'); } });
-      tokenClient.requestAccessToken({ prompt: '' });
-    };
-    const disconnectGoogleCalendar = () => { setGoogleToken(null); localStorage.removeItem('googleToken'); };
-    useEffect(() => { const savedToken = localStorage.getItem('googleToken'); if (savedToken) { try { const parsed = JSON.parse(savedToken); if (parsed && parsed.access_token) setGoogleToken(parsed); } catch {} } }, []);
 
     const handleSaveAppointment = (appt) => { let updated = appointments.find(a => a.id === appt.id) ? appointments.map(a => a.id === appt.id ? appt : a) : [...appointments, appt]; saveAppointments(updated); setAppointmentFromJob(null); };
     const handleDeleteAppointment = (id) => saveAppointments(appointments.filter(a => a.id !== id));
@@ -2062,6 +2107,129 @@
       setTimeEntryModal(null);
       showToast('Time entry deleted', 'info');
     };
+
+    const buildJimContext = () => {
+      const biz = businessProfile || {};
+      const jobLines = jobs.slice(-20).map(j => {
+        const total = getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate).total;
+        return `  - ${j.address || 'Unknown site'} | Client: ${j.clientName || '—'} | Status: ${j.status || 'draft'} | Total: $${total.toFixed(2)}${j.invoiceNumber ? ` | ${j.invoiceNumber}` : ''}`;
+      }).join('\n');
+      return `You are JIM (Jobs Invoice Manager), a friendly AI assistant for an Australian trade and construction business. You have a casual, helpful Aussie personality. Help with jobs, invoices, quotes, scheduling, and business advice.
+
+Business: ${biz.name || 'Not set'} | ABN: ${biz.abn || '—'} | Phone: ${biz.phone || '—'}
+Today: ${new Date().toLocaleDateString('en-AU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+
+Revenue Snapshot:
+  Quoted: $${revenueStats.quoted.toFixed(2)} | Outstanding: $${revenueStats.outstanding.toFixed(2)} | Received: $${revenueStats.received.toFixed(2)}
+
+Recent Jobs (${jobs.length} total):
+${jobLines || '  No jobs yet.'}
+
+Respond conversationally and concisely — this is a voice chat. 2-3 sentences is usually enough unless the user asks for detail.`;
+    };
+
+    const jimPlayAudio = (b64pcm) => {
+      try {
+        if (!jimAudioCtxRef.current || jimAudioCtxRef.current.state === 'closed') {
+          jimAudioCtxRef.current = new AudioContext({ sampleRate: 24000 });
+          jimNextPlayTimeRef.current = 0;
+        }
+        const ctx = jimAudioCtxRef.current;
+        const raw = atob(b64pcm);
+        const bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+        const int16 = new Int16Array(bytes.buffer);
+        const float32 = new Float32Array(int16.length);
+        for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768;
+        const buf = ctx.createBuffer(1, float32.length, 24000);
+        buf.copyToChannel(float32, 0);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        const startAt = Math.max(jimNextPlayTimeRef.current, ctx.currentTime + 0.05);
+        src.start(startAt);
+        jimNextPlayTimeRef.current = startAt + buf.duration;
+      } catch (e) { /* audio error, ignore */ }
+    };
+
+    const stopJimLive = () => {
+      jimWsRef.current?.close();
+      jimWsRef.current = null;
+      jimStreamRef.current?.getTracks().forEach(t => t.stop());
+      jimStreamRef.current = null;
+      if (jimMicCtxRef.current) { try { jimMicCtxRef.current.close(); } catch(_){} jimMicCtxRef.current = null; }
+      if (jimAudioCtxRef.current) { try { jimAudioCtxRef.current.close(); } catch(_){} jimAudioCtxRef.current = null; }
+      jimNextPlayTimeRef.current = 0;
+      setJimLiveStatus('idle');
+      setJimLiveOpen(false);
+    };
+
+    const startJimLive = async () => {
+      if (!apiKey) { showToast('Add your Gemini API key in Settings first.', 'error'); return; }
+      setJimLiveOpen(true);
+      setJimLiveStatus('connecting');
+      setJimLiveTranscript([]);
+
+      const ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`);
+      jimWsRef.current = ws;
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          setup: {
+            model: 'models/gemini-3.0-flash-live',
+            generation_config: {
+              response_modalities: ['AUDIO', 'TEXT'],
+              speech_config: { voice_config: { prebuilt_voice_config: { voice_name: 'Kore' } } }
+            },
+            system_instruction: { parts: [{ text: buildJimContext() }] }
+          }
+        }));
+      };
+
+      ws.onmessage = async (event) => {
+        let data;
+        try { data = JSON.parse(event.data instanceof Blob ? await event.data.text() : event.data); } catch { return; }
+
+        if (data.setupComplete) {
+          setJimLiveStatus('listening');
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: { ideal: 16000 }, channelCount: 1, echoCancellation: true } });
+            jimStreamRef.current = stream;
+            const micCtx = new AudioContext({ sampleRate: 16000 });
+            jimMicCtxRef.current = micCtx;
+            const source = micCtx.createMediaStreamSource(stream);
+            const processor = micCtx.createScriptProcessor(4096, 1, 1);
+            processor.onaudioprocess = (e) => {
+              if (jimWsRef.current?.readyState !== WebSocket.OPEN) return;
+              const f32 = e.inputBuffer.getChannelData(0);
+              const i16 = new Int16Array(f32.length);
+              for (let i = 0; i < f32.length; i++) i16[i] = Math.max(-32768, Math.min(32767, f32[i] * 32768));
+              const b64 = btoa(String.fromCharCode(...new Uint8Array(i16.buffer)));
+              jimWsRef.current.send(JSON.stringify({ realtime_input: { media_chunks: [{ mime_type: 'audio/pcm;rate=16000', data: b64 }] } }));
+            };
+            source.connect(processor);
+            processor.connect(micCtx.destination);
+          } catch {
+            showToast('Microphone access denied.', 'error');
+            stopJimLive();
+          }
+          return;
+        }
+
+        const parts = data.serverContent?.modelTurn?.parts || [];
+        let gotAudio = false;
+        for (const part of parts) {
+          if (part.inlineData?.data) { jimPlayAudio(part.inlineData.data); gotAudio = true; }
+          if (part.text?.trim()) setJimLiveTranscript(t => [...t, { role: 'jim', text: part.text.trim() }]);
+        }
+        if (gotAudio) setJimLiveStatus('speaking');
+        if (data.serverContent?.turnComplete) setJimLiveStatus('listening');
+      };
+
+      ws.onerror = () => setJimLiveStatus('error');
+      ws.onclose = (e) => { if (e.code !== 1000) setJimLiveStatus('error'); };
+    };
+
     const openTimeEntryForJob = (jobId) => {
       setTimeEntryModal({
         id: null,
@@ -2219,10 +2387,20 @@
 
     const handleCreateJob = (address, clientName, clientPhone, tasks = [], dueDate = '') => {
       const now = Date.now();
-      const newJob = { id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now.toString(), date: new Date(now).toISOString(), createdAt: now, type: newJobModal, address, clientName, clientPhone, clientRef: '', dueDate: dueDate || '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false, showCosts: newJobModal === 'handover' ? false : true };
+      const newJob = { id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now.toString(), date: new Date(now).toISOString(), createdAt: now, type: newJobModal, address, clientName, clientPhone, clientRef: '', dueDate: dueDate || '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false, showCosts: newJobModal === 'handover' ? false : true, invoiceNumber: '', amountPaid: 0 };
       saveToDB([...jobs, newJob]); setNewJobModal(null); showToast('Project Created', 'success');
     };
-    const cycleStatus = (id) => { const j = jobs.find(x=>x.id===id), idx = STATUSES.findIndex(s=>s.key===(j.status||'draft')); saveToDB(jobs.map(x=>x.id===id?{...x,status:STATUSES[(idx+1)%STATUSES.length].key}:x)); };
+    const cycleStatus = (id) => {
+      const j = jobs.find(x=>x.id===id), idx = STATUSES.findIndex(s=>s.key===(j.status||'draft'));
+      const nextStatus = STATUSES[(idx+1)%STATUSES.length].key;
+      const updates = { status: nextStatus };
+      if (nextStatus === 'invoiced' && !j.invoiceNumber) {
+        const count = jobs.filter(x=>x.invoiceNumber).length + 1;
+        updates.invoiceNumber = `INV-${new Date().getFullYear()}-${String(count).padStart(3,'0')}`;
+      }
+      saveToDB(jobs.map(x=>x.id===id?{...x,...updates}:x));
+    };
+    const saveAmountPaid = (id, amount) => saveToDB(jobs.map(j=>j.id===id?{...j,amountPaid:parseFloat(amount)||0}:j));
     const toggleGST = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
     const toggleCosts = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,showCosts:!j.showCosts}:j));
     const startEditHeader = () => { setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] }); setIsEditingHeader(true); };
@@ -2270,7 +2448,7 @@
 
     const atStopLimit = selectedJobs.length >= MAX_STOPS;
     const filteredJobs = jobs
-      .filter(j => filterType==='all' || (filterType==='unpaid' ? ['sent','approved','invoiced','overdue'].includes(j.status) : j.type===filterType))
+      .filter(j => filterType==='all' || filterType==='clients' || (filterType==='unpaid' ? ['sent','approved','invoiced','overdue'].includes(j.status) : j.type===filterType))
       .filter(j => !searchQ.trim() || (j.address || '').toLowerCase().includes(searchQ.toLowerCase()) || (j.clientName||'').toLowerCase().includes(searchQ.toLowerCase()))
       .sort((a,b) => {
         if (sortBy === 'created_desc') return (b.createdAt || 0) - (a.createdAt || 0);
@@ -2323,8 +2501,9 @@
     const onMMove = (e) => { if (modeRef.current==='draw') doDraw(e); else if (modeRef.current==='pan' && panStartRef.current) { const np={x:panStartRef.current.panX+(e.clientX-panStartRef.current.clientX),y:panStartRef.current.panY+(e.clientY-panStartRef.current.clientY)}; setCanvasPan(np); panRef.current=np; } };
     const onMUp = () => { panStartRef.current=null; stopDraw(); };
 
-    const expiringLicences = (businessProfile?.licences || []).filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry));
-    const insuranceExpiring = businessProfile?.insuranceExpiry && (isExpiringSoon(businessProfile.insuranceExpiry) || isExpired(businessProfile.insuranceExpiry));
+    const expiringCreds = (businessProfile?.credentials || []).filter(c => isExpiringSoon(c.expiry) || isExpired(c.expiry));
+    const expiringLicences = expiringCreds;
+    const insuranceExpiring = false;
     const actionBtnClass = "flex-1 min-w-[100px] flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95";
 
     if (isLoading) {
@@ -2356,6 +2535,9 @@
                 <button onClick={() => setPrintPreviewJob(activeJob)} className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-black text-xs active:scale-95 shadow-md"><Printer size={14}/> Print PDF</button>
               </>
             )}
+            <button onClick={startJimLive} title="Talk to JIM" className="flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-xs active:scale-95 shadow-md transition-colors">
+              <Radio size={14}/> Ask JIM
+            </button>
           </div>
         </header>
 
@@ -2363,13 +2545,13 @@
         {(expiringLicences.length > 0 || insuranceExpiring) && viewMode === 'dashboard' && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700/40 px-4 py-2.5 flex items-center gap-2 no-print cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors" onClick={() => setShowSettings(true)}>
             <AlertTriangle size={14} className="text-amber-500 flex-shrink-0"/>
-            <p className="text-xs text-amber-700 dark:text-amber-400 font-bold flex-1">{[...expiringLicences.map(l => l.type), ...(insuranceExpiring ? ['Insurance'] : [])].join(', ')} — credential{expiringLicences.length + (insuranceExpiring?1:0) > 1 ? 's' : ''} expiring or expired</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-bold flex-1">{expiringCreds.map(c=>c.label||'Credential').join(', ')} — credential{expiringCreds.length > 1 ? 's' : ''} expiring or expired</p>
             <ChevronRight size={14} className="text-amber-500 flex-shrink-0"/>
           </div>
         )}
 
         {/* Schedule View */}
-        {viewMode==='schedule' && <ScheduleView jobs={jobs} appointments={appointments} timesheets={timesheets} googleToken={googleToken} isGoogleConnected={!!googleToken} onSaveAppointment={handleSaveAppointment} onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm} onScheduleFromJob={openAppointmentForJob} showToast={showToast} onNewTimeEntry={() => setTimeEntryModal({id: null, date: formatLocal(new Date(), 'iso-date'), startTime: '08:00', endTime: '16:00', jobId: '', category: 'Site Work', notes: ''})} onEditTimeEntry={(entry) => setTimeEntryModal(entry)} businessProfile={businessProfile} />}
+        {viewMode==='schedule' && <ScheduleView jobs={jobs} appointments={appointments} timesheets={timesheets} onSaveAppointment={handleSaveAppointment} onDeleteAppointment={handleDeleteAppointment} showConfirm={showConfirm} onScheduleFromJob={openAppointmentForJob} showToast={showToast} onNewTimeEntry={() => setTimeEntryModal({id: null, date: formatLocal(new Date(), 'iso-date'), startTime: '08:00', endTime: '16:00', jobId: '', category: 'Site Work', notes: ''})} onEditTimeEntry={(entry) => setTimeEntryModal(entry)} businessProfile={businessProfile} />}
 
         {/* Dashboard */}
         {viewMode==='dashboard' && (
@@ -2397,10 +2579,42 @@
               </div>
             )}
             {!selectionMode && (
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <button onClick={() => handleNewJobClick('quote')} className="bg-orange-500 hover:bg-orange-400 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"><Plus size={18}/> New Quote</button>
-                <button onClick={() => handleNewJobClick('handover')} className="bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"><CheckCircle2 size={18}/> Completion</button>
-              </div>
+              <>
+                {/* JIM Insight Card */}
+                {jobs.length > 0 && (
+                  <div className={`flex items-center gap-3 p-4 rounded-2xl mb-3 border ${jimInsight.state==='error' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'}`}>
+                    <div className="flex-shrink-0"><JimMascot size={36} state={jimInsight.state}/></div>
+                    <p className={`text-sm font-bold leading-snug ${jimInsight.state==='error' ? 'text-red-700 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}`}>{jimInsight.msg}</p>
+                  </div>
+                )}
+
+                {/* Revenue Snapshot */}
+                {(revenueStats.quoted > 0 || revenueStats.outstanding > 0 || revenueStats.received > 0) && (
+                  <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-4 mb-4 border border-slate-800">
+                    <div className="flex items-center gap-2 mb-3"><TrendingUp size={14} className="text-orange-500"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue Snapshot</span></div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 text-center">
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Quoted</p>
+                        <p className="font-black text-white text-sm">{fmtAUD(revenueStats.quoted)}</p>
+                      </div>
+                      <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 text-center">
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Outstanding</p>
+                        <p className={`font-black text-sm ${revenueStats.overdueCount > 0 ? 'text-red-400' : 'text-amber-400'}`}>{fmtAUD(revenueStats.outstanding)}</p>
+                        {(revenueStats.overdueCount > 0 || revenueStats.invoicedCount > 0) && <p className="text-[8px] text-slate-500 mt-0.5">{revenueStats.overdueCount > 0 && <span className="text-red-400">{revenueStats.overdueCount} overdue </span>}{revenueStats.invoicedCount > 0 && <span className="text-amber-400">{revenueStats.invoicedCount} invoiced</span>}</p>}
+                      </div>
+                      <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 text-center">
+                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Received</p>
+                        <p className="font-black text-emerald-400 text-sm">{fmtAUD(revenueStats.received)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <button onClick={() => handleNewJobClick('quote')} className="bg-orange-500 hover:bg-orange-400 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"><Plus size={18}/> New Quote</button>
+                  <button onClick={() => handleNewJobClick('handover')} className="bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"><CheckCircle2 size={18}/> Completion</button>
+                </div>
+              </>
             )}
             <div className="flex items-center gap-2 mb-3">
               <div className="relative flex-1">
@@ -2417,9 +2631,9 @@
             </div>
 
             <div className="flex gap-2 overflow-x-auto custom-scrollbar mb-4 pb-1">
-              {[{key:'all',label:'All Projects'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'},{key:'unpaid',label:'Unpaid',icon:<Wallet size={12}/>}].map(f => (
+              {[{key:'all',label:'All Projects'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'},{key:'unpaid',label:'Unpaid',icon:<Wallet size={12}/>},{key:'clients',label:'Clients',icon:<Users size={12}/>}].map(f => (
                 <button key={f.key} onClick={() => setFilterType(f.key)}
-                  className={`flex-shrink-0 min-w-[110px] px-4 py-2 flex items-center justify-center gap-1.5 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border
+                  className={`flex-shrink-0 min-w-[100px] px-4 py-2 flex items-center justify-center gap-1.5 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border
                     ${filterType===f.key
                       ? 'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700 shadow-md'
                       : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
@@ -2428,6 +2642,32 @@
               ))}
             </div>
 
+            {filterType === 'clients' ? (
+              <div className="grid gap-3">
+                {clientsData.length === 0 && (
+                  <div className="flex flex-col items-center py-16 gap-3">
+                    <JimMascot size={40} state="empty"/>
+                    <p className="text-slate-500 dark:text-slate-400 font-black text-sm uppercase tracking-widest">No Clients Yet</p>
+                  </div>
+                )}
+                {clientsData.map((c, i) => (
+                  <div key={i} onClick={() => { setFilterType('all'); setSearchQ(c.name === '—' ? '' : c.name); }}
+                    className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-4 cursor-pointer hover:border-orange-400 transition-all shadow-sm">
+                    <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
+                      <span className="font-black text-orange-600 dark:text-orange-400 text-sm">{(c.name || '?')[0].toUpperCase()}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-slate-900 dark:text-white truncate">{c.name}</p>
+                      <p className="text-[10px] text-slate-400 font-medium">{c.jobs.length} job{c.jobs.length!==1?'s':''}{c.phone && ` · ${c.phone}`}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-black text-sm text-slate-900 dark:text-white">{fmtAUD(c.totalValue)}</p>
+                      {c.unpaidCount > 0 && <p className="text-[10px] font-black text-amber-500">{c.unpaidCount} unpaid</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className="grid gap-4">
               {filteredJobs.map(j => {
                 const status = getStatus(j.status||'draft');
@@ -2451,6 +2691,7 @@
                               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{j.type==='handover' ? 'Completion' : 'Quote'}</span>
                               <button onClick={e=>{e.stopPropagation();cycleStatus(j.id);}} className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
                               {j.gstEnabled && getCC().taxRate > 0 && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+{getCC().taxLabel}</span>}
+                              {j.invoiceNumber && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-mono">{j.invoiceNumber}</span>}
                               {isDueSoon && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">Due soon</span>}
                               {isOverdue && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300">Overdue</span>}
                             </div>
@@ -2465,7 +2706,7 @@
                           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hrs</span>
                           <span className="font-black text-slate-900 dark:text-slate-200 text-sm">{getTotals(j.tasks).str}</span>
                         </>}
-                        {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && <div className="flex flex-col items-end mt-1"><span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt||handoverQt).total)}</span></div>}
+                        {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && <div className="flex flex-col items-end mt-1"><span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt||handoverQt).total)}</span>{j.status==='paid' && j.amountPaid>0 && <span className="text-[9px] font-black text-teal-500">Paid {fmtAUD(j.amountPaid)}</span>}</div>}
                       </div>
                     </div>
                   </div>
@@ -2481,6 +2722,7 @@
                 </div>
               )}
             </div>
+            )}
           </main>
         )}
 
@@ -2563,6 +2805,38 @@
                 </div>
               )}
             </div>
+
+            {/* Invoice Panel */}
+            {['invoiced','paid','overdue','sent'].includes(activeJob?.status) && (
+              <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-5 mb-5 border border-slate-800 shadow-lg">
+                <div className="flex items-center gap-2 mb-4"><CreditCard size={16} className="text-indigo-400"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Invoice</span></div>
+                <div className="space-y-3">
+                  {activeJob.invoiceNumber ? (
+                    <div className="flex items-center justify-between"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Invoice No.</span><span className="font-black text-white font-mono">{activeJob.invoiceNumber}</span></div>
+                  ) : (
+                    <button onClick={() => { const count = jobs.filter(x=>x.invoiceNumber).length + 1; saveToDB(jobs.map(j=>j.id===activeJobId?{...j,invoiceNumber:`INV-${new Date().getFullYear()}-${String(count).padStart(3,'0')}`}:j)); showToast('Invoice number generated','success'); }} className="w-full py-2 rounded-xl border border-dashed border-indigo-700 text-indigo-400 text-xs font-black uppercase hover:bg-indigo-900/20 transition-colors">Generate Invoice Number</button>
+                  )}
+                  {(() => {
+                    const total = getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total;
+                    const paid = parseFloat(activeJob.amountPaid) || 0;
+                    const balance = total - paid;
+                    return (
+                      <>
+                        {total > 0 && <div className="flex items-center justify-between"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Due</span><span className="font-black text-white">{fmtAUD(total)}</span></div>}
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex-shrink-0">Amount Paid</span>
+                          <div className="flex items-center gap-1 bg-slate-800 rounded-xl px-3 py-2 flex-1">
+                            <span className="text-slate-400 font-black text-sm">{getCC().symbol}</span>
+                            <input type="number" step="0.01" min="0" className="bg-transparent outline-none font-black text-white text-sm w-full" placeholder="0.00" value={activeJob.amountPaid || ''} onChange={e => saveAmountPaid(activeJobId, e.target.value)}/>
+                          </div>
+                        </div>
+                        {total > 0 && <div className="flex items-center justify-between border-t border-slate-800 pt-3"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Balance</span><span className={`font-black text-lg ${balance <= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>{balance <= 0 ? '✓ Paid' : fmtAUD(balance)}</span></div>}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
 
             {activeJob?.showCosts && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total > 0 && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-5 mb-5 border border-slate-800 shadow-lg">
@@ -2650,15 +2924,18 @@
           <button onClick={() => setViewMode('schedule')} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='schedule' ? 'text-purple-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Calendar size={22}/><span className="text-[10px] font-bold mt-1">Schedule</span></button>
           <button onClick={() => setShowSettings(true)} className="flex flex-col items-center p-2 w-16 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors relative">
             <Settings size={22}/>
-            {(!apiKey || (businessProfile?.licences || []).filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry)).length > 0) && <span className="absolute top-2 right-4 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-900"/>}
+            {(!apiKey || expiringCreds.length > 0) && <span className="absolute top-2 right-4 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-900"/>}
             <span className="text-[10px] font-bold mt-1">Settings</span>
           </button>
         </div>
 
+        {/* JIM Live Voice Panel */}
+        {jimLiveOpen && <JimLivePanel status={jimLiveStatus} transcript={jimLiveTranscript} onStop={stopJimLive}/>}
+
         {/* Modals */}
-        {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} countryCode={countryCode} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} googleClientId={googleClientId} setGoogleClientId={setGoogleClientId} isGoogleConnected={!!googleToken} googleToken={googleToken} connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar} onSave={(k,m,t,cc) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); const c = cc||'AU'; localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); localStorage.setItem('jim-country', c); _cc = c; setCountryCode(c); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
+        {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} countryCode={countryCode} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} onSave={(k,m,t,cc) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); const c = cc||'AU'; localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); localStorage.setItem('jim-country', c); _cc = c; setCountryCode(c); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
         {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUnlock={handleUnlockSuccess} showToast={showToast}/>}
-        {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast} toggleVoice={toggleVoice} listeningField={listeningField}/>}
+        {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast} toggleVoice={toggleVoice} listeningField={listeningField} jobs={jobs}/>}
 
         {showAIAssistModal && activeJob && <AIAssistModal onClose={() => setShowAIAssistModal(false)} onGenerate={handleGenerateDocument} isGenerating={isGenerating} docType={activeJob.type === 'handover' ? 'Completion Invoice' : 'Quotation'} apiKey={apiKey} toggleVoice={toggleVoice} listeningField={listeningField}/>}
 
@@ -2855,7 +3132,7 @@
             showToast={showToast}
         />}
 
-        {appointmentFromJob && <AppointmentFormModal appointment={appointmentFromJob} jobs={jobs} googleToken={googleToken} onSave={handleSaveAppointment} onClose={() => setAppointmentFromJob(null)} showToast={showToast}/>}
+        {appointmentFromJob && <AppointmentFormModal appointment={appointmentFromJob} jobs={jobs} onSave={handleSaveAppointment} onClose={() => setAppointmentFromJob(null)} showToast={showToast}/>}
       </div>
     );
   };
