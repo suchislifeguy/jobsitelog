@@ -2071,6 +2071,7 @@
     const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
     const [pendingUserInput, setPendingUserInput] = useState(null);
     const jimRecognitionRef = useRef(null);
+    const jimActiveRef = useRef(false);
 
     // Live Timer
     const [activeTimer, setActiveTimer] = useState(() => { try { return JSON.parse(localStorage.getItem('joblog-timer') || 'null'); } catch { return null; } });
@@ -2249,12 +2250,21 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
         return;
       }
       
+      // Prevent multiple instances
+      if (jimActiveRef.current) {
+        stopJimLive();
+        setTimeout(() => startJimLive(), 500);
+        return;
+      }
+      
+      jimActiveRef.current = true;
+      jimCancelledRef.current = false;
+      
       setJimLiveOpen(true);
       setJimLiveStatus('connecting');
       setJimLiveTranscript([]);
-      jimCancelledRef.current = false;
       
-      // Wait for voices to load
+      // Wait for voices
       const loadVoices = () => {
         return new Promise((resolve) => {
           const voices = window.speechSynthesis.getVoices();
@@ -2269,8 +2279,6 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
       };
       
       const voices = await loadVoices();
-      
-      // Find a deep male voice
       const maleVoice = voices.find(v => 
         (v.name.toLowerCase().includes('male') || 
          v.name.toLowerCase().includes('deep') ||
@@ -2289,103 +2297,129 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
       if (!SpeechRecognition) {
         showToast('Speech recognition not supported', 'error');
         setJimLiveOpen(false);
+        jimActiveRef.current = false;
         return;
       }
       
       const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
+      recognition.continuous = false;  // IMPORTANT: false means one utterance per trigger
+      recognition.interimResults = false;
       recognition.lang = 'en-AU';
       
-      let interimText = '';
+      let isProcessing = false;  // Prevent concurrent API calls
+      let lastProcessedText = '';
       
       recognition.onstart = () => {
         setJimLiveStatus('listening');
       };
       
       recognition.onresult = async (event) => {
-        let finalText = '';
-        interimText = '';
+        if (isProcessing) return;  // Already answering, ignore new input
         
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalText += transcript;
-          } else {
-            interimText = transcript;
-          }
-        }
+        const userText = event.results[0][0].transcript.trim();
+        if (!userText || userText === lastProcessedText) return;  // Dedupe
         
-        if (finalText.trim()) {
-          setJimLiveStatus('thinking');
-          setJimLiveTranscript(prev => [...prev, { role: 'user', text: finalText }]);
+        lastProcessedText = userText;
+        isProcessing = true;
+        
+        setJimLiveTranscript(prev => [...prev, { role: 'user', text: userText }]);
+        setJimLiveStatus('thinking');
+        
+        try {
+          const context = buildJimContext();
+          const fullPrompt = `${context}\n\nUser said: "${userText}"\n\nRespond as JIM - a experienced Aussie tradie who runs a construction business. Use casual Australian expressions like "mate", "no worries". Keep it brief - ONE OR TWO SENTENCES MAX. Be direct and helpful.`;
           
-          try {
-            const context = buildJimContext();
-            const fullPrompt = `${context}\n\nUser said: "${finalText}"\n\nRespond conversationally as JIM - a blokey, experienced Aussie tradie who runs a construction business. Use casual Australian expressions like "mate", "no worries", "ripper". Keep responses to 2-3 short sentences. Be helpful and direct.`;
-            
-            const response = await smartFetchAI(
-              'light',
-              [{ parts: [{ text: fullPrompt }] }],
-              { temperature: 0.7, maxOutputTokens: 200 },
-              apiKey,
-              geminiModel
-            );
-            
-            let jimResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry mate, I'm having a bit of trouble. Can you try again?";
-            
-            // Clean up response
-            jimResponse = jimResponse.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').trim();
-            
-            setJimLiveTranscript(prev => [...prev, { role: 'jim', text: jimResponse }]);
-            
-            // Speak with male voice
-            const utterance = new SpeechSynthesisUtterance(jimResponse);
-            utterance.rate = 0.85;
-            utterance.pitch = 0.7;  // Lower pitch for deeper voice
-            utterance.volume = 1;
-            
-            if (maleVoice) utterance.voice = maleVoice;
-            
-            utterance.onstart = () => setJimLiveStatus('speaking');
-            utterance.onend = () => {
-              if (!jimCancelledRef.current && jimLiveOpen) {
-                setJimLiveStatus('listening');
-              }
-            };
-            utterance.onerror = () => {
+          const response = await smartFetchAI(
+            'light',
+            [{ parts: [{ text: fullPrompt }] }],
+            { temperature: 0.7, maxOutputTokens: 100 },
+            apiKey,
+            geminiModel
+          );
+          
+          let jimResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry mate, try again.";
+          jimResponse = jimResponse.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').trim();
+          
+          setJimLiveTranscript(prev => [...prev, { role: 'jim', text: jimResponse }]);
+          
+          const utterance = new SpeechSynthesisUtterance(jimResponse);
+          utterance.rate = 0.85;
+          utterance.pitch = 0.7;
+          utterance.volume = 1;
+          if (maleVoice) utterance.voice = maleVoice;
+          
+          utterance.onstart = () => setJimLiveStatus('speaking');
+          utterance.onend = () => {
+            isProcessing = false;
+            lastProcessedText = '';
+            if (!jimCancelledRef.current && jimLiveOpen) {
               setJimLiveStatus('listening');
-            };
-            
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
-            
-          } catch (err) {
-            console.error('JIM error:', err);
-            setJimLiveTranscript(prev => [...prev, { role: 'jim', text: `Sorry mate, got an error: ${err.message}. Check your API key.` }]);
+              // Restart recognition after a short delay
+              setTimeout(() => {
+                if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
+                  try { recognition.start(); } catch(e) { console.log('restart error', e); }
+                }
+              }, 500);
+            } else {
+              jimActiveRef.current = false;
+            }
+          };
+          utterance.onerror = () => {
+            isProcessing = false;
             setJimLiveStatus('listening');
-          }
+            setTimeout(() => {
+              if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
+                try { recognition.start(); } catch(e) {}
+              }
+            }, 500);
+          };
+          
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+          
+        } catch (err) {
+          console.error('JIM error:', err);
+          setJimLiveTranscript(prev => [...prev, { role: 'jim', text: `Error: ${err.message}` }]);
+          isProcessing = false;
+          setJimLiveStatus('listening');
+          setTimeout(() => {
+            if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
+              try { recognition.start(); } catch(e) {}
+            }
+          }, 1000);
         }
       };
       
       recognition.onerror = (event) => {
         console.error('Recognition error:', event.error);
         if (event.error === 'not-allowed') {
-          showToast('Please allow microphone access', 'error');
-          setJimLiveOpen(false);
-        } else if (event.error !== 'no-speech') {
+          showToast('Microphone access denied', 'error');
+          stopJimLive();
+        } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
           setJimLiveStatus('error');
           setTimeout(() => {
-            if (!jimCancelledRef.current && jimLiveOpen) {
+            if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
               setJimLiveStatus('listening');
+              try { recognition.start(); } catch(e) {}
             }
           }, 2000);
+        } else {
+          // No speech or aborted, just restart listening
+          if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
+            setTimeout(() => {
+              try { recognition.start(); } catch(e) {}
+            }, 300);
+          }
         }
       };
       
       recognition.onend = () => {
-        if (!jimCancelledRef.current && jimLiveOpen && jimLiveStatus !== 'speaking') {
-          recognition.start();
+        if (!jimCancelledRef.current && jimLiveOpen && !isProcessing && jimLiveStatus !== 'speaking') {
+          setTimeout(() => {
+            if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
+              try { recognition.start(); } catch(e) {}
+            }
+          }, 300);
         }
       };
       
@@ -2395,6 +2429,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
     
     const stopJimLive = () => {
       jimCancelledRef.current = true;
+      jimActiveRef.current = false;
       
       if (jimRecognitionRef.current) {
         try {
@@ -2701,12 +2736,9 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
                 <button onClick={() => setPrintPreviewJob(activeJob)} className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-black text-xs active:scale-95 shadow-md"><Printer size={14}/> Print PDF</button>
               </>
             )}
-            <button 
-              onClick={() => startJimLive()} 
-              className="flex items-center gap-1.5 px-3 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-black text-xs active:scale-95 shadow-md transition-colors"
-            >
-              <Mic size={14}/> CALL JIM
-            </button>
+          <button onClick={() => startJimLive()} title="Talk to JIM" className="flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-xs active:scale-95 shadow-md transition-colors">
+            <Radio size={14}/> CALL JIM
+          </button>
           </div>
         </header>
 
