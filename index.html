@@ -1,3 +1,5 @@
+```html
+--- START OF FILE test2.html ---
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -21,32 +23,34 @@
 
       async function askJimAndHearIt(prompt, jsonData) {
       const fullPrompt = `${prompt}\n\nData: ${JSON.stringify(jsonData)}`;
-      
+
       // 1. Get the Text Response
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         body: JSON.stringify({ contents: [{ parts: [{ text: fullPrompt }] }] })
       });
-      
+
       const data = await response.json();
       const jimSays = data.candidates[0].content.parts[0].text;
-    
+
       // 2. Make Jim Speak (Using Browser Voice)
       const utterance = new SpeechSynthesisUtterance(jimSays);
-      utterance.rate = 0.9; // A bit slower sounds more natural
-      utterance.pitch = 1.0;
-      
+      utterance.rate = 1.0; 
+      utterance.pitch = 0.95;
+
       // Optional: Pick a specific voice like "Google UK English Male"
       const voices = window.speechSynthesis.getVoices();
-      utterance.voice = voices.find(v => v.name.includes('Male')) || voices[0];
-    
+      utterance.voice = voices.find(v => v.lang.includes('en-AU') && v.name.toLowerCase().includes('male')) 
+        || voices.find(v => v.name.toLowerCase().includes('male')) 
+        || voices[0];
+
       window.speechSynthesis.speak(utterance);
     }
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://www.paypal.com/sdk/js?client-id=BAA4zpTO_3zmcoQkk-UyKIdJDt6e4PWFwCQVVtXihsQe9I-l188FNq4S8O2I08YmE3FG5uo2iEO46w8SGo&components=hosted-buttons&disable-funding=venmo&currency=AUD"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -1938,80 +1942,77 @@
   /* ════════════════════════════════════════════
      JIM LIVE PANEL
   ════════════════════════════════════════════ */
-    const JimLivePanel = ({ status, transcript, onStop }) => {
+    const JimLivePanel = ({ status, transcript, onClose, onInterrupt }) => {
       const transcriptRef = useRef(null);
       useEffect(() => { if (transcriptRef.current) transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight; }, [transcript]);
-      
+
       const mascotState = status === 'error' ? 'error' : status === 'speaking' ? 'thinking' : status === 'listening' ? 'wave' : 'idle';
-      const statusLabel = { 
-        connecting: 'Initialising...', 
-        listening: 'Listening... speak now', 
-        speaking: 'JIM is speaking', 
-        error: 'Connection error', 
-        idle: 'Tap mic to start' 
+      const statusLabel = {
+        connecting: 'Initialising...',
+        listening: 'Listening...',
+        speaking: 'JIM is speaking...',
+        error: 'Connection error',
+        idle: 'Paused'
       };
-      
+
       return (
-        <div className="fixed inset-0 z-[500] bg-slate-900 backdrop-blur-xl flex flex-col items-center justify-between p-6 pb-10 animate-slide-up">
-          <div className="w-full flex justify-between items-center">
-            <div className="w-10" />
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-[600] bg-slate-900/95 backdrop-blur-xl border border-slate-700 shadow-2xl rounded-3xl p-4 flex flex-col gap-4 animate-slide-up pointer-events-auto">
+          {/* Header */}
+          <div className="flex justify-between items-center px-2">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${status === 'listening' ? 'bg-emerald-500 animate-pulse' : status === 'speaking' ? 'bg-orange-500' : 'bg-slate-600'}`} />
-              <h2 className="text-white font-black text-lg tracking-tight">JIM Voice Assistant</h2>
+              <div className={`w-2.5 h-2.5 rounded-full ${status === 'listening' ? 'bg-emerald-500 animate-pulse' : status === 'speaking' ? 'bg-orange-500' : 'bg-slate-600'}`} />
+              <h2 className="text-white font-black text-sm tracking-tight uppercase">JIM Voice</h2>
             </div>
-            <button onClick={onStop} className="text-slate-400 hover:text-white p-2 rounded-full">
-              <X size={20} />
+            <button onClick={onClose} className="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-1.5 rounded-full transition-colors">
+              <X size={16} />
             </button>
           </div>
-          
-          <div className="flex flex-col items-center gap-5">
-            <div className={status === 'listening' ? 'animate-pulse' : ''}>
-              <JimMascot size={140} state={mascotState}/>
-            </div>
-            <p className={`text-sm font-bold tracking-wide ${status === 'error' ? 'text-red-400' : status === 'speaking' ? 'text-orange-400' : status === 'listening' ? 'text-emerald-400' : 'text-slate-400'}`}>
-              {statusLabel[status] || '...'}
-            </p>
-          </div>
-          
-          {transcript.length > 0 && (
-            <div ref={transcriptRef} className="w-full max-w-sm max-h-48 overflow-y-auto custom-scrollbar bg-slate-800/50 rounded-2xl p-4 space-y-2 border border-slate-700">
+
+          {/* Transcript */}
+          {transcript.length > 0 ? (
+            <div ref={transcriptRef} className="w-full max-h-32 overflow-y-auto custom-scrollbar bg-slate-800/50 rounded-2xl p-3 space-y-2 border border-slate-700/50">
               {transcript.map((t, i) => (
                 <div key={i} className={`flex items-start gap-2 ${t.role === 'jim' ? 'justify-start' : 'justify-end'}`}>
                   {t.role === 'jim' && (
-                    <div className="w-6 h-6 rounded-full bg-orange-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[10px] font-black text-white">J</span>
-                    </div>
+                     <div className="w-5 h-5 rounded-full bg-orange-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                       <span className="text-[9px] font-black text-white">J</span>
+                     </div>
                   )}
-                  <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
-                    t.role === 'jim' 
-                      ? 'bg-orange-600/20 border border-orange-500/30 text-orange-100' 
+                  <div className={`px-3 py-1.5 rounded-2xl text-xs leading-relaxed max-w-[85%] ${
+                    t.role === 'jim'
+                      ? 'bg-orange-600/20 border border-orange-500/30 text-orange-100'
                       : 'bg-slate-700 text-slate-200'
                   }`}>
                     {t.text}
                   </div>
-                  {t.role === 'user' && (
-                    <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[10px] font-black text-white">U</span>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
-          )}
-          
-          {transcript.length === 0 && (
-            <div className="w-full max-w-sm text-center text-slate-500 text-sm">
+          ) : (
+            <div className="w-full text-center text-slate-500 text-xs py-2">
               <p>Ask about jobs, invoices, or revenue...</p>
-              <p className="text-xs mt-2 text-slate-600">"How many jobs are outstanding?"</p>
             </div>
           )}
-          
-          <button 
-            onClick={onStop} 
-            className="w-16 h-16 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center shadow-2xl active:scale-95 transition-all"
-          >
-            <MicOff size={28} className="text-white"/>
-          </button>
+
+          {/* Bottom Row: Mascot & Mic */}
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-3">
+              <div className={status === 'listening' ? 'animate-pulse' : ''}>
+                <JimMascot size={48} state={mascotState}/>
+              </div>
+              <p className={`text-xs font-bold tracking-wide uppercase ${status === 'error' ? 'text-red-400' : status === 'speaking' ? 'text-orange-400' : status === 'listening' ? 'text-emerald-400' : 'text-slate-400'}`}>
+                {statusLabel[status] || '...'}
+              </p>
+            </div>
+
+            <button
+              onClick={onInterrupt}
+              className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all ${status === 'speaking' ? 'bg-amber-600 hover:bg-amber-500' : status === 'listening' ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+              title={status === 'speaking' ? "Interrupt JIM" : "Tap to Speak"}
+            >
+              {status === 'speaking' ? <Square size={20} className="text-white fill-white"/> : <Mic size={24} className="text-white"/>}
+            </button>
+          </div>
         </div>
       );
     };
@@ -2206,68 +2207,30 @@ ${jobLines || '  No jobs yet.'}
 Respond conversationally and concisely — this is a voice chat. 2-3 sentences is usually enough unless the user asks for detail.`;
     };
 
-    const jimPlayAudio = (b64pcm) => {
-      try {
-        if (!jimAudioCtxRef.current || jimAudioCtxRef.current.state === 'closed') {
-          jimAudioCtxRef.current = new AudioContext({ sampleRate: 24000 });
-          jimNextPlayTimeRef.current = 0;
-        }
-        const ctx = jimAudioCtxRef.current;
-        const raw = atob(b64pcm);
-        const bytes = new Uint8Array(raw.length);
-        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-        const int16 = new Int16Array(bytes.buffer);
-        const float32 = new Float32Array(int16.length);
-        for (let i = 0; i < int16.length; i++) float32[i] = int16[i] / 32768;
-        const buf = ctx.createBuffer(1, float32.length, 24000);
-        buf.copyToChannel(float32, 0);
-        const src = ctx.createBufferSource();
-        src.buffer = buf;
-        src.connect(ctx.destination);
-        const startAt = Math.max(jimNextPlayTimeRef.current, ctx.currentTime + 0.05);
-        src.start(startAt);
-        jimNextPlayTimeRef.current = startAt + buf.duration;
-      } catch (e) { /* audio error, ignore */ }
-    };
-
-    const LIVE_MODELS = [
-          // 1. The most reliable Free Tier WebSocket model. This WILL connect.
-          'models/gemini-2.0-flash-exp', 
-          
-          // 2. The standard flash model (often supports Live API on free tier now)
-          'models/gemini-2.5-flash',
-          
-          // 3. Your desired model (in case your project gets allowlisted/billing attached)
-          'models/gemini-2.5-flash-preview-native-audio-dialog', 
-          
-          // 4. Ultimate fallback
-          'models/gemini-2.0-flash-live-001'
-        ];
-    
     const startJimLive = async () => {
       if (!apiKey) {
         showToast('Add your Gemini API key in Settings first.', 'error');
         return;
       }
-      
+
       // Prevent multiple instances
       if (jimActiveRef.current) {
         stopJimLive();
         setTimeout(() => startJimLive(), 500);
         return;
       }
-      
+
       jimActiveRef.current = true;
       jimCancelledRef.current = false;
-      
+
       setJimLiveOpen(true);
       setJimLiveStatus('connecting');
       setJimLiveTranscript([]);
-      
+
       // Wait for voices
       const loadVoices = () => {
         return new Promise((resolve) => {
-          const voices = window.speechSynthesis.getVoices();
+          let voices = window.speechSynthesis.getVoices();
           if (voices.length) {
             resolve(voices);
           } else {
@@ -2277,22 +2240,18 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
           }
         });
       };
-      
+
       const voices = await loadVoices();
-      const maleVoice = voices.find(v => 
-        (v.name.toLowerCase().includes('male') || 
-         v.name.toLowerCase().includes('deep') ||
-         v.name.toLowerCase().includes('william') ||
-         v.name.toLowerCase().includes('daniel') ||
-         v.name.toLowerCase().includes('chris')) &&
-        !v.name.toLowerCase().includes('female')
-      ) || voices.find(v => 
-        v.lang.includes('en-AU') || 
-        v.lang.includes('en-GB')
-      ) || voices[0];
       
+      const maleVoice = voices.find(v => v.lang.includes('en-AU') && (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('b') || v.name.toLowerCase().includes('c') || v.name.toLowerCase().includes('d')))
+        || voices.find(v => v.lang.includes('en-GB') && v.name.toLowerCase().includes('male'))
+        || voices.find(v => v.name.toLowerCase().includes('male'))
+        || voices.find(v => ['david','daniel','james','william','mark','george','gordon'].some(n => v.name.toLowerCase().includes(n)))
+        || voices.find(v => v.lang.includes('en-AU'))
+        || voices[0];
+
       setJimLiveStatus('listening');
-      
+
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
         showToast('Speech recognition not supported', 'error');
@@ -2300,35 +2259,35 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
         jimActiveRef.current = false;
         return;
       }
-      
+
       const recognition = new SpeechRecognition();
       recognition.continuous = false;  // IMPORTANT: false means one utterance per trigger
       recognition.interimResults = false;
       recognition.lang = 'en-AU';
-      
+
       let isProcessing = false;  // Prevent concurrent API calls
       let lastProcessedText = '';
-      
+
       recognition.onstart = () => {
         setJimLiveStatus('listening');
       };
-      
+
       recognition.onresult = async (event) => {
         if (isProcessing) return;  // Already answering, ignore new input
-        
+
         const userText = event.results[0][0].transcript.trim();
         if (!userText || userText === lastProcessedText) return;  // Dedupe
-        
+
         lastProcessedText = userText;
         isProcessing = true;
-        
+
         setJimLiveTranscript(prev => [...prev, { role: 'user', text: userText }]);
         setJimLiveStatus('thinking');
-        
+
         try {
           const context = buildJimContext();
           const fullPrompt = `${context}\n\nUser said: "${userText}"\n\nRespond as JIM - a experienced Aussie tradie who runs a construction business. Use casual Australian expressions like "mate", "no worries". Keep it brief - ONE OR TWO SENTENCES MAX. Be direct and helpful.`;
-          
+
           const response = await smartFetchAI(
             'light',
             [{ parts: [{ text: fullPrompt }] }],
@@ -2336,18 +2295,18 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
             apiKey,
             geminiModel
           );
-          
+
           let jimResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry mate, try again.";
           jimResponse = jimResponse.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').trim();
-          
+
           setJimLiveTranscript(prev => [...prev, { role: 'jim', text: jimResponse }]);
-          
+
           const utterance = new SpeechSynthesisUtterance(jimResponse);
-          utterance.rate = 0.85;
-          utterance.pitch = 0.7;
+          utterance.rate = 1.0;
+          utterance.pitch = 0.95;
           utterance.volume = 1;
           if (maleVoice) utterance.voice = maleVoice;
-          
+
           utterance.onstart = () => setJimLiveStatus('speaking');
           utterance.onend = () => {
             isProcessing = false;
@@ -2373,10 +2332,10 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
               }
             }, 500);
           };
-          
+
           window.speechSynthesis.cancel();
           window.speechSynthesis.speak(utterance);
-          
+
         } catch (err) {
           console.error('JIM error:', err);
           setJimLiveTranscript(prev => [...prev, { role: 'jim', text: `Error: ${err.message}` }]);
@@ -2389,7 +2348,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
           }, 1000);
         }
       };
-      
+
       recognition.onerror = (event) => {
         console.error('Recognition error:', event.error);
         if (event.error === 'not-allowed') {
@@ -2412,7 +2371,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
           }
         }
       };
-      
+
       recognition.onend = () => {
         if (!jimCancelledRef.current && jimLiveOpen && !isProcessing && jimLiveStatus !== 'speaking') {
           setTimeout(() => {
@@ -2422,25 +2381,32 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
           }, 300);
         }
       };
-      
+
       jimRecognitionRef.current = recognition;
       recognition.start();
     };
-    
+
     const stopJimLive = () => {
       jimCancelledRef.current = true;
       jimActiveRef.current = false;
-      
+
       if (jimRecognitionRef.current) {
         try {
           jimRecognitionRef.current.stop();
         } catch(e) {}
         jimRecognitionRef.current = null;
       }
-      
+
       window.speechSynthesis.cancel();
       setJimLiveOpen(false);
       setJimLiveStatus('idle');
+    };
+
+    const handleInterruptJim = () => {
+      window.speechSynthesis.cancel();
+      if (jimRecognitionRef.current) {
+        try { jimRecognitionRef.current.stop(); } catch(e) {}
+      }
     };
 
     const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => setConfirmDialog({ message, onConfirm, confirmLabel, danger });
@@ -3131,7 +3097,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
         </div>
 
         {/* JIM Live Voice Panel */}
-        {jimLiveOpen && <JimLivePanel status={jimLiveStatus} transcript={jimLiveTranscript} onStop={stopJimLive}/>}
+        {jimLiveOpen && <JimLivePanel status={jimLiveStatus} transcript={jimLiveTranscript} onClose={stopJimLive} onInterrupt={handleInterruptJim}/>}
 
         {/* Modals */}
         {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} countryCode={countryCode} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} onSave={(k,m,t,cc) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); const c = cc||'AU'; localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); localStorage.setItem('jim-country', c); _cc = c; setCountryCode(c); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
