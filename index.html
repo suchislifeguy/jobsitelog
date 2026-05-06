@@ -87,7 +87,7 @@
       .jim-dot-3     { transform-origin: center; animation: jimDotPulse 1.2s ease-in-out infinite; animation-delay: 0.4s; }
       .jim-sway      { transform-origin: center bottom; animation: jimSway 2.2s ease-in-out infinite; }
       .jim-shake     { animation: jimShake 0.7s ease-in-out infinite; }
-      
+
       .custom-scrollbar::-webkit-scrollbar { width: 6px; }
       .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 6px; }
@@ -109,10 +109,10 @@
         #print-container { position: static !important; display: block !important; padding: 0 !important; margin: 0 !important; background: white !important; overflow: visible !important; }
         .no-print { display: none !important; }
         .no-print-border { border: none !important; background: transparent !important; }
-        
+
         .print-card { border: 2px solid #cbd5e1 !important; margin-bottom: 12px; border-radius: 8px; overflow: visible !important; background: white !important; display: block; }
         .print-card-header { break-after: avoid; page-break-after: avoid; }
-        
+
         .print-img-container { break-inside: avoid; page-break-inside: avoid; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
         .print-img-container img { width: 100%; height: auto; max-height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; page-break-inside: avoid; }
         .print-header { break-after: avoid; page-break-after: avoid; }
@@ -122,7 +122,7 @@
         input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="date"]::-webkit-inner-spin-button,
         input[type="datetime-local"]::-webkit-calendar-picker-indicator { display: none !important; opacity: 0 !important; }
-        
+
         ::-webkit-input-placeholder { color: transparent !important; }
         :-moz-placeholder { color: transparent !important; }
         ::-moz-placeholder { color: transparent !important; }
@@ -191,59 +191,163 @@
     const h = Math.round(size * 1.1);
     return (
       <div className={wrapCls} style={{ width: size, height: h, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg viewBox="0 0 40 44" width={size} height={h} fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* Hard hat */}
-          <path d="M6 18 Q6 8 20 7 Q34 8 34 18Z" fill="#f97316"/>
-          <rect x="3" y="17" width="34" height="3.5" rx="1.5" fill="#c2410c"/>
-          <circle cx="20" cy="13" r="1.5" fill="#fed7aa" opacity="0.85"/>
-          {/* Head body */}
-          <rect x="9" y="20" width="22" height="16" rx="3" fill="#1e293b"/>
-          <rect x="9" y="20" width="22" height="2.5" rx="3" fill="#334155"/>
-          {/* Flat neutral eyebrows */}
-          <rect x="12" y="23.5" width="6" height="1" rx="0.5" fill="#475569"/>
-          <rect x="22" y="23.5" width="6" height="1" rx="0.5" fill="#475569"/>
-          {/* Eyes */}
-          {s==='error' ? (
-            <>
-              <line x1="12.5" y1="26" x2="17.5" y2="29.5" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="17.5" y1="26" x2="12.5" y2="29.5" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="22.5" y1="26" x2="27.5" y2="29.5" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="27.5" y1="26" x2="22.5" y2="29.5" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/>
-            </>
-          ) : (
-            <>
-              <rect x="12" y="25.5" width="6" height="3" rx="1.5" fill={eyeColor} className={eyeCls}/>
-              <rect x="22" y="25.5" width="6" height="3" rx="1.5" fill={eyeColor} className={eyeCls}/>
-            </>
-          )}
-          {/* Neutral upward mouth curve */}
-          {s!=='thinking' && (
-            <path d="M15 32 Q20 34 25 32" stroke="#475569" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
-          )}
-          {/* Thinking dots */}
-          {s==='thinking' && <>
-            <circle cx="16" cy="32" r="1.1" fill="#a78bfa" className="jim-dot-1"/>
-            <circle cx="20" cy="32" r="1.1" fill="#a78bfa" className="jim-dot-2"/>
-            <circle cx="24" cy="32" r="1.1" fill="#a78bfa" className="jim-dot-3"/>
-          </>}
-          {/* Wave arm — right side */}
-          {s==='wave' && (
-            <g className="jim-wave-arm">
-              <path d="M31 27 L37 20" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round"/>
-              <circle cx="37" cy="20" r="2.2" fill="#f97316"/>
-            </g>
-          )}
-          {/* Empty state — shrug arms from collar/shoulder up and out */}
-          {s==='empty' && <>
-            <path d="M15 38.5 Q7 34 3 31" stroke="#334155" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="3" cy="31" r="2" fill="#334155"/>
-            <path d="M25 38.5 Q33 34 37 31" stroke="#334155" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="37" cy="31" r="2" fill="#334155"/>
-          </>}
-          {/* Collar */}
-          <rect x="14" y="37" width="12" height="5.5" rx="2" fill="#0f172a"/>
-          <path d="M18.5 37 L20 39.5 L21.5 37" fill="#f97316" opacity="0.85"/>
-        </svg>
+          <svg viewBox="0 0 40 44" width={size} height={h} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      {/* Hard Hat Plastic Gradient */}
+      <linearGradient id="jim-hat-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#fb923c" />
+        <stop offset="60%" stopColor="#ea580c" />
+        <stop offset="100%" stopColor="#9a3412" />
+      </linearGradient>
+
+      {/* Hard Hat Brim Gradient */}
+      <linearGradient id="jim-brim-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#f97316" />
+        <stop offset="100%" stopColor="#c2410c" />
+      </linearGradient>
+
+      {/* Titanium/Metal Body Gradient */}
+      <linearGradient id="jim-metal-grad" x1="10%" y1="0%" x2="90%" y2="100%">
+        <stop offset="0%" stopColor="#94a3b8" />
+        <stop offset="50%" stopColor="#64748b" />
+        <stop offset="100%" stopColor="#334155" />
+      </linearGradient>
+
+      {/* Glossy Glass Screen Gradient */}
+      <linearGradient id="jim-screen-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#0f172a" />
+        <stop offset="100%" stopColor="#020617" />
+      </linearGradient>
+
+      {/* Mechanical Neck Gradient */}
+      <linearGradient id="jim-neck-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#1e293b" />
+        <stop offset="50%" stopColor="#475569" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
+
+      {/* 3D Drop Shadow */}
+      <filter id="jim-shadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.4" />
+      </filter>
+
+      {/* LED Glow Effect for Screen Elements */}
+      <filter id="jim-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="1.2" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+
+    {/* ==========================================
+        BACKGROUND LAYER: ARMS & NECK
+    ========================================== */}
+
+    {/* Empty state — Shrug Arms */}
+    {s === 'empty' && (
+      <g filter="url(#jim-shadow)">
+        {/* Left Arm Layered for 3D Pipe Effect */}
+        <path d="M14 36 Q7 33 3 30" stroke="#1e293b" strokeWidth="4.5" fill="none" strokeLinecap="round" />
+        <path d="M14 36 Q7 33 3 30" stroke="#64748b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        <circle cx="3" cy="30" r="2.5" fill="#1e293b" />
+        <circle cx="3" cy="30" r="1.2" fill="#94a3b8" />
+        {/* Right Arm Layered */}
+        <path d="M26 36 Q33 33 37 30" stroke="#1e293b" strokeWidth="4.5" fill="none" strokeLinecap="round" />
+        <path d="M26 36 Q33 33 37 30" stroke="#64748b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+        <circle cx="37" cy="30" r="2.5" fill="#1e293b" />
+        <circle cx="37" cy="30" r="1.2" fill="#94a3b8" />
+      </g>
+    )}
+
+    {/* Wave Arm */}
+    {s === 'wave' && (
+      <g className="jim-wave-arm" filter="url(#jim-shadow)">
+        <path d="M28 27 L36 20" stroke="#9a3412" strokeWidth="4.5" strokeLinecap="round" />
+        <path d="M28 27 L36 20" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="36" cy="20" r="3" fill="#1e293b" />
+        <circle cx="36" cy="20" r="1.5" fill="#cbd5e1" />
+      </g>
+    )}
+
+    {/* Mechanical Neck Base */}
+    <g filter="url(#jim-shadow)">
+      <rect x="13" y="34" width="14" height="8" rx="2" fill="url(#jim-neck-grad)" />
+      {/* Ribbed details */}
+      <line x1="13.5" y1="36" x2="26.5" y2="36" stroke="#020617" strokeWidth="0.75" />
+      <line x1="13.5" y1="38" x2="26.5" y2="38" stroke="#020617" strokeWidth="0.75" />
+      <line x1="13.5" y1="40" x2="26.5" y2="40" stroke="#020617" strokeWidth="0.75" />
+      {/* 3D Orange Collar/Emblem */}
+      <path d="M18 36 L20 39.5 L22 36 Z" fill="#ea580c" />
+      <path d="M18.5 36 L20 38.5 L21.5 36 Z" fill="#fb923c" />
+    </g>
+
+    {/* ==========================================
+        MIDDLE LAYER: HEAD & FACE
+    ========================================== */}
+
+    {/* Metal Head Casing */}
+    <rect x="6.5" y="17" width="27" height="20" rx="4.5" fill="url(#jim-metal-grad)" filter="url(#jim-shadow)" stroke="#cbd5e1" strokeWidth="0.5" />
+
+    {/* Glossy Black Display Screen */}
+    <rect x="9.5" y="20.5" width="21" height="14.5" rx="2.5" fill="url(#jim-screen-grad)" stroke="#020617" strokeWidth="1" />
+    {/* Curved Screen Glare */}
+    <path d="M9.5 24 Q15 22 30.5 22.5 L30.5 20.5 C30.5 19.1 29.4 18 28 18 L12 18 C10.6 18 9.5 19.1 9.5 20.5 Z" fill="#ffffff" opacity="0.06" />
+
+    {/* Screen Interface (Digital Features) */}
+    <g>
+      {/* Dimmed Eyebrows */}
+      <rect x="12" y="22.5" width="5.5" height="1.2" rx="0.6" fill="#475569" />
+      <rect x="22.5" y="22.5" width="5.5" height="1.2" rx="0.6" fill="#475569" />
+
+      {/* Eyes */}
+      {s === 'error' ? (
+        <g filter="url(#jim-glow)">
+          <line x1="12.5" y1="25.5" x2="16.5" y2="29.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="16.5" y1="25.5" x2="12.5" y2="29.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="23.5" y1="25.5" x2="27.5" y2="29.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" />
+          <line x1="27.5" y1="25.5" x2="23.5" y2="29.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" />
+        </g>
+      ) : (
+        <g filter="url(#jim-glow)">
+          <rect x="12" y="25" width="6" height="3.5" rx="1.75" fill={eyeColor} className={eyeCls} opacity="0.85" />
+          {/* Bright LED Core Highlight */}
+          <rect x="12.75" y="25.5" width="4.5" height="1.5" rx="0.75" fill="#ffffff" opacity="0.6" />
+
+          <rect x="22" y="25" width="6" height="3.5" rx="1.75" fill={eyeColor} className={eyeCls} opacity="0.85" />
+          <rect x="22.75" y="25.5" width="4.5" height="1.5" rx="0.75" fill="#ffffff" opacity="0.6" />
+        </g>
+      )}
+
+      {/* Mouth / Thinking State */}
+      {s === 'thinking' ? (
+        <g filter="url(#jim-glow)">
+          <circle cx="16" cy="32" r="1.2" fill="#a855f7" className="jim-dot-1" />
+          <circle cx="20" cy="32" r="1.2" fill="#a855f7" className="jim-dot-2" />
+          <circle cx="24" cy="32" r="1.2" fill="#a855f7" className="jim-dot-3" />
+        </g>
+      ) : (
+        <path d="M15 32 Q20 34 25 32" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" fill="none" filter="url(#jim-glow)" opacity="0.8" />
+      )}
+    </g>
+
+    {/* ==========================================
+        FOREGROUND LAYER: HARD HAT
+    ========================================== */}
+
+    <g filter="url(#jim-shadow)">
+      {/* Main Dome */}
+      <path d="M7 16 C7 4, 33 4, 33 16 Z" fill="url(#jim-hat-grad)" />
+      {/* Top Structural Ridge */}
+      <path d="M17 16 L18.5 5 C19.5 4.8 20.5 4.8 21.5 5 L23 16 Z" fill="#ea580c" />
+      <path d="M18.5 16 L19.2 5.2 C19.7 5.1 20.3 5.1 20.8 5.2 L21.5 16 Z" fill="#fb923c" />
+      {/* Plastic Shine / Reflection */}
+      <path d="M9 15 C9 8, 14 6, 18 5.5 C14 6.5, 11 9, 10 15 Z" fill="#ffffff" opacity="0.25" />
+
+      {/* Hat Brim */}
+      <rect x="3" y="15" width="34" height="4.5" rx="2.25" fill="url(#jim-brim-grad)" />
+      {/* Brim Edge Highlight */}
+      <rect x="3.5" y="15.5" width="33" height="1.5" rx="0.75" fill="#ffffff" opacity="0.3" />
+    </g>
+  </svg>
       </div>
     );
   };
@@ -304,7 +408,7 @@
     if (!hM && !mM) { const n = parseFloat(s); return isNaN(n) ? 0 : n * 60; }
     return (hM ? parseFloat(hM[1]) * 60 : 0) + (mM ? parseFloat(mM[1]) : 0);
   };
-  
+
   const fmtMins = (m) => { const h = Math.floor(m/60), r = Math.round(m%60); if (!h && !r) return `0m`; if (!h) return `${r}m`; if (!r) return `${h}h`; return `${h}h ${r}m`; };
   const fmtAUD  = (n) => Number(n||0).toLocaleString(getCC().locale, { style:'currency', currency: getCC().currency, minimumFractionDigits:2, maximumFractionDigits:2 });
   const isExpiringSoon = (expiryStr) => { if (!expiryStr) return false; const diff = new Date(expiryStr) - new Date(); return diff > 0 && diff < 60 * 24 * 60 * 60 * 1000; };
@@ -314,7 +418,7 @@
   const smartFetchAI = async (taskType, contents, generationConfig, apiKey, userModel) => {
     const heavyModels = [userModel, 'gemini-3.0-pro', 'gemini-3.0-flash', 'gemini-2.5-pro', 'gemini-2.5-flash'];
     const lightModels = [userModel, 'gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
-    
+
     const models = taskType === 'heavy' ? heavyModels : lightModels;
     const uniqueModels = [...new Set(models)].filter(Boolean);
 
@@ -326,7 +430,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents, generationConfig })
         });
-        
+
         if (!res.ok) {
           let errText = await res.text();
           try {
@@ -337,7 +441,7 @@
           } catch(e) {}
           throw new Error(`[${model}] ${errText}`);
         }
-        
+
         return await res.json();
       } catch (err) {
         if (err.message.includes('429') || err.message.includes('404') || err.message.includes('50') || err.message.includes('fetch')) {
@@ -400,7 +504,7 @@
           if (h > MAX) { w *= MAX/h; h = MAX; }
           c.width = w; c.height = h;
           c.getContext('2d').drawImage(img, 0, 0, w, h);
-          res(c.toDataURL('image/webp', 0.7)); 
+          res(c.toDataURL('image/webp', 0.7));
         } catch(e) { rej(e); }
       };
     };
@@ -543,7 +647,7 @@
           ) : (
             <>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 font-medium leading-relaxed">Provide optional instructions to guide the AI when generating this {docType}.</p>
-              
+
               <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-purple-500 bg-slate-50 dark:bg-slate-800 mb-4 transition-shadow">
                 <textarea
                   className="w-full p-4 bg-transparent outline-none text-sm font-medium h-32 resize-none dark:text-white dark:placeholder-slate-500"
@@ -557,7 +661,7 @@
                   </button>
                 </div>
               </div>
-              
+
               {isGenerating && (
                 <div className="flex flex-col items-center gap-2 py-2 mb-2">
                   <JimMascot size={52} state="thinking"/>
@@ -649,7 +753,7 @@
                 {form.logo && <button onClick={() => setForm(f=>({...f,logo:''}))} className="text-[10px] text-red-400 font-bold mt-1 ml-2 hover:text-red-600">Remove</button>}
               </div>
             </div>
-            
+
             <div className="space-y-3">
               <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div>
               <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/></div>
@@ -941,7 +1045,7 @@
                 Advanced Integrations
                 <ChevronDown size={16} className={`text-slate-400 transition-transform ${showAdvanced ? 'rotate-180' : ''}`}/>
               </button>
-              
+
               {showAdvanced && (
                 <div className="p-4 bg-white dark:bg-slate-900 space-y-4 border-t border-slate-200 dark:border-slate-700">
                   <div>
@@ -1009,7 +1113,7 @@
     };
     const start = (e) => { e.preventDefault(); isDrawing.current = true; const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#0f172a'; ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
     const draw = (e) => { if (!isDrawing.current) return; e.preventDefault(); const pos = getPos(e); const ctx = canvasRef.current.getContext('2d'); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
-    const end = () => { if (!isDrawing.current) return; isDrawing.current = false; onSave(canvasRef.current.toDataURL('image/webp', 0.5)); }; 
+    const end = () => { if (!isDrawing.current) return; isDrawing.current = false; onSave(canvasRef.current.toDataURL('image/webp', 0.5)); };
     const clear = () => { if(!canvasRef.current) return; const cvs = canvasRef.current; cvs.getContext('2d').clearRect(0, 0, cvs.width, cvs.height); onSave(null); };
     return (
       <div className="relative border-2 border-slate-300 border-dashed rounded-xl overflow-hidden bg-slate-50 no-print-border inline-block max-w-full touch-none">
@@ -1044,11 +1148,11 @@
             try {
               const uploadRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                   'X-Goog-Upload-Protocol': 'raw',
                   'X-Goog-Upload-Header-Content-Length': file.size.toString(),
                   'X-Goog-Upload-Header-Content-Type': file.type,
-                  'Content-Type': file.type 
+                  'Content-Type': file.type
                 },
                 body: file
               });
@@ -1070,11 +1174,11 @@
 
             if (useFallback) {
               console.log("Using inline base64 fallback for PDF...");
-              const base64Data = await new Promise((resolve, reject) => { 
-                const reader = new FileReader(); 
-                reader.onload = () => resolve(reader.result.split(',')[1]); 
-                reader.onerror = reject; 
-                reader.readAsDataURL(file); 
+              const base64Data = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
               });
               fileParts.push({ inlineData: { mimeType: file.type, data: base64Data } });
             }
@@ -1083,9 +1187,9 @@
             fileParts.push({ inlineData: { mimeType: file.type || 'image/jpeg', data: base64Data } });
           }
         }
-        
+
         const textPrompt = `You are a data extraction AI. Extract job details from the attached files (if any) AND the following source text.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "clientPhone", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
-        
+
         const resData = await smartFetchAI(
           'heavy',
           [{ parts: [{ text: textPrompt }, ...fileParts] }],
@@ -1093,7 +1197,7 @@
           apiKey,
           geminiModel
         );
-        
+
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
         const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
@@ -1165,7 +1269,7 @@
               {files.length > 0 && (
                 <div className="mb-3 space-y-1">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 px-3 py-2 rounded-lg shadow-sm"><span className="text-[11px] font-medium truncate flex-1 dark:text-white">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400 flex-shrink-0"><X size={13}/></button></div>))}</div>
               )}
-              
+
               <div className="border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-orange-400 transition-shadow">
                 <textarea
                   className="w-full px-4 py-3 bg-transparent outline-none text-xs font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400"
@@ -1219,13 +1323,13 @@
       const element = document.getElementById('pdf-content');
       setIsGeneratingPDF(true);
       try {
-        const opt = { 
-          margin: 10, 
-          filename: `${job.clientName || 'Job'}-${formatLocal(header.date, 'short')}.pdf`, 
+        const opt = {
+          margin: 10,
+          filename: `${job.clientName || 'Job'}-${formatLocal(header.date, 'short')}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
           pagebreak: { mode: ['css', 'legacy'] },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         const pdfBlob = await window.html2pdf().set(opt).from(element).output('blob');
         const file = new File([pdfBlob], `${job.clientName || 'Job_Report'}.pdf`, { type: 'application/pdf' });
@@ -1293,12 +1397,12 @@
               <input className={`w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none ${!header.clientName ? 'print:hidden' : ''}`} value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
               <input className={`w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1 outline-none ${!header.clientRef ? 'print:hidden' : ''}`} value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>
               <input className={`w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none ${!header.address ? 'print:hidden' : ''}`} value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
-              
+
               <div className={`flex items-center gap-2 mb-2 ${!header.dueDate ? 'print:hidden' : ''}`}>
                 <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Due Date:</span>
                 <input type="date" className="bg-transparent border-b border-dashed border-amber-400 outline-none text-amber-600 font-bold text-sm cursor-pointer focus:border-orange-500" value={header.dueDate} onChange={e => setHeader({...header, dueDate: e.target.value})}/>
               </div>
-              
+
               <PrintEditableDiv value={header.projectNotes} onChange={v => setHeader({...header, projectNotes: v})} placeholder="Project notes / Document Summary" className={`w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 ${!header.projectNotes ? 'print:hidden' : ''}`}/>
               {header.projectPhotos?.length > 0 && <div className="flex gap-2 mt-2 overflow-x-auto">{header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
               <div className="flex gap-4 mt-2 text-sm font-medium text-slate-600">
@@ -1320,7 +1424,7 @@
                   </div>
                   <div className="p-6">
                     <PrintEditableDiv value={t.desc} onChange={v => updateTask(idx, 'desc', v)} placeholder="Task description" className={`w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent outline-none ${!t.desc ? 'print:hidden' : ''}`}/>
-                    
+
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className={`p-4 bg-slate-50 rounded-xl border ${!t.materials ? 'print:hidden' : ''}`}>
                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
@@ -1330,7 +1434,7 @@
                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}</label>
                         <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)} placeholder={job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}/>
                       </div>
-                      
+
                       {showCosts && labour > 0 && (
                         <div className="p-4 bg-slate-50 rounded-xl border">
                           <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
@@ -1439,7 +1543,7 @@
       const sm = parseInt(form.startTime.split(':')[0])*60 + parseInt(form.startTime.split(':')[1]);
       const em = parseInt(form.endTime.split(':')[0])*60 + parseInt(form.endTime.split(':')[1]);
       if (em <= sm) return showToast('End time must be after start time.', 'error');
-      
+
       onSave({ id: entry.id || (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()), ...form });
     };
 
@@ -1450,13 +1554,13 @@
             <h3 className="font-black text-lg text-slate-900 dark:text-white">{editing ? 'Edit Time Entry' : 'Log Time'}</h3>
             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          
+
           <div className="overflow-y-auto flex-1 custom-scrollbar space-y-4 pb-2">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Date</label>
               <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.date} onChange={e => setForm({...form, date: e.target.value})}/>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start Time</label><input type="time" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.startTime} onChange={e => setForm({...form, startTime: e.target.value})}/></div>
               <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End Time</label><input type="time" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.endTime} onChange={e => setForm({...form, endTime: e.target.value})}/></div>
@@ -1479,7 +1583,7 @@
 
             <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label><textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm font-medium h-20 resize-none dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="e.g. Rough in bathroom..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/></div>
           </div>
-          
+
           <div className="flex gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             {editing && (<button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-3.5 rounded-xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={18}/></button>)}
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-3.5 rounded-xl font-black text-sm text-slate-600 dark:text-slate-300">Cancel</button>
@@ -1616,12 +1720,12 @@
     const [apptModal, setApptModal] = useState(null);
     const [googleEvents, setGoogleEvents] = useState([]);
     const [showTimesheetPrint, setShowTimesheetPrint] = useState(false);
-    
+
     const today = new Date();
     const startOfWeek = getStartOfWeek(today, 1);
     startOfWeek.setDate(startOfWeek.getDate() + (weekOffset * 7));
     startOfWeek.setHours(0,0,0,0);
-    
+
     const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const days = Array.from({length:7}, (_,i) => { const d = new Date(startOfWeek); d.setDate(d.getDate()+i); return d; });
     const hours = Array.from({length:15}, (_,i) => i+6);
@@ -1646,7 +1750,7 @@
     const externalGoogleEvents = googleEvents.filter(ev => !localGoogleIds.has(ev.id)).map(ev => ({ id: ev.id, title: ev.summary || '(No title)', start: new Date(ev.start.dateTime || ev.start.date), end: new Date(ev.end.dateTime || ev.end.date), isGoogle: true, notes: ev.description || '' }));
     const allEvents = [...localEvents, ...externalGoogleEvents];
     const getEventsForSlot = (day, hour) => { const slotStart = new Date(day); slotStart.setHours(hour,0,0,0); const slotEnd = new Date(slotStart); slotEnd.setHours(hour+1,0,0,0); return allEvents.filter(ev => ev.start < slotEnd && ev.end > slotStart); };
-    
+
     const handleSave = async (data) => {
       if (googleToken && isGoogleConnected && !data.googleEventId) {
         try {
@@ -1669,32 +1773,32 @@
     // Setup Timesheet Calcs
     const endOfWeek = new Date(startOfWeek); endOfWeek.setDate(endOfWeek.getDate()+7);
     const fullDayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-    
-    let weeklyTotalMins = 0; 
-    const dailyMins = [0,0,0,0,0,0,0]; 
+
+    let weeklyTotalMins = 0;
+    const dailyMins = [0,0,0,0,0,0,0];
     const weeklyLogs = [];
 
     timesheets.forEach(entry => {
       const [y,m,d] = entry.date.split('-');
       const tDate = new Date(y, m-1, d);
       tDate.setHours(0,0,0,0);
-      
+
       if (tDate >= startOfWeek && tDate < endOfWeek) {
         const sm = parseInt(entry.startTime.split(':')[0])*60 + parseInt(entry.startTime.split(':')[1]);
         const em = parseInt(entry.endTime.split(':')[0])*60 + parseInt(entry.endTime.split(':')[1]);
         let mins = em >= sm ? em - sm : (em + 24*60) - sm;
-        
+
         if (mins > 0) {
           weeklyTotalMins += mins;
-          const dIdx = (tDate.getDay() + 6) % 7; 
+          const dIdx = (tDate.getDay() + 6) % 7;
           dailyMins[dIdx] += mins;
-          weeklyLogs.push({ 
+          weeklyLogs.push({
             id: entry.id,
-            day: fullDayNames[dIdx], 
+            day: fullDayNames[dIdx],
             date: entry.date,
             jobId: entry.jobId,
             category: entry.category,
-            notes: entry.notes, 
+            notes: entry.notes,
             timeStr: `${entry.startTime} - ${entry.endTime}`,
             hours: fmtMins(mins),
             rawMins: mins,
@@ -1707,10 +1811,10 @@
     const exportCSV = () => {
       if (weeklyLogs.length===0) return showToast('No entries to export', 'error');
       let csv = "Day,Date,Category,Job,Notes,Hours\n";
-      weeklyLogs.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(l => { 
+      weeklyLogs.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(l => {
         const jobInfo = jobs.find(j => j.id === l.jobId);
         const jobName = jobInfo ? `${jobInfo.address}` : '';
-        csv += `"${l.day}","${l.date}","${l.category}","${jobName}","${l.notes.replace(/"/g, '""')}","${l.hours}"\n`; 
+        csv += `"${l.day}","${l.date}","${l.category}","${jobName}","${l.notes.replace(/"/g, '""')}","${l.hours}"\n`;
       });
       csv += `\nTotal,,,,, "${fmtMins(weeklyTotalMins)}"\n`;
       const blob = new Blob([csv], { type: 'text/csv' });
@@ -1725,7 +1829,7 @@
 
     return (
       <div className="max-w-6xl mx-auto p-4 animate-slide-up pb-24">
-        
+
         {/* Toggle Bar */}
         <div className="flex bg-slate-200 dark:bg-slate-800 rounded-xl p-1 mb-6 max-w-sm mx-auto shadow-inner">
           <button onClick={() => setViewTab('upcoming')} className={`flex-1 py-2 font-black text-sm rounded-lg transition-all ${viewTab==='upcoming'?'bg-white dark:bg-slate-700 shadow text-purple-600 dark:text-purple-400':'text-slate-500'}`}>Appointments</button>
@@ -1922,7 +2026,7 @@
     const loadAppointments = async () => setAppointments(await get(DB_KEY_APPOINTMENTS) || []);
     const loadTimesheets = async () => setTimesheets(await get(DB_KEY_TIMESHEETS) || []);
     useEffect(() => { loadJobs(); loadTemplates(); loadMaterials(); loadAppointments(); loadTimesheets(); }, []);
-    
+
     const updMetric = (d) => setDbSize(`${(new TextEncoder().encode(JSON.stringify(d)).length/1024/1024).toFixed(2)} MB`);
     const saveToDB = async (nj) => { setJobs(nj); try { await set(DB_KEY_JOBS, nj); } catch(e) { showToast('Warning: Data could not be saved (Storage limit).', 'error'); } updMetric(nj); };
     const saveUserTemplates = async (arr) => { setUserTemplates(arr); await set(DB_KEY_TEMPL, arr); };
@@ -1945,7 +2049,7 @@
 
     const handleSaveAppointment = (appt) => { let updated = appointments.find(a => a.id === appt.id) ? appointments.map(a => a.id === appt.id ? appt : a) : [...appointments, appt]; saveAppointments(updated); setAppointmentFromJob(null); };
     const handleDeleteAppointment = (id) => saveAppointments(appointments.filter(a => a.id !== id));
-    
+
     const handleSaveTimeEntry = async (entry) => {
       const updated = timeEntryModal.id ? timesheets.map(t => t.id === entry.id ? entry : t) : [...timesheets, entry];
       await saveTimesheets(updated);
@@ -1984,7 +2088,7 @@
         const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
         const docType = job.type === 'handover' ? 'Completion Invoice' : 'Quotation';
         const prompt = `You are a professional Australian trade document writer. Generate a formal ${docType}. Return ONLY a valid JSON object with: "summary" (opening paragraphs, use \\n\\n for breaks), "tasks" (array of {title, desc}), "footer" (closing paragraph). Job: Address: ${job.address}, Client: ${job.clientName || 'the client'}, Tasks: ${JSON.stringify(job.tasks.map((t,i)=>({index:i+1,title:t.title,time:t.time,rate:t.rate,materialsCost:t.materialsCost,materials:t.materials,desc:t.desc})))}, Total: $${qt.total.toFixed(2)}. Extra instructions: ${customPrompt || 'None'}`;
-        
+
         const resData = await smartFetchAI(
           'heavy',
           [{ parts: [{ text: prompt }] }],
@@ -1994,7 +2098,7 @@
         );
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const result = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-        
+
         const updatedTasks = job.tasks.map((t, idx) => ({ ...t, desc: result.tasks?.[idx]?.desc || t.desc, title: result.tasks?.[idx]?.title || t.title }));
         setPrintPreviewJob({ ...job, projectNotes: result.summary + (result.footer ? '\n\n' + result.footer : ''), tasks: updatedTasks });
         setShowAIAssistModal(false);
@@ -2067,7 +2171,7 @@
       try {
         const base64Data = await compressImage(file);
         const textPrompt = `You are an OCR JSON extraction tool. Read this receipt. Return ONLY a valid JSON object. Format: {"cost": 123.45, "items": "Hammer, Nails"}`;
-        
+
         const resData = await smartFetchAI(
           'light',
           [{ parts: [{ text: textPrompt }, { inlineData: { mimeType: 'image/webp', data: base64Data.split(',')[1] } }] }],
@@ -2075,7 +2179,7 @@
           apiKey,
           geminiModel
         );
-        
+
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
         setTaskData(prev => ({ ...prev, materialsCost: json.cost ? String(json.cost) : prev.materialsCost, materials: prev.materials ? prev.materials + (json.items ? ', ' + json.items : '') : (json.items || '') }));
@@ -2124,13 +2228,13 @@
     const startEditHeader = () => { setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] }); setIsEditingHeader(true); };
     const saveHeaderEdit = () => { if (!headerDraft.address.trim()) return; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, dueDate:headerDraft.dueDate, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j)); setIsEditingHeader(false); showToast('Details Updated', 'success'); };
     const handleProjectPhotoUpload = async (e) => { try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setHeaderDraft(d => ({...d,projectPhotos:[...d.projectPhotos,...c]})); } catch { showToast('One or more images could not be processed.', 'error'); } };
-    
-    const handleSaveTask = () => { 
-      if (!taskData.title) return showToast('Task title is required.', 'error'); 
-      if (!activeJob) return; 
-      const updated = editingTaskId ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t) : [...activeJob.tasks, { ...taskData, id: Date.now() }]; 
-      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j)); 
-      closeModal(); showToast('Entry Saved', 'success'); 
+
+    const handleSaveTask = () => {
+      if (!taskData.title) return showToast('Task title is required.', 'error');
+      if (!activeJob) return;
+      const updated = editingTaskId ? activeJob.tasks.map(t => t.id===editingTaskId ? { ...taskData, id:editingTaskId } : t) : [...activeJob.tasks, { ...taskData, id: Date.now() }];
+      saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, tasks:updated } : j));
+      closeModal(); showToast('Entry Saved', 'success');
     };
     const closeModal = () => { recognitionRef.current?.stop(); recognitionRef.current = null; setListeningField(null); setIsTaskFormOpen(false); setEditingTaskId(null); setTaskData(EMPTY_TASK); setRateError(false); setMatError(false); setIsNamingTemplate(false); };
     const handleImageUpload = async (e) => { try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setTaskData(p=>({...p,images:[...p.images,...c]})); } catch { showToast('One or more images could not be processed.', 'error'); } };
@@ -2139,7 +2243,7 @@
     const toggleJobSelection = (id) => setSelectedJobs(prev => prev.includes(id) ? prev.filter(x=>x!==id) : prev.length>=MAX_STOPS ? prev : [...prev,id]);
     const clearSelection = () => setSelectedJobs([]);
     const selectAllVisible = () => setSelectedJobs(prev => { const e=new Set(prev); return [...prev,...filteredJobs.map(j=>j.id).filter(id=>!e.has(id))].slice(0,MAX_STOPS); });
-    
+
     const getMyLocation = () => { if (!navigator.geolocation) { setLocStatus('denied'); return; } setLocStatus('loading'); navigator.geolocation.getCurrentPosition((pos) => { setCurrentCoords({lat:pos.coords.latitude,lng:pos.coords.longitude}); setLocStatus('ok'); }, () => { setLocStatus('denied'); setUseMyLocation(false); }); };
     const handleLocToggle = () => { const next=!useMyLocation; setUseMyLocation(next); if (next && locStatus==='idle') getMyLocation(); };
     const openGoogleMaps = () => {
@@ -2206,7 +2310,7 @@
     const getCoords = (e) => { const cvs=canvasRef.current, r=cvs.getBoundingClientRect(); let cx=e.clientX, cy=e.clientY; if (e.touches?.length>0) { cx=e.touches[0].clientX; cy=e.touches[0].clientY; } return { x:(cx-r.left)*(cvs.width/r.width), y:(cy-r.top)*(cvs.height/r.height) }; };
     const startDraw = (e) => { setIsDrawing(true); drawRef.current=true; const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.strokeStyle=penColor; ctx.lineWidth=Math.max(3,canvasRef.current.width/100); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.beginPath(); ctx.moveTo(x,y); };
     const doDraw = (e) => { if (!drawRef.current) return; e.preventDefault(); const {x,y}=getCoords(e), ctx=canvasRef.current.getContext('2d'); ctx.lineTo(x,y); ctx.stroke(); };
-    const stopDraw = () => { if (!drawRef.current) return; setIsDrawing(false); drawRef.current=false; setUndoStack(p=>[...p.slice(-4),canvasRef.current.toDataURL('image/webp',0.7)]); }; 
+    const stopDraw = () => { if (!drawRef.current) return; setIsDrawing(false); drawRef.current=false; setUndoStack(p=>[...p.slice(-4),canvasRef.current.toDataURL('image/webp',0.7)]); };
     const handleUndo = () => { if (undoStack.length<=1) return; const ns=[...undoStack]; ns.pop(); const img=new Image(); img.src=ns[ns.length-1]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack(ns); }; };
     const handleClear = () => { if (undoStack.length<=1) return; const img=new Image(); img.src=undoStack[0]; img.onload=()=>{ const ctx=canvasRef.current.getContext('2d'); ctx.clearRect(0,0,canvasRef.current.width,canvasRef.current.height); ctx.drawImage(img,0,0,canvasRef.current.width,canvasRef.current.height); setUndoStack([undoStack[0]]); }; };
     const saveAnnotated = () => { if (!canvasRef.current) return; const imgs=[...taskData.images]; imgs[editingImageIdx]=canvasRef.current.toDataURL('image/webp',0.8); setTaskData(p=>({...p,images:imgs})); setEditingImageIdx(null); };
@@ -2311,13 +2415,13 @@
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
               </div>
             </div>
-            
+
             <div className="flex gap-2 overflow-x-auto custom-scrollbar mb-4 pb-1">
               {[{key:'all',label:'All Projects'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'},{key:'unpaid',label:'Unpaid',icon:<Wallet size={12}/>}].map(f => (
-                <button key={f.key} onClick={() => setFilterType(f.key)} 
-                  className={`flex-shrink-0 min-w-[110px] px-4 py-2 flex items-center justify-center gap-1.5 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border 
-                    ${filterType===f.key 
-                      ? 'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700 shadow-md' 
+                <button key={f.key} onClick={() => setFilterType(f.key)}
+                  className={`flex-shrink-0 min-w-[110px] px-4 py-2 flex items-center justify-center gap-1.5 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border
+                    ${filterType===f.key
+                      ? 'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700 shadow-md'
                       : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
                   {f.icon}{f.label}
                 </button>
@@ -2387,7 +2491,7 @@
               <button onClick={() => { setViewMode('dashboard'); setIsEditingHeader(false); }} className="text-slate-400 dark:text-slate-500 font-bold text-xs flex items-center gap-1 uppercase tracking-widest hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 rounded-full transition-colors"><ChevronRight size={14} className="rotate-180"/> Dashboard</button>
               <button onClick={() => showConfirm('Permanently delete this project?', () => { saveToDB(jobs.filter(x=>x.id!==activeJobId)); setViewMode('dashboard'); showToast('Project Deleted','success'); }, 'Delete')} className="text-red-400 hover:text-red-600 flex items-center gap-1 text-[10px] font-black uppercase"><Trash2 size={14}/> Delete</button>
             </div>
-            
+
             <div className={`p-5 sm:p-8 rounded-[2rem] border shadow-sm mb-4 bg-white dark:bg-slate-800 ${activeJob?.type==='handover'?'border-emerald-200 dark:border-emerald-900/50':'border-slate-200 dark:border-slate-700'}`}>
               {isEditingHeader ? (
                 <div>
@@ -2418,39 +2522,39 @@
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3 whitespace-pre-wrap">{activeJob.projectNotes}</p>}
                     {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto custom-scrollbar">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
                   </div>
-                  
+
                   {getTotals(activeJob?.tasks||[]).mins > 0 && (
                     <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-sm border border-orange-200 dark:border-orange-800 w-fit">
                       <Clock size={12}/> {getTotals(activeJob?.tasks||[]).str}
                     </div>
                   )}
-                  
+
                   <div className="flex flex-wrap items-stretch gap-2">
                     <button onClick={() => cycleStatus(activeJobId)} className={`${actionBtnClass} ${getStatus(activeJob?.status || 'draft').cls}`}>
                       {getStatus(activeJob?.status || 'draft').label}
                     </button>
-                    
+
                     <button onClick={() => toggleCosts(activeJobId)} className={`${actionBtnClass} ${activeJob.showCosts ? 'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
                       <DollarSign size={14}/> Costs {activeJob.showCosts ? 'ON' : 'OFF'}
                     </button>
-                    
+
                     {getCC().taxRate > 0 && (
                       <button onClick={() => toggleGST(activeJobId)} className={`${actionBtnClass} ${activeJob.gstEnabled ? 'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
                         <Receipt size={14}/> {getCC().taxLabel} {activeJob.gstEnabled ? 'ON' : 'OFF'}
                       </button>
                     )}
-                    
+
                     <button onClick={() => openTimeEntryForJob(activeJobId)} className={`${actionBtnClass} bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800 hover:bg-cyan-200 dark:hover:bg-cyan-800/60`}>
                       <Timer size={14}/> Log Time
                     </button>
-                    
+
                     {activeJob.clientPhone && (
                       <a href={`sms:${activeJob.clientPhone}?body=${encodeURIComponent(`Hi ${activeJob.clientName||''}, this is ${businessProfile?.name || 'your tradie'}. I'm on my way to ${activeJob.address} now. ETA is about __ mins.`)}`} className={`${actionBtnClass} bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-800/60`}>
                         <Phone size={14}/> SMS Transit
                       </a>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-3 gap-2 mt-2">
                     <button onClick={startEditHeader} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><Pencil size={16}/> Edit</button>
                     <button onClick={() => openAppointmentForJob(activeJobId)} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><CalendarPlus size={16}/> Schedule</button>
@@ -2459,7 +2563,7 @@
                 </div>
               )}
             </div>
-        
+
             {activeJob?.showCosts && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total > 0 && (
               <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-5 mb-5 border border-slate-800 shadow-lg">
                 <div className="flex items-center justify-between mb-4">
@@ -2481,7 +2585,7 @@
                 })()}
               </div>
             )}
-        
+
             <div className="space-y-4 mb-6">
               {activeJob?.tasks.map((t, i) => {
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
@@ -2519,7 +2623,7 @@
                 </div>
               )}
             </div>
-            
+
             <div className="flex justify-center mt-6 mb-24">
               <button
                 onClick={() => setIsTaskFormOpen(true)}
@@ -2567,7 +2671,7 @@
                 <h2 className="text-xl font-black text-slate-900 dark:text-white">{editingTaskId ? 'Edit Entry' : 'New Entry'}</h2>
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
-              
+
               <div className="overflow-y-auto flex-1 custom-scrollbar pb-4 pr-1">
                 {/* Template Selection Accordion */}
                 <div className="mb-4">
@@ -2597,7 +2701,7 @@
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <div className="flex-1 relative">
                       <input placeholder="Time (e.g. 2h 30m)" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm border border-transparent dark:border-slate-700" value={taskData.time} onChange={e=>setTaskData(p=>({...p,time:e.target.value}))}/>
@@ -2605,7 +2709,7 @@
                     </div>
                     <label className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 px-4 rounded-xl cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 gap-2 border border-transparent dark:border-slate-700"><ImageIcon className="text-slate-600 dark:text-slate-400" size={16}/><span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase">Photos</span><input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/></label>
                   </div>
-                  
+
                   {activeJob?.showCosts && (
                     <div className="flex flex-col gap-2 mt-3">
                       <div className="flex gap-2">
@@ -2642,20 +2746,20 @@
                   )}
 
                   {activeJob?.showCosts && (() => { const hrs=parseTimeToMinutes(taskData.time)/60; const labour=hrs*(parseFloat(taskData.rate)||0); const mats=parseFloat(taskData.materialsCost)||0; const total=labour+mats; return total>0 ? (<div className="bg-slate-900 dark:bg-slate-800 rounded-xl px-4 py-2 flex justify-between items-center"><div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{labour>0&&<span className="mr-3">Labour {fmtAUD(labour)}</span>}{mats>0&&<span>Mats {fmtAUD(mats)}</span>}</div><div className="text-white font-black text-sm">{fmtAUD(total)}</div></div>) : null; })()}
-                  
+
                   {taskData.images.length > 0 && (
                     <div className="mt-4 img-preview-grid">
                       {taskData.images.map((img,i) => (<div key={i} className="relative w-full aspect-[4/3] group cursor-pointer" onClick={() => setEditingImageIdx(i)}><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-700 shadow-sm"/><div className="absolute inset-0 bg-slate-900/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white drop-shadow-md" size={24}/></div><button onClick={e=>{e.stopPropagation();setTaskData(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}));}} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md z-10"><X size={12}/></button></div>))}
                       <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
                     </div>
                   )}
-                  
+
                   <input placeholder="Materials Used" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-transparent dark:border-slate-700 dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
                   <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-transparent dark:border-slate-700 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
-                  
+
                   <div className="border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus-within:ring-2 focus-within:ring-orange-400 overflow-hidden transition-shadow">
                     <textarea placeholder="Full details…" className="w-full p-3 bg-transparent outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-500 custom-scrollbar" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
-                    
+
                     <div className="flex justify-end gap-2 bg-slate-100 dark:bg-slate-700/50 px-2 py-1.5 border-t border-slate-200 dark:border-slate-700">
                       <button type="button" onClick={handleProfessionalize} disabled={isProfessionalizing} className="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/40 transition-colors">
                         {isProfessionalizing ? <div className="w-3 h-3 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"/> : <Wand2 size={12}/>} Polish
@@ -2665,16 +2769,16 @@
                       </button>
                     </div>
                   </div>
-                  
+
                   <button onClick={handleAiSuggest} disabled={isAiSuggesting} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-900/20 ${isAiSuggesting ? 'opacity-70 cursor-wait' : ''}`}>{isAiSuggesting ? <><JimMascot size={16} state="thinking"/> Ask JIM…</> : <><Sparkles size={14}/> Ask JIM</>}</button>
-                  
+
                   <div className="flex gap-2 pb-2">
                     <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 border border-transparent dark:border-slate-700 transition-colors uppercase"><Bookmark size={14}/> Template</button>
                     {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (<button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-600 border border-transparent dark:border-slate-700 transition-colors uppercase"><Package size={14}/> Material</button>)}
                   </div>
                 </div>
               </div>
-              
+
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
                 <button onClick={handleSaveTask} className={`w-full text-white p-4 rounded-2xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 hover:opacity-90 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`}><Save size={18}/> Save Entry</button>
               </div>
@@ -2698,13 +2802,13 @@
 
         {/* Time Entry Modal */}
         {timeEntryModal && (
-          <TimeEntryModal 
-            entry={timeEntryModal} 
-            jobs={jobs} 
-            onSave={handleSaveTimeEntry} 
-            onDelete={() => handleDeleteTimeEntry(timeEntryModal.id)} 
-            onClose={() => setTimeEntryModal(null)} 
-            showToast={showToast} 
+          <TimeEntryModal
+            entry={timeEntryModal}
+            jobs={jobs}
+            onSave={handleSaveTimeEntry}
+            onDelete={() => handleDeleteTimeEntry(timeEntryModal.id)}
+            onClose={() => setTimeEntryModal(null)}
+            showToast={showToast}
           />
         )}
 
@@ -2742,15 +2846,15 @@
           </div>
         )}
 
-        {printPreviewJob && <PrintPreview 
-            job={printPreviewJob} 
-            extraTaxRate={extraTaxRate} 
-            businessProfile={businessProfile} 
+        {printPreviewJob && <PrintPreview
+            job={printPreviewJob}
+            extraTaxRate={extraTaxRate}
+            businessProfile={businessProfile}
             onClose={() => setPrintPreviewJob(null)}
-            onUpdateJob={handleUpdateJobFromPreview} 
+            onUpdateJob={handleUpdateJobFromPreview}
             showToast={showToast}
         />}
-        
+
         {appointmentFromJob && <AppointmentFormModal appointment={appointmentFromJob} jobs={jobs} googleToken={googleToken} onSave={handleSaveAppointment} onClose={() => setAppointmentFromJob(null)} showToast={showToast}/>}
       </div>
     );
