@@ -2031,6 +2031,7 @@
     const jimAudioCtxRef = useRef(null);
     const jimMicCtxRef = useRef(null);
     const jimNextPlayTimeRef = useRef(0);
+    const jimCancelledRef = useRef(false);
     const showToast = (message, type = 'info') => setToast({ message, type });
 
     const loadJobs = async () => { const d = await get(DB_KEY_JOBS) || []; const migrated = d.map(j => { const mj = { ...j }; if (mj.type === 'handover' && mj.showCosts === undefined) mj.showCosts = false; if (mj.type === 'quote' && mj.showCosts === undefined) mj.showCosts = true; if (!mj.createdAt) mj.createdAt = mj.date ? new Date(mj.date).getTime() : Date.now(); if (mj.invoiceNumber === undefined) mj.invoiceNumber = ''; if (mj.amountPaid === undefined) mj.amountPaid = 0; return mj; }); setJobs(migrated); updMetric(migrated); setIsLoading(false); };
@@ -2153,7 +2154,8 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
     };
 
     const stopJimLive = () => {
-      jimWsRef.current?.close();
+      jimCancelledRef.current = true;
+      jimWsRef.current?.close(1000, 'user stopped');
       jimWsRef.current = null;
       jimStreamRef.current?.getTracks().forEach(t => t.stop());
       jimStreamRef.current = null;
@@ -2164,11 +2166,30 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
       setJimLiveOpen(false);
     };
 
-    const startJimLive = async () => {
+    const LIVE_MODELS = [
+      'models/gemini-2.0-flash-live-001',
+      'models/gemini-live-2.5-flash-preview',
+      'models/gemini-2.5-flash-preview-native-audio-dialog',
+      'models/gemini-2.0-flash-exp',
+    ];
+
+    const startJimLive = async (modelIdx = 0) => {
       if (!apiKey) { showToast('Add your Gemini API key in Settings first.', 'error'); return; }
-      setJimLiveOpen(true);
-      setJimLiveStatus('connecting');
-      setJimLiveTranscript([]);
+      if (modelIdx === 0) {
+        jimCancelledRef.current = false;
+        setJimLiveOpen(true);
+        setJimLiveStatus('connecting');
+        setJimLiveTranscript([]);
+      }
+      if (jimCancelledRef.current) return;
+      if (modelIdx >= LIVE_MODELS.length) {
+        setJimLiveStatus('error');
+        showToast('Gemini Live API not available — none of the live models worked. Check your region or API key.', 'error');
+        return;
+      }
+
+      const model = LIVE_MODELS[modelIdx];
+      let setupReceived = false;
 
       const ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`);
       jimWsRef.current = ws;
@@ -2176,7 +2197,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
       ws.onopen = () => {
         ws.send(JSON.stringify({
           setup: {
-            model: 'models/gemini-3.0-flash-live',
+            model,
             generation_config: {
               response_modalities: ['AUDIO', 'TEXT'],
               speech_config: { voice_config: { prebuilt_voice_config: { voice_name: 'Kore' } } }
@@ -2190,7 +2211,14 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
         let data;
         try { data = JSON.parse(event.data instanceof Blob ? await event.data.text() : event.data); } catch { return; }
 
+        if (data.error) {
+          ws.close();
+          startJimLive(modelIdx + 1);
+          return;
+        }
+
         if (data.setupComplete) {
+          setupReceived = true;
           setJimLiveStatus('listening');
           try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: { ideal: 16000 }, channelCount: 1, echoCancellation: true } });
@@ -2226,8 +2254,14 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
         if (data.serverContent?.turnComplete) setJimLiveStatus('listening');
       };
 
-      ws.onerror = () => setJimLiveStatus('error');
-      ws.onclose = (e) => { if (e.code !== 1000) setJimLiveStatus('error'); };
+      ws.onerror = () => {
+        if (!setupReceived && !jimCancelledRef.current) { startJimLive(modelIdx + 1); }
+        else if (setupReceived) { setJimLiveStatus('error'); }
+      };
+      ws.onclose = (e) => {
+        if (!setupReceived && e.code !== 1000 && !jimCancelledRef.current) { startJimLive(modelIdx + 1); }
+        else if (e.code !== 1000 && setupReceived) { setJimLiveStatus('error'); }
+      };
     };
 
     const openTimeEntryForJob = (jobId) => {
