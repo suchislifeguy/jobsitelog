@@ -926,18 +926,6 @@
     const [showMaterials, setShowMaterials] = useState(false);
     const [showBusiness, setShowBusiness] = useState(false);
     const [licenceInput, setLicenceInput] = useState('');
-    const [availableVoices, setAvailableVoices] = useState([]);
-    const [selectedVoiceName, setSelectedVoiceName] = useState(() => localStorage.getItem('jimVoiceName') || '');
-
-    React.useEffect(() => {
-      const load = () => {
-        const v = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-        if (v.length) setAvailableVoices(v);
-      };
-      load();
-      window.speechSynthesis.onvoiceschanged = load;
-    }, []);
-
     const save = () => { onSave(draftKey, draftModel, draftExtraTax, draftCountry); onClose(); showToast('Settings Saved', 'success'); };
     const hasBiz = !!businessProfile?.name;
 
@@ -1081,29 +1069,6 @@
                 )}
               </div>
             </div>
-
-            {/* JIM Voice */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">JIM Voice</label>
-              {availableVoices.length === 0 ? (
-                <p className="text-[11px] text-slate-400 italic">No voices loaded yet — open Call JIM first, then reopen Settings.</p>
-              ) : (
-                <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-2">
-                  <select
-                    value={selectedVoiceName}
-                    onChange={e => { setSelectedVoiceName(e.target.value); localStorage.setItem('jimVoiceName', e.target.value); }}
-                    className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-orange-400"
-                  >
-                    <option value="">Auto-detect (male preferred)</option>
-                    {availableVoices.map(v => (
-                      <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
-                    ))}
-                  </select>
-                  <p className="text-[10px] text-slate-400">Pick any voice from your system. Look for "Male" in the name for a male voice.</p>
-                </div>
-              )}
-            </div>
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
 
             <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"><Check size={16}/> Save Settings</button>
           </div>
@@ -2286,25 +2251,14 @@ ${weekSheets || '  No time entries this week.'}`;
       // Log available voices so user can see what's on their system
       console.log('[JIM voices]', voices.map(v => `${v.name} (${v.lang})`));
 
-      // Check if user has manually picked a voice in Settings
-      const savedVoiceName = localStorage.getItem('jimVoiceName');
-      let maleVoice;
-      if (savedVoiceName) {
-        maleVoice = voices.find(v => v.name === savedVoiceName) || null;
-        if (!maleVoice) console.warn('[JIM] Saved voice not found:', savedVoiceName);
-      }
-
-      if (!maleVoice) {
-        const knownMaleNames = ['daniel', 'james', 'william', 'arthur', 'aaron', 'bruce', 'gordon', 'mark', 'david', 'male', 'guy', 'boy', 'alex', 'fred', 'oliver', 'liam', 'thomas', 'rishi'];
-        const isMale = (v) => knownMaleNames.some(name => v.name.toLowerCase().includes(name));
-        maleVoice = voices.find(v => v.lang.includes('en-AU') && isMale(v))
-          || voices.find(v => v.lang.includes('en-GB') && isMale(v))
-          || voices.find(v => v.lang.includes('en-US') && isMale(v))
-          || voices.find(v => isMale(v))
-          || voices.find(v => v.lang.includes('en-AU'))
-          || voices[0];
-      }
-      console.log('[JIM using voice]', maleVoice?.name);
+      const knownMaleNames = ['daniel', 'james', 'william', 'arthur', 'aaron', 'bruce', 'gordon', 'mark', 'david', 'male', 'guy', 'boy', 'alex', 'fred', 'oliver', 'liam', 'thomas', 'rishi', 'lee'];
+      const isMale = (v) => knownMaleNames.some(name => v.name.toLowerCase().includes(name));
+      const maleVoice = voices.find(v => v.lang.includes('en-AU') && isMale(v))
+        || voices.find(v => v.lang.includes('en-GB') && isMale(v))
+        || voices.find(v => v.lang.includes('en-US') && isMale(v))
+        || voices.find(v => isMale(v))
+        || voices.find(v => v.lang.includes('en-AU'))
+        || voices[0];
 
       setJimLiveStatus('listening');
 
