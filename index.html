@@ -2569,7 +2569,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
                 <button onClick={() => setPrintPreviewJob(activeJob)} className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-black text-xs active:scale-95 shadow-md"><Printer size={14}/> Print PDF</button>
               </>
             )}
-            <button onClick={startJimLive} title="Talk to JIM" className="flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-xs active:scale-95 shadow-md transition-colors">
+            <button onClick={() => startJimLive()} title="Talk to JIM" className="flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-xs active:scale-95 shadow-md transition-colors">
               <Radio size={14}/> Ask JIM
             </button>
           </div>
