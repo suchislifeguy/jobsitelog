@@ -87,6 +87,14 @@
       .jim-dot-3     { transform-origin: center; animation: jimDotPulse 1.2s ease-in-out infinite; animation-delay: 0.4s; }
       .jim-sway      { transform-origin: center bottom; animation: jimSway 2.2s ease-in-out infinite; }
       .jim-shake     { animation: jimShake 0.7s ease-in-out infinite; }
+      
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 6px; }
+      .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+      .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.5); }
+      .dark .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); }
+
       html, body { max-width: 100vw; overflow-x: hidden; }
       body { -webkit-tap-highlight-color: transparent; transition: background-color 0.3s; }
       @supports (padding-bottom: env(safe-area-inset-bottom)) {
@@ -102,7 +110,6 @@
         .no-print { display: none !important; }
         .no-print-border { border: none !important; background: transparent !important; }
         
-        /* Stop html2pdf from arbitrarily cutting text fields in half */
         .print-card { border: 2px solid #cbd5e1 !important; margin-bottom: 12px; border-radius: 8px; overflow: visible !important; background: white !important; display: block; }
         .print-card-header { break-after: avoid; page-break-after: avoid; }
         
@@ -116,7 +123,6 @@
         input[type="date"]::-webkit-inner-spin-button,
         input[type="datetime-local"]::-webkit-calendar-picker-indicator { display: none !important; opacity: 0 !important; }
         
-        /* Hide all default placeholders so empty fields don't print them out */
         ::-webkit-input-placeholder { color: transparent !important; }
         :-moz-placeholder { color: transparent !important; }
         ::-moz-placeholder { color: transparent !important; }
@@ -306,8 +312,8 @@
 
   // --- Core AI "Smart Router" & Waterfall ---
   const smartFetchAI = async (taskType, contents, generationConfig, apiKey, userModel) => {
-    const heavyModels = [userModel, 'gemini-2.5-pro', 'gemini-2.5-flash'];
-    const lightModels = [userModel, 'gemini-2.5-flash-lite', 'gemini-2.5-flash'];
+    const heavyModels = [userModel, 'gemini-3.0-pro', 'gemini-3.0-flash', 'gemini-2.5-pro', 'gemini-2.5-flash'];
+    const lightModels = [userModel, 'gemini-3.0-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
     
     const models = taskType === 'heavy' ? heavyModels : lightModels;
     const uniqueModels = [...new Set(models)].filter(Boolean);
@@ -321,18 +327,6 @@
           body: JSON.stringify({ contents, generationConfig })
         });
         
-        if (res.status === 429) {
-          console.warn(`[AI] 429 Rate Limit hit on ${model}. Gracefully falling back...`);
-          lastError = new Error(`429 Too Many Requests on ${model}`);
-          continue;
-        }
-
-        if (res.status === 404) {
-          console.warn(`[AI] 404 Model Not Found (${model}). Gracefully falling back...`);
-          lastError = new Error(`404 Model Not Found (${model})`);
-          continue;
-        }
-        
         if (!res.ok) {
           const errText = await res.text();
           throw new Error(`API error ${res.status} on ${model}: ${errText}`);
@@ -340,10 +334,12 @@
         
         return await res.json();
       } catch (err) {
-        if (err.message.includes('429') || err.message.includes('404')) {
+        // Retry on rate limits (429), model missing (404), or server errors (500/503/fetch fails)
+        if (err.message.includes('429') || err.message.includes('404') || err.message.includes('50') || err.message.includes('fetch')) {
           lastError = err;
           continue;
         }
+        // Do not retry on 400 Bad Request, immediately throw to user
         throw err;
       }
     }
@@ -469,16 +465,16 @@
   };
 
   const ToastMessage = ({ message, type, onClose }) => {
-    useEffect(() => { const timer = setTimeout(onClose, 4000); return () => clearTimeout(timer); }, [onClose]);
+    useEffect(() => { const timer = setTimeout(onClose, type === 'error' ? 10000 : 4000); return () => clearTimeout(timer); }, [onClose, type]);
     const icons = { success: <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0"/>, error: <AlertTriangle size={18} className="text-red-500 flex-shrink-0"/>, info: <Info size={18} className="text-blue-500 flex-shrink-0"/> };
     return (
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] w-[90%] max-w-sm animate-slide-down">
-        <div className="bg-slate-900 dark:bg-slate-800 text-white rounded-2xl shadow-2xl p-4 flex items-start sm:items-center gap-3 border border-slate-700">
-          <div className="mt-0.5 sm:mt-0">{icons[type]}</div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold break-words leading-tight">{message}</p>
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] w-[90%] max-w-lg animate-slide-down pointer-events-auto">
+        <div className="bg-slate-900 dark:bg-slate-800 text-white rounded-2xl shadow-2xl p-4 sm:p-5 flex items-start gap-3 border border-slate-700">
+          <div className="mt-0.5">{icons[type]}</div>
+          <div className="flex-1 min-w-0 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+            <p className="text-sm font-bold break-words leading-relaxed whitespace-pre-wrap">{message}</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white flex-shrink-0 p-1"><X size={16}/></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-white flex-shrink-0 p-1.5 bg-slate-800/50 hover:bg-slate-700 rounded-lg transition-colors"><X size={16}/></button>
         </div>
       </div>
     );
@@ -631,7 +627,7 @@
             <h3 className="font-black text-lg flex items-center gap-2 text-slate-900 dark:text-white"><Building2 size={18} className="text-orange-500"/> Business Profile</h3>
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={18}/></button>
           </div>
-          <div className="overflow-y-auto flex-1 no-scrollbar pb-2 pr-1 space-y-5">
+          <div className="overflow-y-auto flex-1 custom-scrollbar pb-2 pr-1 space-y-5">
             {expiringCreds.length > 0 && (
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-3 flex items-start gap-2">
                 <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
@@ -696,7 +692,7 @@
             <h3 className="font-black text-lg text-slate-900 dark:text-white">Task Templates</h3>
             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          <div className="overflow-y-auto flex-1 no-scrollbar mb-2">
+          <div className="overflow-y-auto flex-1 custom-scrollbar mb-2">
             {editing === null ? (
               <>
                 {list.length === 0 && <p className="text-center text-sm text-slate-400 font-bold py-6">No templates saved yet.</p>}
@@ -711,7 +707,7 @@
                 ))}
               </>
             ) : (
-              <div className="space-y-3 pb-2">
+              <div className="space-y-3 pb-2 pr-1">
                 <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Template Name *" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
                 <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Task Title *" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/>
                 <div className="grid grid-cols-2 gap-3">
@@ -760,7 +756,7 @@
             <h3 className="font-black text-lg text-slate-900 dark:text-white">Saved Materials</h3>
             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          <div className="overflow-y-auto flex-1 no-scrollbar mb-2">
+          <div className="overflow-y-auto flex-1 custom-scrollbar mb-2">
             {!editing ? (
               <>
                 {list.length === 0 && <p className="text-center text-sm text-slate-400 font-bold py-6">No materials saved yet.</p>}
@@ -775,7 +771,7 @@
                 ))}
               </>
             ) : (
-              <div className="space-y-3 pb-2">
+              <div className="space-y-3 pb-2 pr-1">
                 <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Material Name *" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
                 <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Price $ *" type="number" step="0.01" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/>
               </div>
@@ -825,7 +821,7 @@
 
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-7 shadow-2xl border dark:border-slate-800 max-h-[90vh] overflow-y-auto animate-slide-up sm:animate-none pb-safe">
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-7 shadow-2xl border dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-5 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
             <div className="flex items-center gap-3">
               <JimMascot size={40} state="idle"/>
@@ -931,7 +927,7 @@
               <input type="password" className="w-full p-3.5 mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
               <div className="relative">
                 <Bot size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
+                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-3.0-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
 
@@ -1040,6 +1036,7 @@
         const fileParts = [];
         for (const file of files) {
           if (file.type === 'application/pdf') {
+            let uploadedUri = null;
             try {
               const uploadRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`, {
                 method: 'POST',
@@ -1051,17 +1048,18 @@
                 },
                 body: file
               });
-              if (!uploadRes.ok) throw new Error('Google Upload API failed');
+              if (!uploadRes.ok) {
+                const errText = await uploadRes.text();
+                throw new Error(`Upload API rejected file: ${uploadRes.status} ${errText}`);
+              }
               const uploadData = await uploadRes.json();
-              fileParts.push({ fileData: { mimeType: file.type, fileUri: uploadData.file.uri } });
+              if (!uploadData.file || !uploadData.file.uri) {
+                throw new Error(`Upload API missing URI: ${JSON.stringify(uploadData)}`);
+              }
+              uploadedUri = uploadData.file.uri;
+              fileParts.push({ fileData: { mimeType: file.type, fileUri: uploadedUri } });
             } catch (err) {
-              const base64Data = await new Promise((resolve, reject) => { 
-                const reader = new FileReader(); 
-                reader.onload = () => resolve(reader.result.split(',')[1]); 
-                reader.onerror = reject; 
-                reader.readAsDataURL(file); 
-              });
-              fileParts.push({ inlineData: { mimeType: file.type, data: base64Data } });
+              throw new Error(`PDF Upload Failed: ${err.message}`);
             }
           } else if (file.type.startsWith('image/')) {
             const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
@@ -1084,7 +1082,7 @@
         const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
         onSave(json.address || addr, json.clientName || client, json.clientPhone || phone, tasks, json.dueDate || dueDate);
         showToast('Successfully imported via AI!', 'success');
-      } catch (err) { showToast(`AI import failed: ${err.message}`, 'error'); }
+      } catch (err) { console.error("AI Import Error details:", err); showToast(`AI import failed: ${err.message}`, 'error'); }
       finally { setIsImporting(false); }
     };
 
@@ -1109,7 +1107,7 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white mt-1"><X size={18}/></button>
           </div>
 
-          <div className="px-5 py-4 space-y-3 max-h-[65vh] overflow-y-auto no-scrollbar">
+          <div className="px-5 py-4 space-y-3 max-h-[65vh] overflow-y-auto custom-scrollbar">
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Job Address *</label>
               <div className="relative">
@@ -1387,7 +1385,7 @@
             <h3 className="font-black text-lg text-slate-900 dark:text-white">{editing ? 'Edit Appointment' : 'New Appointment'}</h3>
             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
-          <div className="overflow-y-auto flex-1 no-scrollbar space-y-4 pb-2 pr-1">
+          <div className="overflow-y-auto flex-1 custom-scrollbar space-y-4 pb-2 pr-1">
             <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Title *</label><input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="e.g. Site Visit" value={form.title} onChange={e => setForm({...form, title: e.target.value})}/></div>
             <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Link to Project</label><select className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-medium text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}><option value="">No linked job</option>{jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}</select></div>
             <div className="grid grid-cols-2 gap-3">
@@ -1436,7 +1434,7 @@
             <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
           </div>
           
-          <div className="overflow-y-auto flex-1 no-scrollbar space-y-4 pb-2">
+          <div className="overflow-y-auto flex-1 custom-scrollbar space-y-4 pb-2">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Date</label>
               <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.date} onChange={e => setForm({...form, date: e.target.value})}/>
@@ -1856,7 +1854,7 @@
     const [listeningField, setListeningField] = useState(null);
     const recognitionRef = useRef(null);
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
-    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-2.5-flash');
+    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-3.0-flash');
     const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('googleClientId') || '');
     const [googleToken, setGoogleToken] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState(null);
@@ -2489,7 +2487,7 @@
                       </div>
                       {t.desc && <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3 whitespace-pre-wrap border-l-4 border-slate-200 dark:border-slate-600 pl-3">{t.desc}</p>}
                       {showCosts && subtotal > 0 && (<div className="flex gap-1.5 mb-3 flex-wrap">{labour>0 && <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md">Labour {fmtAUD(labour)}</span>}{mats>0 && <span className="text-[10px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-1 rounded-md">Mats {fmtAUD(mats)}</span>}<span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-2 py-1 rounded-md">Subtotal {fmtAUD(subtotal)}</span></div>)}
-                      {t.images?.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-3 no-scrollbar">{t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}</div>)}
+                      {t.images?.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar">{t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}</div>)}
                     </div>
                   </div>
                 );
@@ -2553,7 +2551,7 @@
                 <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
               </div>
               
-              <div className="overflow-y-auto flex-1 no-scrollbar pb-4 pr-1">
+              <div className="overflow-y-auto flex-1 custom-scrollbar pb-4 pr-1">
                 {/* Template Selection Accordion */}
                 <div className="mb-4">
                   <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-black text-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 text-slate-700 dark:text-white transition-colors">
@@ -2639,7 +2637,7 @@
                   <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-transparent dark:border-slate-700 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
                   
                   <div className="border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus-within:ring-2 focus-within:ring-orange-400 overflow-hidden transition-shadow">
-                    <textarea placeholder="Full details…" className="w-full p-3 bg-transparent outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-500" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
+                    <textarea placeholder="Full details…" className="w-full p-3 bg-transparent outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-500 custom-scrollbar" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
                     
                     <div className="flex justify-end gap-2 bg-slate-100 dark:bg-slate-700/50 px-2 py-1.5 border-t border-slate-200 dark:border-slate-700">
                       <button type="button" onClick={handleProfessionalize} disabled={isProfessionalizing} className="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/40 transition-colors">
