@@ -2183,110 +2183,93 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
         ];
     
     const startJimLive = async (modelIdx = 0, lastErrorMsg = '') => {
-          if (!apiKey) { showToast('Add your Gemini API key in Settings first.', 'error'); return; }
-          if (modelIdx === 0) {
-            jimCancelledRef.current = false;
-            setJimLiveOpen(true);
-            setJimLiveStatus('connecting');
-            setJimLiveTranscript([]);
-          }
-          if (jimCancelledRef.current) return;
-          
-          // IF ALL MODELS FAIL, SHOW THE EXACT ERROR IN THE TOAST
-          if (modelIdx >= LIVE_MODELS.length) {
-            setJimLiveStatus('error');
-            showToast(`Live API failed: ${lastErrorMsg || 'Connection rejected by server'}`, 'error');
-            console.error("All Live Models failed. Last error:", lastErrorMsg);
-            return;
-          }
+      if (!apiKey) { showToast('Add your Gemini API key in Settings first.', 'error'); return; }
+      
+      if (modelIdx === 0) {
+        jimCancelledRef.current = false;
+        setJimLiveOpen(true);
+        setJimLiveStatus('connecting');
+        setJimLiveTranscript([]);
+      }
     
-          const model = LIVE_MODELS[modelIdx];
-          let setupReceived = false;
+      if (jimCancelledRef.current) return;
+      
+      // Exit if we've exhausted the model list
+      if (modelIdx >= LIVE_MODELS.length) {
+        setJimLiveStatus('error');
+        showToast(`Live API Failed: ${lastErrorMsg || 'Policy Violation (1008)'}`, 'error');
+        return;
+      }
     
-          const ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`);
-          jimWsRef.current = ws;
+      const model = LIVE_MODELS[modelIdx];
+      let setupReceived = false;
     
-          ws.onopen = () => {
-            console.log(`[JIM Live] Trying model: ${model}...`);
-            ws.send(JSON.stringify({
-              setup: {
-                model,
-                generation_config: {
-                  response_modalities: ['AUDIO', 'TEXT'],
-                  speech_config: { voice_config: { prebuilt_voice_config: { voice_name: 'Kore' } } }
-                },
-                system_instruction: { parts: [{ text: buildJimContext() }] }
+      // Endpoint for May 2026 Multimodal Live
+      const ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`);
+      jimWsRef.current = ws;
+    
+      ws.onopen = () => {
+        console.log(`[JIM Live] Attempting connection: ${model}`);
+        
+        // 1008 FIX: We use a simplified config. 
+        // Some preview models reject 'TEXT' modality or complex system instructions in the first chunk.
+        const setupMsg = {
+          setup: {
+            model,
+            generation_config: {
+              response_modalities: ["AUDIO"], // Native audio models prefer single modality for stability
+              speech_config: { 
+                voice_config: { 
+                  prebuilt_voice_config: { voice_name: 'Kore' } 
+                } 
               }
-            }));
-          };
-    
-          ws.onmessage = async (event) => {
-            let data;
-            try { data = JSON.parse(event.data instanceof Blob ? await event.data.text() : event.data); } catch { return; }
-    
-            // CAPTURE EXACT GOOGLE ERROR
-            if (data.error) {
-              console.warn(`[JIM Live] ${model} rejected. Error:`, data.error.message || data.error);
-              ws.close();
-              // Pass the exact error message to the next loop
-              startJimLive(modelIdx + 1, data.error.message || `Code ${data.error.code}`);
-              return;
+            },
+            system_instruction: { 
+              parts: [{ text: buildJimContext().substring(0, 2000) }] // Trim context to prevent buffer overflow 1008s
             }
-    
-            if (data.setupComplete) {
-              console.log(`[JIM Live] Connected to ${model}!`);
-              setupReceived = true;
-              setJimLiveStatus('listening');
-              try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: { ideal: 16000 }, channelCount: 1, echoCancellation: true } });
-                jimStreamRef.current = stream;
-                const micCtx = new AudioContext({ sampleRate: 16000 });
-                jimMicCtxRef.current = micCtx;
-                const source = micCtx.createMediaStreamSource(stream);
-                const processor = micCtx.createScriptProcessor(4096, 1, 1);
-                processor.onaudioprocess = (e) => {
-                  if (jimWsRef.current?.readyState !== WebSocket.OPEN) return;
-                  const f32 = e.inputBuffer.getChannelData(0);
-                  const i16 = new Int16Array(f32.length);
-                  for (let i = 0; i < f32.length; i++) i16[i] = Math.max(-32768, Math.min(32767, f32[i] * 32768));
-                  const b64 = btoa(String.fromCharCode(...new Uint8Array(i16.buffer)));
-                  jimWsRef.current.send(JSON.stringify({ realtime_input: { media_chunks: [{ mime_type: 'audio/pcm;rate=16000', data: b64 }] } }));
-                };
-                source.connect(processor);
-                processor.connect(micCtx.destination);
-              } catch {
-                showToast('Microphone access denied.', 'error');
-                stopJimLive();
-              }
-              return;
-            }
-    
-            const parts = data.serverContent?.modelTurn?.parts || [];
-            let gotAudio = false;
-            for (const part of parts) {
-              if (part.inlineData?.data) { jimPlayAudio(part.inlineData.data); gotAudio = true; }
-              if (part.text?.trim()) setJimLiveTranscript(t => [...t, { role: 'jim', text: part.text.trim() }]);
-            }
-            if (gotAudio) setJimLiveStatus('speaking');
-            if (data.serverContent?.turnComplete) setJimLiveStatus('listening');
-          };
-    
-          ws.onerror = () => {
-            if (!setupReceived && !jimCancelledRef.current) { 
-              startJimLive(modelIdx + 1, "WebSocket Error (Network or 403 Forbidden)"); 
-            } else if (setupReceived) { 
-              setJimLiveStatus('error'); 
-            }
-          };
-          
-          ws.onclose = (e) => {
-            if (!setupReceived && e.code !== 1000 && !jimCancelledRef.current) { 
-              startJimLive(modelIdx + 1, `WebSocket closed unexpectedly (Code ${e.code})`); 
-            } else if (e.code !== 1000 && setupReceived) { 
-              setJimLiveStatus('error'); 
-            }
-          };
+          }
         };
+        ws.send(JSON.stringify(setupMsg));
+      };
+    
+      ws.onmessage = async (event) => {
+        let data;
+        try {
+          data = JSON.parse(event.data instanceof Blob ? await event.data.text() : event.data);
+        } catch (e) { return; }
+    
+        if (data.error) {
+          console.error(`[JIM Live] ${model} Error:`, data.error);
+          ws.close(); // Triggers onclose logic to try next model
+          return;
+        }
+    
+        if (data.setupComplete) {
+          console.log(`[JIM Live] Success! Connected to ${model}`);
+          setupReceived = true;
+          setJimLiveStatus('listening');
+          startMicStream(); // Helper to keep code clean
+        }
+    
+        // Handle incoming audio/transcript
+        const parts = data.serverContent?.modelTurn?.parts || [];
+        parts.forEach(part => {
+          if (part.inlineData?.data) jimPlayAudio(part.inlineData.data);
+          if (part.text) setJimLiveTranscript(prev => [...prev, { role: 'jim', text: part.text }]);
+        });
+    
+        if (data.serverContent?.turnComplete) setJimLiveStatus('listening');
+      };
+    
+      ws.onclose = (e) => {
+        // Error 1008 or 1006 usually means the model rejected the setup
+        if (!setupReceived && !jimCancelledRef.current) {
+          const reason = e.code === 1008 ? "Policy Violation/Tier Limit" : `Code ${e.code}`;
+          console.warn(`[JIM Live] ${model} failed (${reason}). Trying next...`);
+          startJimLive(modelIdx + 1, reason);
+        }
+      };
+    };
 
     const openTimeEntryForJob = (jobId) => {
       setTimeEntryModal({
