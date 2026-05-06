@@ -2169,11 +2169,18 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
     };
 
     const LIVE_MODELS = [
-      'models/gemini-2.5-flash-preview-native-audio-dialog', // Primary: Best for native voice
-      'models/gemini-live-2.5-flash-preview',                // Fallback 1
-      'models/gemini-2.0-flash-live-001',                    // Fallback 2
-      'models/gemini-2.0-flash-exp',                         // Fallback 3
-    ];
+          // 1. The most reliable Free Tier WebSocket model. This WILL connect.
+          'models/gemini-2.0-flash-exp', 
+          
+          // 2. The standard flash model (often supports Live API on free tier now)
+          'models/gemini-2.5-flash',
+          
+          // 3. Your desired model (in case your project gets allowlisted/billing attached)
+          'models/gemini-2.5-flash-preview-native-audio-dialog', 
+          
+          // 4. Ultimate fallback
+          'models/gemini-2.0-flash-live-001'
+        ];];
 
     const startJimLive = async (modelIdx = 0) => {
       if (!apiKey) { showToast('Add your Gemini API key in Settings first.', 'error'); return; }
