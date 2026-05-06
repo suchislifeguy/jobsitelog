@@ -193,45 +193,46 @@
           {/* Head body */}
           <rect x="9" y="20" width="22" height="16" rx="3" fill="#1e293b"/>
           <rect x="9" y="20" width="22" height="2.5" rx="3" fill="#334155"/>
+          {/* Flat neutral eyebrows */}
+          <rect x="12" y="23.5" width="6" height="1" rx="0.5" fill="#475569"/>
+          <rect x="22" y="23.5" width="6" height="1" rx="0.5" fill="#475569"/>
           {/* Eyes */}
           {s==='error' ? (
             <>
-              <line x1="12" y1="24.5" x2="18" y2="28.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round"/>
-              <line x1="18" y1="24.5" x2="12" y2="28.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round"/>
-              <line x1="22" y1="24.5" x2="28" y2="28.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round"/>
-              <line x1="28" y1="24.5" x2="22" y2="28.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round"/>
+              <line x1="12.5" y1="26" x2="17.5" y2="29.5" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="17.5" y1="26" x2="12.5" y2="29.5" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="22.5" y1="26" x2="27.5" y2="29.5" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="27.5" y1="26" x2="22.5" y2="29.5" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"/>
             </>
           ) : (
             <>
-              <rect x="12" y="25" width="6" height="2.5" rx="1" fill={eyeColor} className={eyeCls}/>
-              <rect x="22" y="25" width="6" height="2.5" rx="1" fill={eyeColor} className={eyeCls}/>
+              <rect x="12" y="25.5" width="6" height="3" rx="1.5" fill={eyeColor} className={eyeCls}/>
+              <rect x="22" y="25.5" width="6" height="3" rx="1.5" fill={eyeColor} className={eyeCls}/>
             </>
           )}
-          {/* Status mouth dots */}
-          {s!=='thinking' && <>
-            <circle cx="16" cy="32" r="0.9" fill="#475569"/>
-            <circle cx="20" cy="32" r="0.9" fill="#475569"/>
-            <circle cx="24" cy="32" r="0.9" fill="#475569"/>
-          </>}
+          {/* Neutral upward mouth curve */}
+          {s!=='thinking' && (
+            <path d="M15 32 Q20 34 25 32" stroke="#475569" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+          )}
           {/* Thinking dots */}
           {s==='thinking' && <>
             <circle cx="16" cy="32" r="1.1" fill="#a78bfa" className="jim-dot-1"/>
             <circle cx="20" cy="32" r="1.1" fill="#a78bfa" className="jim-dot-2"/>
             <circle cx="24" cy="32" r="1.1" fill="#a78bfa" className="jim-dot-3"/>
           </>}
-          {/* Wave arm */}
+          {/* Wave arm — right side */}
           {s==='wave' && (
             <g className="jim-wave-arm">
               <path d="M31 27 L37 20" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round"/>
               <circle cx="37" cy="20" r="2.2" fill="#f97316"/>
             </g>
           )}
-          {/* Empty state arms */}
+          {/* Empty state — shrug arms from collar/shoulder up and out */}
           {s==='empty' && <>
-            <path d="M9 27 L2 32" stroke="#334155" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="2" cy="32" r="2" fill="#334155"/>
-            <path d="M31 27 L38 32" stroke="#334155" strokeWidth="2.5" strokeLinecap="round"/>
-            <circle cx="38" cy="32" r="2" fill="#334155"/>
+            <path d="M15 38.5 Q7 34 3 31" stroke="#334155" strokeWidth="2.5" strokeLinecap="round"/>
+            <circle cx="3" cy="31" r="2" fill="#334155"/>
+            <path d="M25 38.5 Q33 34 37 31" stroke="#334155" strokeWidth="2.5" strokeLinecap="round"/>
+            <circle cx="37" cy="31" r="2" fill="#334155"/>
           </>}
           {/* Collar */}
           <rect x="14" y="37" width="12" height="5.5" rx="2" fill="#0f172a"/>
@@ -253,17 +254,29 @@
     { key: "JIM-PRO-002",   expiry: null },
   ];
 
-  const LICENCE_TYPE_OPTIONS = [
-    'QBCC (QLD)','Fair Trading (NSW)','VBA (VIC)','Building Commission (WA)',
-    'CBS (SA)','OCBA (TAS)','ICBN (NT)','Access Canberra (ACT)',
-    'Builders Licence','Electrical Licence','Plumbing Licence','Gas Licence',
-    'White Card','Asbestos Removal','Demolition Licence','Rigging Licence',
-    'Scaffolding Licence','Crane Operator','Refrigeration Licence','Security Licence','Other'
-  ];
+  const migrateProfile = (p) => {
+    if (!p || p.credentials !== undefined) return p;
+    const creds = [];
+    if (p.abn) creds.push({ label: 'ABN', value: p.abn, expiry: '' });
+    (p.licences||[]).forEach(l => creds.push({ label: l.customType||l.type, value: l.number+(l.state?` (${l.state})`:''), expiry: l.expiry||'' }));
+    if (p.insurance) creds.push({ label: 'Public Liability Insurance', value: p.insurance+(p.insurancePolicy?` · ${p.insurancePolicy}`:''), expiry: p.insuranceExpiry||'' });
+    const { abn, licences, insurance, insurancePolicy, insuranceExpiry, ...rest } = p;
+    return { ...rest, credentials: creds };
+  };
 
   const BIZA_KEY  = 'joblog-business';
   const MAX_STOPS = 12;
-  const GST_RATE  = 0.1;
+
+  const COUNTRY_CONFIGS = {
+    AU: { name: 'Australia',      flag: '🇦🇺', currency: 'AUD', symbol: '$',  taxLabel: 'GST',       taxRate: 10, locale: 'en-AU', markupLabel: 'Additional Markup' },
+    NZ: { name: 'New Zealand',    flag: '🇳🇿', currency: 'NZD', symbol: '$',  taxLabel: 'GST',       taxRate: 15, locale: 'en-NZ', markupLabel: 'Additional Markup' },
+    US: { name: 'United States',  flag: '🇺🇸', currency: 'USD', symbol: '$',  taxLabel: 'Sales Tax', taxRate: 0,  locale: 'en-US', markupLabel: 'State / Local Tax' },
+    CA: { name: 'Canada',         flag: '🇨🇦', currency: 'CAD', symbol: '$',  taxLabel: 'GST/HST',   taxRate: 5,  locale: 'en-CA', markupLabel: 'Provincial / Other Tax' },
+    GB: { name: 'United Kingdom', flag: '🇬🇧', currency: 'GBP', symbol: '£',  taxLabel: 'VAT',       taxRate: 20, locale: 'en-GB', markupLabel: 'Additional Markup' },
+    IE: { name: 'Ireland',        flag: '🇮🇪', currency: 'EUR', symbol: '€',  taxLabel: 'VAT',       taxRate: 23, locale: 'en-IE', markupLabel: 'Additional Markup' },
+  };
+  let _cc = localStorage.getItem('jim-country') || 'AU';
+  const getCC = () => COUNTRY_CONFIGS[_cc] || COUNTRY_CONFIGS.AU;
 
   // --- Utility Functions ---
   const formatLocal = (input, style = 'default') => {
@@ -287,7 +300,7 @@
   };
   
   const fmtMins = (m) => { const h = Math.floor(m/60), r = Math.round(m%60); if (!h && !r) return `0m`; if (!h) return `${r}m`; if (!r) return `${h}h`; return `${h}h ${r}m`; };
-  const fmtAUD  = (n) => `$${Number(n||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const fmtAUD  = (n) => Number(n||0).toLocaleString(getCC().locale, { style:'currency', currency: getCC().currency, minimumFractionDigits:2, maximumFractionDigits:2 });
   const isExpiringSoon = (expiryStr) => { if (!expiryStr) return false; const diff = new Date(expiryStr) - new Date(); return diff > 0 && diff < 60 * 24 * 60 * 60 * 1000; };
   const isExpired = (expiryStr) => { if (!expiryStr) return false; return new Date(expiryStr) < new Date(); };
 
@@ -344,7 +357,7 @@
       mats   += parseFloat(t.materialsCost)||0;
     });
     const subtotal = labour + mats;
-    const gst      = gstEnabled ? subtotal * GST_RATE : 0;
+    const gst      = gstEnabled ? subtotal * (getCC().taxRate / 100) : 0;
     const extra    = subtotal * (extraTaxRate / 100);
     const total    = subtotal + gst + extra;
     return { labour, mats, subtotal, gst, extra, total };
@@ -564,91 +577,31 @@
     );
   };
 
-  const LicenceEditor = ({ licences, onChange }) => {
-    const [editing, setEditing] = useState(null);
-    const blankLicence = { type: LICENCE_TYPE_OPTIONS[0], customType: '', number: '', expiry: '', state: '' };
-    const [draft, setDraft] = useState(blankLicence);
-
-    const openNew = () => { setDraft(blankLicence); setEditing('new'); };
-    const openEdit = (i) => { setDraft({ ...licences[i] }); setEditing(i); };
-
-    const save = () => {
-      if (!draft.number.trim()) return;
-      const entry = { ...draft, type: draft.type === 'Other' && draft.customType ? draft.customType : draft.type };
-      let updated;
-      if (editing === 'new') { updated = [...licences, entry]; }
-      else { updated = licences.map((l, i) => i === editing ? entry : l); }
-      onChange(updated);
-      setEditing(null);
-    };
-
-    const remove = (i) => onChange(licences.filter((_, idx) => idx !== i));
-
-    if (editing !== null) {
-      return (
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{editing === 'new' ? 'Add Credential' : 'Edit Credential'}</span>
-            <button onClick={() => setEditing(null)} className="text-slate-400 hover:text-slate-600"><X size={16}/></button>
-          </div>
-          <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Licence / Credential Type</label>
-            <select className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" value={draft.type} onChange={e => setDraft(d => ({ ...d, type: e.target.value, customType: '' }))}>
-              {LICENCE_TYPE_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-            </select>
-          </div>
-          {draft.type === 'Other' && (
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Custom Label</label>
-              <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. Pest Control Licence" value={draft.customType} onChange={e => setDraft(d => ({ ...d, customType: e.target.value }))}/>
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Licence Number *</label>
-              <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. 1234567" value={draft.number} onChange={e => setDraft(d => ({ ...d, number: e.target.value }))}/>
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">State / Jurisdiction</label>
-              <input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" placeholder="e.g. QLD" value={draft.state} onChange={e => setDraft(d => ({ ...d, state: e.target.value }))}/>
-            </div>
-          </div>
-          <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Expiry Date (optional)</label>
-            <input type="date" className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" value={draft.expiry} onChange={e => setDraft(d => ({ ...d, expiry: e.target.value }))}/>
-          </div>
-          <div className="flex gap-2 pt-1">
-            <button onClick={save} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-2.5 rounded-xl font-black text-sm flex items-center justify-center gap-1.5"><Check size={14}/> Save</button>
-            <button onClick={() => setEditing(null)} className="flex-1 bg-slate-200 dark:bg-slate-700 py-2.5 rounded-xl font-black text-sm text-slate-600 dark:text-slate-300">Cancel</button>
-          </div>
-        </div>
-      );
-    }
-
+  const CredentialsEditor = ({ credentials, onChange }) => {
+    const add = () => onChange([...credentials, { label: '', value: '', expiry: '' }]);
+    const remove = (i) => onChange(credentials.filter((_, idx) => idx !== i));
+    const upd = (i, f, v) => onChange(credentials.map((c, idx) => idx === i ? { ...c, [f]: v } : c));
     return (
       <div className="space-y-2">
-        {licences.length === 0 && <p className="text-xs text-slate-400 font-medium text-center py-2">No credentials added yet.</p>}
-        {licences.map((lic, i) => {
-          const expired = isExpired(lic.expiry);
-          const expiring = isExpiringSoon(lic.expiry);
+        {credentials.length === 0 && <p className="text-xs text-slate-400 font-medium text-center py-2">No credentials added yet.</p>}
+        {credentials.map((c, i) => {
+          const exp = isExpired(c.expiry); const soon = isExpiringSoon(c.expiry);
           return (
-            <div key={i} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${expired ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : expiring ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600'}`}>
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <BadgeCheck size={18} className={`${expired ? 'text-red-400' : expiring ? 'text-amber-400' : 'text-slate-400'} flex-shrink-0`} />
-                <div className="min-w-0">
-                  <p className="font-black text-xs text-slate-800 dark:text-white truncate">{lic.type}</p>
-                  <p className="font-mono text-[10px] text-slate-500 dark:text-slate-400">{lic.number}{lic.state ? ` · ${lic.state}` : ''}</p>
-                  {lic.expiry && <p className={`text-[9px] font-black uppercase mt-0.5 ${expired ? 'text-red-500' : expiring ? 'text-amber-500' : 'text-slate-400'}`}>{expired ? 'EXPIRED: ' : expiring ? 'EXPIRES: ' : 'EXP: '}{formatLocal(lic.expiry)}</p>}
-                </div>
+            <div key={i} className={`p-3 rounded-xl border space-y-2 ${exp ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : soon ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}>
+              <div className="flex items-center gap-2">
+                <input className="flex-1 p-2 bg-slate-50 dark:bg-slate-700 rounded-lg outline-none text-[11px] font-black uppercase tracking-wide dark:text-white border border-slate-200 dark:border-slate-600 focus:ring-1 focus:ring-orange-400 placeholder-slate-400" placeholder="Label  (e.g. ABN, Licence No., Insurance)" value={c.label} onChange={e => upd(i,'label',e.target.value)}/>
+                <button onClick={() => remove(i)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"><Trash2 size={14}/></button>
               </div>
-              <div className="flex gap-1 flex-shrink-0 ml-2">
-                <button onClick={() => openEdit(i)} className="p-1.5 text-slate-400 hover:text-blue-500 transition-colors"><Pencil size={14}/></button>
-                <button onClick={() => remove(i)} className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={14}/></button>
+              <input className="w-full p-2 bg-slate-50 dark:bg-slate-700 rounded-lg outline-none text-sm font-mono font-bold dark:text-white border border-slate-200 dark:border-slate-600 focus:ring-1 focus:ring-orange-400 placeholder-slate-400" placeholder="Value / number" value={c.value} onChange={e => upd(i,'value',e.target.value)}/>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex-shrink-0">Expiry</span>
+                <input type="date" className={`flex-1 p-2 rounded-lg outline-none text-xs font-bold dark:text-white border focus:ring-1 focus:ring-orange-400 ${exp ? 'bg-red-50 dark:bg-red-900/30 border-red-300' : soon ? 'bg-amber-50 dark:bg-amber-900/30 border-amber-300' : 'bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600'}`} value={c.expiry} onChange={e => upd(i,'expiry',e.target.value)}/>
+                {(exp||soon) && <span className={`text-[9px] font-black uppercase tracking-widest flex-shrink-0 ${exp?'text-red-500':'text-amber-500'}`}>{exp?'EXPIRED':'SOON'}</span>}
               </div>
             </div>
           );
         })}
-        <button onClick={openNew} className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-xs font-black uppercase text-slate-400 hover:border-orange-400 hover:text-orange-500 transition-all">
+        <button onClick={add} className="w-full flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl text-xs font-black uppercase text-slate-400 hover:border-orange-400 hover:text-orange-500 transition-all">
           <PlusCircle size={14}/> Add Credential
         </button>
       </div>
@@ -657,10 +610,9 @@
 
   const BusinessProfileEditor = ({ profile, onSave, onClose, showToast }) => {
     const [form, setForm] = useState({
-      name: profile.name || '', tradingName: profile.tradingName || '', abn: profile.abn || '',
+      name: profile.name || '', tradingName: profile.tradingName || '',
       phone: profile.phone || '', email: profile.email || '', address: profile.address || '',
-      logo: profile.logo || '', licences: profile.licences || [], insurance: profile.insurance || '',
-      insurancePolicy: profile.insurancePolicy || '', insuranceExpiry: profile.insuranceExpiry || '',
+      logo: profile.logo || '', credentials: profile.credentials || [],
       termsAndConditions: profile.termsAndConditions || ''
     });
 
@@ -670,7 +622,7 @@
       catch { showToast('Logo could not be processed.', 'error'); }
     };
 
-    const expiringLicences = form.licences.filter(l => isExpiringSoon(l.expiry) || isExpired(l.expiry));
+    const expiringCreds = form.credentials.filter(c => isExpiringSoon(c.expiry) || isExpired(c.expiry));
 
     return (
       <div className="fixed inset-0 z-[190] bg-slate-900/95 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
@@ -680,10 +632,10 @@
             <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={18}/></button>
           </div>
           <div className="overflow-y-auto flex-1 no-scrollbar pb-2 pr-1 space-y-5">
-            {expiringLicences.length > 0 && (
+            {expiringCreds.length > 0 && (
               <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-3 flex items-start gap-2">
                 <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5"/>
-                <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">{expiringLicences.length} credential{expiringLicences.length > 1 ? 's' : ''} {expiringLicences.some(l => isExpired(l.expiry)) ? 'expired or expiring soon' : 'expiring soon'} — update below.</p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 font-bold">{expiringCreds.length} credential{expiringCreds.length > 1 ? 's' : ''} {expiringCreds.some(c => isExpired(c.expiry)) ? 'expired or expiring soon' : 'expiring soon'} — update below.</p>
               </div>
             )}
             <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
@@ -701,7 +653,6 @@
             <div className="space-y-3">
               <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div>
               <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/></div>
-              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">ABN</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-mono outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.abn} onChange={e=>setForm(f=>({...f,abn:e.target.value}))}/></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Phone</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div>
                 <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div>
@@ -711,22 +662,9 @@
             </div>
 
             <div>
-              <div className="flex items-center gap-2 mb-3"><BadgeCheck size={15} className="text-emerald-500"/><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Licences & Credentials</span></div>
-              <LicenceEditor licences={form.licences} onChange={(updated) => setForm(f => ({ ...f, licences: updated }))}/>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-3"><ShieldCheck size={15} className="text-blue-500"/><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Public Liability Insurance</span></div>
-              <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-3">
-                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Insurer Name</label><input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" value={form.insurance} onChange={e=>setForm(f=>({...f,insurance:e.target.value}))}/></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Number</label><input className="w-full p-3 bg-white dark:bg-slate-700 rounded-xl outline-none font-mono text-sm font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-600" value={form.insurancePolicy} onChange={e=>setForm(f=>({...f,insurancePolicy:e.target.value}))}/></div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Policy Expiry</label>
-                    <input type="date" className={`w-full p-3 rounded-xl outline-none text-sm font-bold dark:text-white focus:ring-2 focus:ring-orange-400 border dark:border-slate-600 ${isExpired(form.insuranceExpiry) ? 'bg-red-50 dark:bg-red-900/20 border-red-300' : isExpiringSoon(form.insuranceExpiry) ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-300' : 'bg-white dark:bg-slate-700 border-slate-200'}`} value={form.insuranceExpiry} onChange={e=>setForm(f=>({...f,insuranceExpiry:e.target.value}))}/>
-                  </div>
-                </div>
-              </div>
+              <div className="flex items-center gap-2 mb-1"><BadgeCheck size={15} className="text-emerald-500"/><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Licences &amp; Credentials</span></div>
+              <p className="text-[10px] text-slate-400 mb-3">Add any credentials relevant to your country — ABN, licence numbers, insurance, certifications.</p>
+              <CredentialsEditor credentials={form.credentials} onChange={updated => setForm(f => ({ ...f, credentials: updated }))}/>
             </div>
           </div>
           <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
@@ -859,10 +797,11 @@
     );
   };
 
-  const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
+  const SettingsModal = ({ apiKey, geminiModel, extraTaxRate, countryCode, onSave, onClose, isDarkMode, toggleTheme, exportData, importData, userTemplates, saveUserTemplates, userMaterials, saveUserMaterials, businessProfile, saveBusinessProfile, googleClientId, setGoogleClientId, isGoogleConnected, googleToken, connectGoogleCalendar, disconnectGoogleCalendar, showToast, dbSize, isPro, onUnlockPro }) => {
     const [draftKey, setDraftKey] = useState(apiKey);
     const [draftModel, setDraftModel] = useState(geminiModel);
     const [draftExtraTax, setDraftExtraTax] = useState(extraTaxRate);
+    const [draftCountry, setDraftCountry] = useState(countryCode || 'AU');
     const [draftGoogleClientId, setDraftGoogleClientId] = useState(googleClientId);
     const [showTemplates, setShowTemplates] = useState(false);
     const [showMaterials, setShowMaterials] = useState(false);
@@ -870,7 +809,7 @@
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [licenceInput, setLicenceInput] = useState('');
 
-    const save = () => { onSave(draftKey, draftModel, draftExtraTax); setGoogleClientId(draftGoogleClientId); onClose(); showToast('Settings Saved', 'success'); };
+    const save = () => { onSave(draftKey, draftModel, draftExtraTax, draftCountry); setGoogleClientId(draftGoogleClientId); onClose(); showToast('Settings Saved', 'success'); };
     const hasBiz = !!businessProfile?.name;
 
     const handleLicenceUnlock = () => {
@@ -923,9 +862,25 @@
             </div>
             <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
 
+            {/* Region / Currency */}
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Region &amp; Currency</label>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(COUNTRY_CONFIGS).map(([code, cfg]) => (
+                  <button key={code} onClick={() => setDraftCountry(code)}
+                    className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 font-black text-[10px] uppercase tracking-wide transition-all ${draftCountry === code ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'}`}>
+                    <span className="text-xl leading-none">{cfg.flag}</span>
+                    <span>{cfg.name.split(' ')[0]}</span>
+                    <span className="font-medium normal-case text-[9px] opacity-70">{cfg.currency} · {cfg.taxLabel}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
+
             {/* Extra Tax */}
             <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Universal Tax / Markup</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{COUNTRY_CONFIGS[draftCountry]?.markupLabel || 'Additional Markup'}</label>
               <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
                 <input type="range" min="0" max="50" step="0.5" value={draftExtraTax} onChange={e => setDraftExtraTax(e.target.value)} className="flex-1 accent-orange-500"/>
                 <span className="font-black text-slate-700 dark:text-slate-200 w-12 text-right">{draftExtraTax}%</span>
@@ -1333,7 +1288,7 @@
               {header.projectPhotos?.length > 0 && <div className="flex gap-2 mt-2 overflow-x-auto">{header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
               <div className="flex gap-4 mt-2 text-sm font-medium text-slate-600">
                 <span>TOTAL TIME: {fmtMins(totalHours)}</span>
-                {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? '(inc. GST)' : ''}</span>}
+                {showCosts && totals.total > 0 && <span>TOTAL: {fmtAUD(totals.total)} {job.gstEnabled ? `(inc. ${getCC().taxLabel})` : ''}</span>}
               </div>
             </div>
 
@@ -1364,7 +1319,7 @@
                       {showCosts && labour > 0 && (
                         <div className="p-4 bg-slate-50 rounded-xl border">
                           <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
-                          <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}{t.rate ? ` ($${t.rate}/hr)` : ''}</span>
+                          <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}{t.rate ? ` (${getCC().symbol}${t.rate}/hr)` : ''}</span>
                         </div>
                       )}
                       {showCosts && mats > 0 && (
@@ -1385,13 +1340,13 @@
                 <div>
                   <p className="font-black uppercase text-slate-500 text-sm">Labour: {fmtAUD(totals.labour)}</p>
                   <p className="font-black uppercase text-slate-500 text-sm">Materials: {fmtAUD(totals.mats)}</p>
-                  {job.gstEnabled && (<><p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p><p className="font-black uppercase text-slate-600 text-sm">GST (10%): {fmtAUD(totals.gst)}</p></>)}
-                  {extraTaxRate > 0 && <p className="font-black uppercase text-purple-600 text-sm">Tax/Markup ({extraTaxRate}%): {fmtAUD(totals.extra)}</p>}
+                  {job.gstEnabled && (<><p className="font-black uppercase text-slate-600 text-sm mt-2 border-t border-slate-200 pt-2">Subtotal: {fmtAUD(totals.subtotal)}</p><p className="font-black uppercase text-slate-600 text-sm">{getCC().taxLabel} ({getCC().taxRate}%): {fmtAUD(totals.gst)}</p></>)}
+                  {extraTaxRate > 0 && <p className="font-black uppercase text-purple-600 text-sm">{getCC().markupLabel} ({extraTaxRate}%): {fmtAUD(totals.extra)}</p>}
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{job.type === 'handover' ? 'Total Due' : job.gstEnabled ? 'Total inc. Tax/GST' : 'Quotation Total'}</p>
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{job.type === 'handover' ? 'Total Due' : job.gstEnabled ? `Total inc. Tax/${getCC().taxLabel}` : 'Quotation Total'}</p>
                   <p className="text-4xl font-black text-slate-900">{fmtAUD(totals.total)}</p>
-                  {job.gstEnabled && <p className="text-xs text-slate-400 font-bold mt-1">GST included: {fmtAUD(totals.gst)}</p>}
+                  {job.gstEnabled && <p className="text-xs text-slate-400 font-bold mt-1">{getCC().taxLabel} included: {fmtAUD(totals.gst)}</p>}
                 </div>
               </div>
             )}
@@ -1881,6 +1836,7 @@
     });
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [extraTaxRate, setExtraTaxRate] = useState(() => Number(localStorage.getItem('joblog-extratax') || 0));
+    const [countryCode, setCountryCode] = useState(() => localStorage.getItem('jim-country') || 'AU');
     const [viewMode, setViewMode] = useState('dashboard');
     const [activeJobId, setActiveJobId] = useState(null);
     const [selectionMode, setSelectionMode] = useState(false);
@@ -2375,7 +2331,7 @@
                             <div className="flex items-center gap-1.5 flex-wrap mb-1">
                               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{j.type==='handover' ? 'Completion' : 'Quote'}</span>
                               <button onClick={e=>{e.stopPropagation();cycleStatus(j.id);}} className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
-                              {j.gstEnabled && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+GST</span>}
+                              {j.gstEnabled && getCC().taxRate > 0 && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+{getCC().taxLabel}</span>}
                               {isDueSoon && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">Due soon</span>}
                               {isOverdue && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300">Overdue</span>}
                             </div>
@@ -2463,9 +2419,11 @@
                       <DollarSign size={14}/> Costs {activeJob.showCosts ? 'ON' : 'OFF'}
                     </button>
                     
-                    <button onClick={() => toggleGST(activeJobId)} className={`${actionBtnClass} ${activeJob.gstEnabled ? 'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
-                      <Receipt size={14}/> GST {activeJob.gstEnabled ? 'ON' : 'OFF'}
-                    </button>
+                    {getCC().taxRate > 0 && (
+                      <button onClick={() => toggleGST(activeJobId)} className={`${actionBtnClass} ${activeJob.gstEnabled ? 'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
+                        <Receipt size={14}/> {getCC().taxLabel} {activeJob.gstEnabled ? 'ON' : 'OFF'}
+                      </button>
+                    )}
                     
                     <button onClick={() => openTimeEntryForJob(activeJobId)} className={`${actionBtnClass} bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800 hover:bg-cyan-200 dark:hover:bg-cyan-800/60`}>
                       <Timer size={14}/> Log Time
@@ -2501,8 +2459,8 @@
                         <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-sm">{fmtAUD(qt.mats)}</p></div>
                         {activeJob.gstEnabled ? <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-sm">{fmtAUD(qt.subtotal)}</p></div> : <div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div>}
                       </div>
-                      {activeJob.gstEnabled && extraTaxRate === 0 && (<div className="grid grid-cols-2 gap-2 mt-2"><div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div><div className="bg-orange-500 rounded-xl p-3"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. GST</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div></div>)}
-                      {extraTaxRate > 0 && (<div className={`grid mt-2 gap-2 ${activeJob.gstEnabled ? 'grid-cols-2' : 'grid-cols-2'}`}>{activeJob.gstEnabled && <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">GST (10%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div>}<div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Markup ({extraTaxRate}%)</p><p className="font-black text-purple-400 text-sm">{fmtAUD(qt.extra)}</p></div><div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. Tax</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div></div>)}
+                      {activeJob.gstEnabled && extraTaxRate === 0 && (<div className="grid grid-cols-2 gap-2 mt-2"><div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{getCC().taxLabel} ({getCC().taxRate}%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div><div className="bg-orange-500 rounded-xl p-3"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. {getCC().taxLabel}</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div></div>)}
+                      {extraTaxRate > 0 && (<div className={`grid mt-2 gap-2 ${activeJob.gstEnabled ? 'grid-cols-2' : 'grid-cols-2'}`}>{activeJob.gstEnabled && <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{getCC().taxLabel} ({getCC().taxRate}%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div>}<div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{getCC().markupLabel} ({extraTaxRate}%)</p><p className="font-black text-purple-400 text-sm">{fmtAUD(qt.extra)}</p></div><div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. Tax</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div></div>)}
                     </>
                   );
                 })()}
@@ -2579,7 +2537,7 @@
         </div>
 
         {/* Modals */}
-        {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} googleClientId={googleClientId} setGoogleClientId={setGoogleClientId} isGoogleConnected={!!googleToken} googleToken={googleToken} connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar} onSave={(k,m,t) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
+        {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} countryCode={countryCode} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} googleClientId={googleClientId} setGoogleClientId={setGoogleClientId} isGoogleConnected={!!googleToken} googleToken={googleToken} connectGoogleCalendar={connectGoogleCalendar} disconnectGoogleCalendar={disconnectGoogleCalendar} onSave={(k,m,t,cc) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); const c = cc||'AU'; localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); localStorage.setItem('jim-country', c); _cc = c; setCountryCode(c); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
         {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUnlock={handleUnlockSuccess} showToast={showToast}/>}
         {newJobModal && <NewJobModal type={newJobModal} apiKey={apiKey} geminiModel={geminiModel} onSave={handleCreateJob} onClose={() => setNewJobModal(null)} showToast={showToast} toggleVoice={toggleVoice} listeningField={listeningField}/>}
 
