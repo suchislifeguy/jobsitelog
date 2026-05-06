@@ -217,163 +217,251 @@
     const h = Math.round(size * 1.1);
     return (
       <div className={wrapCls} style={{ width: size, height: h, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg viewBox="0 0 40 44" width={size} height={h} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      {/* Hard Hat Plastic Gradient */}
-      <linearGradient id="jim-hat-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#fb923c" />
-        <stop offset="60%" stopColor="#ea580c" />
-        <stop offset="100%" stopColor="#9a3412" />
-      </linearGradient>
-
-      {/* Hard Hat Brim Gradient */}
-      <linearGradient id="jim-brim-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#f97316" />
-        <stop offset="100%" stopColor="#c2410c" />
-      </linearGradient>
-
-      {/* Titanium/Metal Body Gradient */}
-      <linearGradient id="jim-metal-grad" x1="10%" y1="0%" x2="90%" y2="100%">
-        <stop offset="0%" stopColor="#94a3b8" />
-        <stop offset="50%" stopColor="#64748b" />
-        <stop offset="100%" stopColor="#334155" />
-      </linearGradient>
-
-      {/* Glossy Glass Screen Gradient */}
-      <linearGradient id="jim-screen-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="#0f172a" />
-        <stop offset="100%" stopColor="#020617" />
-      </linearGradient>
-
-      {/* Mechanical Neck Gradient */}
-      <linearGradient id="jim-neck-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stopColor="#1e293b" />
-        <stop offset="50%" stopColor="#475569" />
-        <stop offset="100%" stopColor="#0f172a" />
-      </linearGradient>
-
-      {/* 3D Drop Shadow */}
-      <filter id="jim-shadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodColor="#000000" floodOpacity="0.4" />
-      </filter>
-
-      {/* LED Glow Effect for Screen Elements */}
-      <filter id="jim-glow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="1.2" result="blur" />
-        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-      </filter>
-    </defs>
-
-    {/* ==========================================
-        BACKGROUND LAYER: ARMS & NECK
-    ========================================== */}
-
-    {/* Empty state — Shrug Arms */}
-    {s === 'empty' && (
-      <g filter="url(#jim-shadow)">
-        {/* Left Arm Layered for 3D Pipe Effect */}
-        <path d="M14 36 Q7 33 3 30" stroke="#1e293b" strokeWidth="4.5" fill="none" strokeLinecap="round" />
-        <path d="M14 36 Q7 33 3 30" stroke="#64748b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <circle cx="3" cy="30" r="2.5" fill="#1e293b" />
-        <circle cx="3" cy="30" r="1.2" fill="#94a3b8" />
-        {/* Right Arm Layered */}
-        <path d="M26 36 Q33 33 37 30" stroke="#1e293b" strokeWidth="4.5" fill="none" strokeLinecap="round" />
-        <path d="M26 36 Q33 33 37 30" stroke="#64748b" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <circle cx="37" cy="30" r="2.5" fill="#1e293b" />
-        <circle cx="37" cy="30" r="1.2" fill="#94a3b8" />
-      </g>
-    )}
-
-    {/* Wave Arm */}
-    {s === 'wave' && (
-      <g className="jim-wave-arm" filter="url(#jim-shadow)">
-        <path d="M28 27 L36 20" stroke="#9a3412" strokeWidth="4.5" strokeLinecap="round" />
-        <path d="M28 27 L36 20" stroke="#f97316" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx="36" cy="20" r="3" fill="#1e293b" />
-        <circle cx="36" cy="20" r="1.5" fill="#cbd5e1" />
-      </g>
-    )}
-
-    {/* Mechanical Neck Base */}
-    <g filter="url(#jim-shadow)">
-      <rect x="13" y="34" width="14" height="8" rx="2" fill="url(#jim-neck-grad)" />
-      {/* Ribbed details */}
-      <line x1="13.5" y1="36" x2="26.5" y2="36" stroke="#020617" strokeWidth="0.75" />
-      <line x1="13.5" y1="38" x2="26.5" y2="38" stroke="#020617" strokeWidth="0.75" />
-      <line x1="13.5" y1="40" x2="26.5" y2="40" stroke="#020617" strokeWidth="0.75" />
-      {/* 3D Orange Collar/Emblem */}
-      <path d="M18 36 L20 39.5 L22 36 Z" fill="#ea580c" />
-      <path d="M18.5 36 L20 38.5 L21.5 36 Z" fill="#fb923c" />
-    </g>
-
-    {/* ==========================================
-        MIDDLE LAYER: HEAD & FACE
-    ========================================== */}
-
-    {/* Metal Head Casing */}
-    <rect x="6.5" y="17" width="27" height="20" rx="4.5" fill="url(#jim-metal-grad)" filter="url(#jim-shadow)" stroke="#cbd5e1" strokeWidth="0.5" />
-
-    {/* Glossy Black Display Screen */}
-    <rect x="9.5" y="20.5" width="21" height="14.5" rx="2.5" fill="url(#jim-screen-grad)" stroke="#020617" strokeWidth="1" />
-    {/* Curved Screen Glare */}
-    <path d="M9.5 24 Q15 22 30.5 22.5 L30.5 20.5 C30.5 19.1 29.4 18 28 18 L12 18 C10.6 18 9.5 19.1 9.5 20.5 Z" fill="#ffffff" opacity="0.06" />
-
-    {/* Screen Interface (Digital Features) */}
-    <g>
-      {/* Dimmed Eyebrows */}
-      <rect x="12" y="22.5" width="5.5" height="1.2" rx="0.6" fill="#475569" />
-      <rect x="22.5" y="22.5" width="5.5" height="1.2" rx="0.6" fill="#475569" />
-
-      {/* Eyes */}
-      {s === 'error' ? (
-        <g filter="url(#jim-glow)">
-          <line x1="12.5" y1="25.5" x2="16.5" y2="29.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" />
-          <line x1="16.5" y1="25.5" x2="12.5" y2="29.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" />
-          <line x1="23.5" y1="25.5" x2="27.5" y2="29.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" />
-          <line x1="27.5" y1="25.5" x2="23.5" y2="29.5" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" />
-        </g>
-      ) : (
-        <g filter="url(#jim-glow)">
-          <rect x="12" y="25" width="6" height="3.5" rx="1.75" fill={eyeColor} className={eyeCls} opacity="0.85" />
-          {/* Bright LED Core Highlight */}
-          <rect x="12.75" y="25.5" width="4.5" height="1.5" rx="0.75" fill="#ffffff" opacity="0.6" />
-
-          <rect x="22" y="25" width="6" height="3.5" rx="1.75" fill={eyeColor} className={eyeCls} opacity="0.85" />
-          <rect x="22.75" y="25.5" width="4.5" height="1.5" rx="0.75" fill="#ffffff" opacity="0.6" />
-        </g>
-      )}
-
-      {/* Mouth / Thinking State */}
-      {s === 'thinking' ? (
-        <g filter="url(#jim-glow)">
-          <circle cx="16" cy="32" r="1.2" fill="#a855f7" className="jim-dot-1" />
-          <circle cx="20" cy="32" r="1.2" fill="#a855f7" className="jim-dot-2" />
-          <circle cx="24" cy="32" r="1.2" fill="#a855f7" className="jim-dot-3" />
-        </g>
-      ) : (
-        <path d="M15 32 Q20 34 25 32" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" fill="none" filter="url(#jim-glow)" opacity="0.8" />
-      )}
-    </g>
-
-    {/* ==========================================
-        FOREGROUND LAYER: HARD HAT
-    ========================================== */}
-
-    <g filter="url(#jim-shadow)">
-      {/* Main Dome */}
-      <path d="M7 16 C7 4, 33 4, 33 16 Z" fill="url(#jim-hat-grad)" />
-      {/* Top Structural Ridge */}
-      <path d="M17 16 L18.5 5 C19.5 4.8 20.5 4.8 21.5 5 L23 16 Z" fill="#ea580c" />
-      <path d="M18.5 16 L19.2 5.2 C19.7 5.1 20.3 5.1 20.8 5.2 L21.5 16 Z" fill="#fb923c" />
-      {/* Plastic Shine / Reflection */}
-      <path d="M9 15 C9 8, 14 6, 18 5.5 C14 6.5, 11 9, 10 15 Z" fill="#ffffff" opacity="0.25" />
-
-      {/* Hat Brim */}
-      <rect x="3" y="15" width="34" height="4.5" rx="2.25" fill="url(#jim-brim-grad)" />
-      {/* Brim Edge Highlight */}
-      <rect x="3.5" y="15.5" width="33" height="1.5" rx="0.75" fill="#ffffff" opacity="0.3" />
-    </g>
-  </svg>
+          <svg viewBox="0 0 120 180" width={size} height={h} fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              {/* Hard Hat Plastic Gradient */}
+              <linearGradient id="jim-hat-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#fb923c" />
+                <stop offset="60%" stopColor="#ea580c" />
+                <stop offset="100%" stopColor="#9a3412" />
+              </linearGradient>
+          
+              {/* Hard Hat Brim Gradient */}
+              <linearGradient id="jim-brim-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#f97316" />
+                <stop offset="100%" stopColor="#c2410c" />
+              </linearGradient>
+          
+              {/* Skin Tone Gradient */}
+              <linearGradient id="jim-skin-grad" x1="10%" y1="0%" x2="90%" y2="100%">
+                <stop offset="0%" stopColor="#fddcc5" />
+                <stop offset="50%" stopColor="#f5c5a3" />
+                <stop offset="100%" stopColor="#e8b08a" />
+              </linearGradient>
+          
+              {/* High-Vis Vest Gradient */}
+              <linearGradient id="jim-vest-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#f97316" />
+                <stop offset="100%" stopColor="#c2410c" />
+              </linearGradient>
+          
+              {/* Jeans Gradient */}
+              <linearGradient id="jim-jeans-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#1e40af" />
+                <stop offset="50%" stopColor="#2563eb" />
+                <stop offset="100%" stopColor="#1e3a8a" />
+              </linearGradient>
+          
+              {/* Drop Shadow */}
+              <filter id="jim-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000000" floodOpacity="0.35" />
+              </filter>
+            </defs>
+          
+            {/* ==========================================
+                BACKGROUND: ARMS (Full human arms)
+            ========================================== */}
+          
+            {s === 'empty' && (
+              <g filter="url(#jim-shadow)">
+                {/* Left Arm — resting at side */}
+                <path d="M22 72 L18 72 L10 130 L16 130 Z" fill="#f5c5a3" />
+                <path d="M10 130 C6 153 8 155 14 155 C20 155 22 153 16 130 Z" fill="#f5c5a3" />
+                <circle cx="14" cy="157" r="5" fill="#f5c5a3" />
+                {/* Right Arm */}
+                <path d="M98 72 L102 72 L104 130 L98 130 Z" fill="#f5c5a3" />
+                <path d="M104 130 C108 153 106 155 100 155 C94 155 92 153 98 130 Z" fill="#f5c5a3" />
+                <circle cx="100" cy="157" r="5" fill="#f5c5a3" />
+              </g>
+            )}
+          
+            {s === 'wave' && (
+              <g filter="url(#jim-shadow)" className="jim-wave-arm">
+                {/* Left Arm — resting */}
+                <path d="M22 72 L18 72 L10 130 L16 130 Z" fill="#f5c5a3" />
+                <path d="M10 130 C6 153 8 155 14 155 C20 155 22 153 16 130 Z" fill="#f5c5a3" />
+                <circle cx="14" cy="157" r="5" fill="#f5c5a3" />
+                {/* Right Arm — waving hand */}
+                <path d="M98 72 L104 72 L114 100 L108 100 Z" fill="#f5c5a3" />
+                <path d="M114 100 L120 75 L115 70 L108 100 Z" fill="#f5c5a3" />
+                <circle cx="118" cy="72" r="5" fill="#f5c5a3" />
+              </g>
+            )}
+          
+            {s === 'thinking' && (
+              <g filter="url(#jim-shadow)">
+                {/* Left Arm — resting */}
+                <path d="M22 72 L18 72 L10 130 L16 130 Z" fill="#f5c5a3" />
+                <path d="M10 130 C6 153 8 155 14 155 C20 155 22 153 16 130 Z" fill="#f5c5a3" />
+                <circle cx="14" cy="157" r="5" fill="#f5c5a3" />
+                {/* Right Arm — hand on chin */}
+                <path d="M98 72 L102 72 L106 110 L100 110 Z" fill="#f5c5a3" />
+                <path d="M106 110 L108 130 L102 130 L100 110 Z" fill="#f5c5a3" />
+                <circle cx="105" cy="131" r="5" fill="#f5c5a3" />
+              </g>
+            )}
+          
+            {s === 'error' && (
+              <g filter="url(#jim-shadow)">
+                {/* Left Arm — hand on head */}
+                <path d="M22 72 L18 72 L12 50 L18 50 Z" fill="#f5c5a3" />
+                <path d="M12 50 L16 30 L22 30 L18 50 Z" fill="#f5c5a3" />
+                <circle cx="19" cy="28" r="5" fill="#f5c5a3" />
+                {/* Right Arm — hand on head */}
+                <path d="M98 72 L102 72 L108 50 L102 50 Z" fill="#f5c5a3" />
+                <path d="M108 50 L104 30 L98 30 L102 50 Z" fill="#f5c5a3" />
+                <circle cx="101" cy="28" r="5" fill="#f5c5a3" />
+              </g>
+            )}
+          
+            {/* ==========================================
+                BACKGROUND: LEGS & LOWER BODY
+            ========================================== */}
+          
+            <g filter="url(#jim-shadow)">
+              {/* Jeans - Left Leg */}
+              <path d="M30 140 L22 185 L50 185 L48 140 Z" fill="url(#jim-jeans-grad)" />
+              {/* Jeans - Right Leg */}
+              <path d="M90 140 L98 185 L70 185 L72 140 Z" fill="url(#jim-jeans-grad)" />
+              
+              {/* Work Boots */}
+              <path d="M20 185 L20 195 L55 195 L55 185 Z" fill="#78350f" rx="3" />
+              <path d="M100 185 L100 195 L65 195 L65 185 Z" fill="#78350f" rx="3" />
+              <path d="M22 188 L22 192 L52 192 L52 188 Z" fill="#92400e" />
+              <path d="M98 188 L98 192 L68 192 L68 188 Z" fill="#92400e" />
+          
+              {/* Tool Belt */}
+              <rect x="25" y="133" width="70" height="12" rx="2" fill="#451a03" />
+              <rect x="44" y="134" width="12" height="10" rx="1" fill="#78350f" />
+              <rect x="64" y="134" width="12" height="10" rx="1" fill="#78350f" />
+              <circle cx="60" cy="139" r="6" fill="#d97706" />
+            </g>
+          
+            {/* ==========================================
+                MIDDLE LAYER: TORSO & CHEST
+            ========================================== */}
+          
+            <g filter="url(#jim-shadow)">
+              {/* White Singlet / Undershirt visible at neck */}
+              <path d="M40 85 L80 85 L75 100 L45 100 Z" fill="#f8fafc" />
+          
+              {/* Torso with blue shirt under vest */}
+              <path d="M28 100 C28 75 92 75 92 100 L95 135 L25 135 Z" fill="#1e3a8a" />
+              
+              {/* High-Vis Vest */}
+              <path d="M25 100 L42 100 L35 135 L20 135 Z" fill="url(#jim-vest-grad)" />
+              <path d="M95 100 L78 100 L85 135 L100 135 Z" fill="url(#jim-vest-grad)" />
+              {/* Vest reflective stripes */}
+              <rect x="30" y="112" width="18" height="5" rx="2" fill="#fef08a" opacity="0.9" />
+              <rect x="72" y="112" width="18" height="5" rx="2" fill="#fef08a" opacity="0.9" />
+              <rect x="30" y="124" width="18" height="5" rx="2" fill="#fef08a" opacity="0.9" />
+              <rect x="72" y="124" width="18" height="5" rx="2" fill="#fef08a" opacity="0.9" />
+          
+              {/* Chest definition (manly pecs under shirt fabric) */}
+              <path d="M40 100 C35 92 45 88 52 90 C58 88 65 88 68 90 C75 88 85 92 80 100 Z" fill="#bfdbfe" opacity="0.4" />
+            </g>
+          
+            {/* ==========================================
+                MIDDLE LAYER: NECK
+            ========================================== */}
+          
+            <g filter="url(#jim-shadow)">
+              {/* Strong thick neck */}
+              <rect x="46" y="58" width="28" height="30" rx="6" fill="url(#jim-skin-grad)" />
+              {/* Adam's apple hint */}
+              <ellipse cx="60" cy="78" rx="4" ry="5" fill="#e8b08a" />
+              {/* Collar of workshirt */}
+              <path d="M38 88 L48 78 L54 88 Z" fill="#1e3a8a" />
+              <path d="M82 88 L72 78 L66 88 Z" fill="#1e3a8a" />
+            </g>
+          
+            {/* ==========================================
+                FOREGROUND LAYER: FACE & HEAD
+            ========================================== */}
+          
+            <g filter="url(#jim-shadow)">
+              {/* Face Oval */}
+              <ellipse cx="60" cy="48" rx="28" ry="32" fill="url(#jim-skin-grad)" />
+          
+              {/* Strong Jaw Line */}
+              <path d="M36 58 L36 65 Q60 78 84 65 L84 58 Z" fill="#f5c5a3" />
+              <path d="M38 62 Q60 75 82 62" stroke="#e8b08a" strokeWidth="1.5" fill="none" />
+          
+              {/* Ears */}
+              <ellipse cx="32" cy="48" rx="5" ry="8" fill="#f5c5a3" stroke="#e8b08a" strokeWidth="1" />
+              <ellipse cx="88" cy="48" rx="5" ry="8" fill="#f5c5a3" stroke="#e8b08a" strokeWidth="1" />
+              <ellipse cx="32" cy="48" rx="2.5" ry="4" fill="#e8b08a" />
+              <ellipse cx="88" cy="48" rx="2.5" ry="4" fill="#e8b08a" />
+          
+              {/* Short Back and Sides Haircut */}
+              <path d="M33 35 C33 18 87 18 87 35 C87 33 80 22 60 22 C40 22 33 33 33 35 Z" fill="#78350f" />
+              <path d="M35 30 C40 22 80 22 85 30 C80 25 40 25 35 30 Z" fill="#92400e" />
+          
+              {/* Thick Eyebrows */}
+              <path d="M38 38 Q44 34 50 38" stroke="#78350f" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+              <path d="M70 38 Q76 34 82 38" stroke="#78350f" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+          
+              {/* Eyes */}
+              {s === 'error' ? (
+                <g>
+                  {/* X eyes for error */}
+                  <line x1="38" y1="44" x2="50" y2="52" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
+                  <line x1="50" y1="44" x2="38" y2="52" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
+                  <line x1="70" y1="44" x2="82" y2="52" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
+                  <line x1="82" y1="44" x2="70" y2="52" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
+                </g>
+              ) : (
+                <g>
+                  {/* Normal eyes with eye color */}
+                  <ellipse cx="44" cy="46" rx="6" ry="5" fill="white" />
+                  <circle cx="45" cy="46" r="3.5" fill={eyeColor} className={eyeCls} />
+                  <circle cx="45" cy="46" r="1.5" fill="#1e293b" />
+                  <ellipse cx="76" cy="46" rx="6" ry="5" fill="white" />
+                  <circle cx="77" cy="46" r="3.5" fill={eyeColor} className={eyeCls} />
+                  <circle cx="77" cy="46" r="1.5" fill="#1e293b" />
+                </g>
+              )}
+          
+              {/* Nose */}
+              <path d="M60 44 L58 54 Q60 57 62 54 Z" fill="#e8b08a" />
+              <circle cx="57" cy="54" r="2" fill="#e8b08a" />
+              <circle cx="63" cy="54" r="2" fill="#e8b08a" />
+          
+              {/* Mouth */}
+              {s === 'thinking' ? (
+                <g>
+                  {/* Thinking mouth — pursed to one side */}
+                  <ellipse cx="70" cy="63" rx="5" ry="6" fill="#c2410c" />
+                  <path d="M67 63 Q70 58 73 63" stroke="#c2410c" strokeWidth="2" fill="none" />
+                </g>
+              ) : (
+                <path d="M50 63 Q60 70 70 63" stroke="#c2410c" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+              )}
+          
+              {/* Stubble / 5 o'clock shadow */}
+              <path d="M38 58 C46 60 74 60 82 58 C78 62 42 62 38 58 Z" fill="#d4a574" opacity="0.4" />
+              <path d="M42 62 Q60 66 78 62 Q60 67 42 62 Z" fill="#d4a574" opacity="0.3" />
+            </g>
+          
+            {/* ==========================================
+                FOREGROUND TOP: THE ORIGINAL HARD HAT
+            ========================================== */}
+          
+            <g filter="url(#jim-shadow)">
+              {/* Main Dome */}
+              <path d="M30 35 C30 8 90 8 90 35 Z" fill="url(#jim-hat-grad)" />
+              {/* Top Structural Ridge */}
+              <path d="M56 35 L58 12 C59 10 61 10 62 12 L64 35 Z" fill="#ea580c" />
+              <path d="M57 35 L58 12.5 C59 12 61 12 62 12.5 L63 35 Z" fill="#fb923c" />
+              {/* Plastic Shine */}
+              <path d="M34 32 C34 20 44 16 52 14 C48 18 38 24 36 32 Z" fill="#ffffff" opacity="0.25" />
+          
+              {/* Hat Brim */}
+              <rect x="20" y="33" width="80" height="8" rx="4" fill="url(#jim-brim-grad)" />
+              {/* Brim Highlight */}
+              <rect x="22" y="34" width="76" height="2" rx="1" fill="#ffffff" opacity="0.3" />
+            </g>
+          </svg>
       </div>
     );
   };
