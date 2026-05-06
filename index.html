@@ -2025,6 +2025,7 @@
     const [isProcessingLive, setIsProcessingLive] = useState(false);
     const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
     const [pendingUserInput, setPendingUserInput] = useState(null);
+    const jimRecognitionRef = useRef(null);
 
     // Live Timer
     const [activeTimer, setActiveTimer] = useState(() => { try { return JSON.parse(localStorage.getItem('joblog-timer') || 'null'); } catch { return null; } });
@@ -2197,426 +2198,134 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
           'models/gemini-2.0-flash-live-001'
         ];
     
-    const startJimLive = async (modelIdx = 0, lastErrorMsg = '') => {
-      if (!apiKey) { 
-        showToast('Add your Gemini API key in Settings first.', 'error'); 
-        return; 
-      }
-      
-      // Prevent multiple simultaneous connections
-      if (isProcessingLive) {
-        showToast('JIM is already processing, please wait...', 'info');
+    const startJimLive = async () => {
+      if (!apiKey) {
+        showToast('Add your Gemini API key in Settings first.', 'error');
         return;
       }
-    
-      if (modelIdx === 0) {
-        jimCancelledRef.current = false;
-        setJimLiveOpen(true);
-        setJimLiveStatus('connecting');
-        setJimLiveTranscript([]);
-        setIsProcessingLive(true);
-        setIsAwaitingResponse(false);
-        setPendingUserInput(null);
-      }
-    
-      if (jimCancelledRef.current) {
-        setIsProcessingLive(false);
+      
+      setJimLiveOpen(true);
+      setJimLiveStatus('listening');
+      setJimLiveTranscript([]);
+      
+      // Start speech recognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        showToast('Speech recognition not supported in this browser', 'error');
+        setJimLiveOpen(false);
         return;
       }
-    
-      if (modelIdx >= LIVE_MODELS.length) {
-        setJimLiveStatus('error');
-        setIsProcessingLive(false);
-        showToast(`Live API Failed: ${lastErrorMsg || 'All models exhausted'}`, 'error');
-        return;
-      }
-    
-      const model = LIVE_MODELS[modelIdx];
       
-      if (jimWsRef.current && jimWsRef.current.readyState === WebSocket.OPEN) {
-        jimWsRef.current.close();
-      }
-    
-      const ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`);
-      jimWsRef.current = ws;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-AU';
       
-      let setupComplete = false;
-      let responseTimeout = null;
-      let currentAudioContext = null;
-    
-      const cleanup = () => {
-        if (responseTimeout) clearTimeout(responseTimeout);
-        if (currentAudioContext && currentAudioContext.state !== 'closed') {
-          currentAudioContext.close().catch(console.warn);
-        }
+      recognition.onstart = () => {
+        setJimLiveStatus('listening');
       };
-    
-      ws.onopen = () => {
-        console.log(`[JIM Live] WebSocket opened for ${model}`);
+      
+      recognition.onresult = async (event) => {
+        const userText = event.results[0][0].transcript;
+        setJimLiveTranscript(prev => [...prev, { role: 'user', text: userText }]);
+        setJimLiveStatus('thinking');
         
-        responseTimeout = setTimeout(() => {
-          console.warn(`[JIM Live] No response from ${model}, trying next...`);
-          ws.close();
-        }, 15000);
-        
-        const setupMessage = {
-          setup: {
-            model: model,
-            generation_config: {
-              temperature: 0.7,
-              candidate_count: 1,
-              response_modalities: ["AUDIO"],
-              speech_config: {
-                voice_config: {
-                  prebuilt_voice_config: {
-                    voice_name: 'Kore'
-                  }
-                }
-              }
-            },
-            system_instruction: {
-              parts: [{
-                text: buildJimContext().substring(0, 1500)
-              }]
-            }
-          }
-        };
-        
-        ws.send(JSON.stringify(setupMessage));
-      };
-    
-      ws.onmessage = async (event) => {
-        let data;
+        // Call Gemini API
         try {
-          data = JSON.parse(event.data instanceof Blob ? await event.data.text() : event.data);
-        } catch (e) {
-          console.error('Parse error:', e);
-          return;
-        }
-    
-        if (data.error) {
-          console.error(`[JIM Live] ${model} Error:`, data.error);
-          if (responseTimeout) clearTimeout(responseTimeout);
-          ws.close();
-          return;
-        }
-    
-        // Handle setup completion
-        if (data.setupComplete) {
-          console.log(`[JIM Live] Setup complete for ${model}`);
-          if (responseTimeout) clearTimeout(responseTimeout);
-          setupComplete = true;
-          setJimLiveStatus('listening');
-          setIsAwaitingResponse(false);
-          setIsProcessingLive(false);
+          const context = buildJimContext();
+          const fullPrompt = `${context}\n\nUser asked: "${userText}"\n\nRespond conversationally as JIM, the Australian tradie assistant. Keep it brief and helpful (2-3 sentences max).`;
           
-          // Start microphone after setup
-          await startLiveMicrophone();
-          return;
-        }
-    
-        // Handle server content - this means JIM is responding
-        if (data.serverContent) {
-          // Set flag that we're awaiting a response/tool call completion
-          setIsAwaitingResponse(true);
-          setIsProcessingLive(true);
+          const response = await smartFetchAI(
+            'light',
+            [{ parts: [{ text: fullPrompt }] }],
+            { temperature: 0.7, maxOutputTokens: 150 },
+            apiKey,
+            geminiModel
+          );
           
-          const parts = data.serverContent.modelTurn?.parts || [];
+          const jimResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't process that.";
           
-          for (const part of parts) {
-            // Handle function call (tool call)
-            if (part.functionCall) {
-              console.log('[JIM Live] Tool call received:', part.functionCall);
-              setJimLiveStatus('thinking');
-              
-              // Process the tool call
-              const result = await processToolCall(part.functionCall);
-              
-              // Send function response back
-              if (jimWsRef.current && jimWsRef.current.readyState === WebSocket.OPEN) {
-                const functionResponse = {
-                  function_response: {
-                    id: part.functionCall.id,
-                    response: result
-                  }
-                };
-                jimWsRef.current.send(JSON.stringify(functionResponse));
-              }
-              
-              setJimLiveStatus('listening');
-              continue;
-            }
-            
-            // Handle audio response
-            if (part.inlineData?.data && part.inlineData?.mimeType?.includes('audio')) {
-              try {
-                if (!currentAudioContext) {
-                  currentAudioContext = new AudioContext({ sampleRate: 24000 });
-                  jimAudioCtxRef.current = currentAudioContext;
-                }
-                
-                const base64Data = part.inlineData.data;
-                const binaryString = atob(base64Data);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                  bytes[i] = binaryString.charCodeAt(i);
-                }
-                
-                const int16 = new Int16Array(bytes.buffer);
-                const float32 = new Float32Array(int16.length);
-                for (let i = 0; i < int16.length; i++) {
-                  float32[i] = int16[i] / 32768;
-                }
-                
-                const buffer = currentAudioContext.createBuffer(1, float32.length, 24000);
-                buffer.copyToChannel(float32, 0);
-                
-                const source = currentAudioContext.createBufferSource();
-                source.buffer = buffer;
-                source.connect(currentAudioContext.destination);
-                source.start();
-              } catch (err) {
-                console.error('Audio playback error:', err);
-              }
-            }
-            
-            // Handle text transcript
-            if (part.text) {
-              setJimLiveTranscript(prev => [...prev, { role: 'jim', text: part.text }]);
-            }
-          }
+          setJimLiveTranscript(prev => [...prev, { role: 'jim', text: jimResponse }]);
           
-          // Turn complete - ready for next input
-          if (data.serverContent.turnComplete) {
-            setIsAwaitingResponse(false);
-            setIsProcessingLive(false);
+          // Speak the response
+          const utterance = new SpeechSynthesisUtterance(jimResponse);
+          utterance.rate = 0.9;
+          utterance.pitch = 1.0;
+          utterance.lang = 'en-AU';
+          
+          const voices = window.speechSynthesis.getVoices();
+          const aussieVoice = voices.find(v => v.lang.includes('en-AU') || v.name.includes('Karen') || v.name.includes('Google UK'));
+          if (aussieVoice) utterance.voice = aussieVoice;
+          
+     utterance.onstart = () => setJimLiveStatus('speaking');
+          utterance.onend = () => {
             setJimLiveStatus('listening');
-            
-            // Process any pending user input that was queued
-            if (pendingUserInput) {
-              const input = pendingUserInput;
-              setPendingUserInput(null);
-              sendLiveInput(input);
+            // Restart recognition for continuous conversation
+            if (jimLiveOpen && !jimCancelledRef.current) {
+              setTimeout(() => {
+                if (jimLiveOpen && !jimCancelledRef.current) {
+                  recognition.start();
+                }
+              }, 500);
             }
-          }
+          };
+          utterance.onerror = () => setJimLiveStatus('listening');
+          
+          window.speechSynthesis.speak(utterance);
+          
+        } catch (err) {
+          console.error('JIM error:', err);
+          setJimLiveTranscript(prev => [...prev, { role: 'jim', text: `Sorry, error: ${err.message}` }]);
+          setJimLiveStatus('error');
+          setTimeout(() => {
+            if (jimLiveOpen && !jimCancelledRef.current) {
+              setJimLiveStatus('listening');
+              recognition.start();
+            }
+          }, 2000);
         }
       };
-    
-      ws.onerror = (error) => {
-        console.error(`[JIM Live] ${model} WebSocket error:`, error);
-        if (responseTimeout) clearTimeout(responseTimeout);
-        setIsProcessingLive(false);
-        setIsAwaitingResponse(false);
-      };
-    
-      ws.onclose = (event) => {
-        console.log(`[JIM Live] ${model} closed: ${event.code} - ${event.reason}`);
-        cleanup();
-        
-        if (jimCancelledRef.current) {
-          setIsProcessingLive(false);
-          setIsAwaitingResponse(false);
-          return;
-        }
-        
-        if (!setupComplete || event.code === 1008 || event.code === 1006) {
-          console.log(`[JIM Live] Trying next model (${modelIdx + 1})...`);
-          setTimeout(() => {
-            startJimLive(modelIdx + 1, `Code ${event.code}: ${event.reason}`);
-          }, 500);
-        } else if (event.code !== 1000) {
-          console.log(`[JIM Live] Unexpected close, retrying...`);
-          setTimeout(() => {
-            if (!jimCancelledRef.current) {
-              startJimLive(modelIdx, `Reconnect after ${event.code}`);
-            }
-          }, 1000);
+      
+      recognition.onerror = (event) => {
+        console.error('Recognition error:', event.error);
+        if (event.error === 'not-allowed') {
+          showToast('Microphone access denied', 'error');
+          setJimLiveOpen(false);
         } else {
-          setJimLiveStatus('idle');
-          setIsProcessingLive(false);
-          setIsAwaitingResponse(false);
+          setJimLiveStatus('error');
+          setTimeout(() => {
+            if (jimLiveOpen && !jimCancelledRef.current) {
+              setJimLiveStatus('listening');
+              recognition.start();
+            }
+          }, 2000);
         }
       };
-    };
-    
-    // Helper to send input (text or audio) with race condition prevention
-    const sendLiveInput = (input) => {
-      // Don't send if we're awaiting a response (JIM is thinking or speaking)
-      if (isAwaitingResponse) {
-        console.log('[JIM Live] Queuing input - awaiting response');
-        setPendingUserInput(input);
-        return false;
-      }
       
-      if (!jimWsRef.current || jimWsRef.current.readyState !== WebSocket.OPEN) {
-        console.error('[JIM Live] WebSocket not ready');
-        return false;
-      }
+      recognition.onend = () => {
+        if (jimLiveOpen && !jimCancelledRef.current && jimLiveStatus !== 'speaking') {
+          // Restart if still open
+          recognition.start();
+        }
+      };
       
-      setIsProcessingLive(true);
-      
-      if (typeof input === 'string') {
-        // Send text message
-        const message = {
-          client_content: {
-            turns: [{
-              role: 'user',
-              parts: [{ text: input }]
-            }],
-            turn_complete: true
-          }
-        };
-        jimWsRef.current.send(JSON.stringify(message));
-      } else if (input instanceof Blob) {
-        // Send audio message
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64 = reader.result.split(',')[1];
-          const message = {
-            realtime_input: {
-              media_chunks: [{
-                data: base64,
-                mime_type: input.type || 'audio/webm'
-              }]
-            }
-          };
-          jimWsRef.current.send(JSON.stringify(message));
-        };
-        reader.readAsDataURL(input);
-      }
-      
-      return true;
-    };
-    
-    // Start microphone streaming with proper flag checks
-    const startLiveMicrophone = async () => {
-      if (!jimWsRef.current || jimWsRef.current.readyState !== WebSocket.OPEN) {
-        console.error('WebSocket not ready for mic stream');
-        return;
-      }
-      
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        jimStreamRef.current = stream;
-        
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
-        });
-        
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0 && !isAwaitingResponse && jimWsRef.current && jimWsRef.current.readyState === WebSocket.OPEN) {
-            sendLiveInput(event.data);
-          } else if (isAwaitingResponse && event.data.size > 0) {
-            // Queue the audio for later
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              setPendingUserInput(event.data);
-            };
-            reader.readAsDataURL(event.data);
-          }
-        };
-        
-        mediaRecorder.start(500);
-        jimStreamRef.current.mediaRecorder = mediaRecorder;
-        
-      } catch (err) {
-        console.error('Microphone access error:', err);
-        setJimLiveStatus('error');
-        setIsProcessingLive(false);
-        showToast('Could not access microphone', 'error');
-      }
-    };
-    
-    // Process tool calls from JIM
-    const processToolCall = async (functionCall) => {
-      const { name, args } = functionCall;
-      console.log(`[JIM Live] Processing tool: ${name}`, args);
-      
-      switch (name) {
-        case 'get_jobs_summary':
-          return {
-            jobs_count: jobs.length,
-            total_quoted: revenueStats.quoted,
-            total_outstanding: revenueStats.outstanding,
-            total_received: revenueStats.received,
-            overdue_count: revenueStats.overdueCount
-          };
-          
-        case 'get_job_details':
-          const job = jobs.find(j => j.id === args.job_id || j.address?.includes(args.address));
-          if (job) {
-            const totals = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
-            return {
-              id: job.id,
-              address: job.address,
-              client: job.clientName,
-              status: job.status,
-              total: totals.total,
-              tasks: job.tasks.map(t => ({ title: t.title, time: t.time }))
-            };
-          }
-          return { error: 'Job not found' };
-          
-        case 'get_upcoming_appointments':
-          const upcoming = appointments
-            .filter(a => new Date(a.start) > new Date())
-            .sort((a,b) => new Date(a.start) - new Date(b.start))
-            .slice(0, 5);
-          return upcoming.map(a => ({
-            title: a.title,
-            start: a.start,
-            notes: a.notes
-          }));
-          
-        default:
-          return { error: `Unknown tool: ${name}` };
-      }
+      jimRecognitionRef.current = recognition;
+      recognition.start();
     };
     
     const stopJimLive = () => {
       jimCancelledRef.current = true;
-      setIsProcessingLive(false);
-      setIsAwaitingResponse(false);
-      setPendingUserInput(null);
       
-      if (jimWsRef.current) {
-        jimWsRef.current.close(1000, 'User stopped');
-        jimWsRef.current = null;
+      if (jimRecognitionRef.current) {
+        try {
+          jimRecognitionRef.current.stop();
+        } catch(e) {}
+        jimRecognitionRef.current = null;
       }
       
-      if (jimStreamRef.current) {
-        if (jimStreamRef.current.mediaRecorder) {
-          jimStreamRef.current.mediaRecorder.stop();
-        }
-        jimStreamRef.current.getTracks().forEach(t => t.stop());
-        jimStreamRef.current = null;
-      }
-      
-      if (jimMicCtxRef.current) {
-        try { jimMicCtxRef.current.close(); } catch(_) {}
-        jimMicCtxRef.current = null;
-      }
-      
-      if (jimAudioCtxRef.current) {
-        try { jimAudioCtxRef.current.close(); } catch(_) {}
-        jimAudioCtxRef.current = null;
-      }
-      
-      jimNextPlayTimeRef.current = 0;
-      setJimLiveStatus('idle');
+      window.speechSynthesis.cancel();
       setJimLiveOpen(false);
-    };
-
-    const openTimeEntryForJob = (jobId) => {
-      setTimeEntryModal({
-        id: null,
-        date: formatLocal(new Date(), 'iso-date'),
-        startTime: '08:00',
-        endTime: '12:00',
-        jobId: jobId,
-        category: 'Site Work',
-        notes: ''
-      });
+      setJimLiveStatus('idle');
     };
 
     const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => setConfirmDialog({ message, onConfirm, confirmLabel, danger });
