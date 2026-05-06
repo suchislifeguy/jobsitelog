@@ -33,13 +33,13 @@
 
       // 2. Make Jim Speak (Using Browser Voice)
       const utterance = new SpeechSynthesisUtterance(jimSays);
-      utterance.rate = 1.0; 
+      utterance.rate = 1.0;
       utterance.pitch = 0.95;
 
       // Optional: Pick a specific voice like "Google UK English Male"
       const voices = window.speechSynthesis.getVoices();
-      utterance.voice = voices.find(v => v.lang.includes('en-AU') && v.name.toLowerCase().includes('male')) 
-        || voices.find(v => v.name.toLowerCase().includes('male')) 
+      utterance.voice = voices.find(v => v.lang.includes('en-AU') && v.name.toLowerCase().includes('male'))
+        || voices.find(v => v.name.toLowerCase().includes('male'))
         || voices[0];
 
       window.speechSynthesis.speak(utterance);
@@ -107,7 +107,7 @@
       .jim-idle      { animation: jimIdleFloat 3s ease-in-out infinite; }
       .jim-eye-pulse { animation: jimEyePulse 2.5s ease-in-out infinite; }
       .jim-scan      { transform-origin: center; animation: jimScan 1.1s ease-in-out infinite; }
-      .jim-wave-arm  { transform-origin: 31px 27px; animation: jimWaveArm 1.4s ease-in-out infinite; }
+      .jim-wave-arm  { transform-box: fill-box; transform-origin: 0% 0%; animation: jimWaveArm 1.4s ease-in-out infinite; }
       .jim-dot-1     { transform-origin: center; animation: jimDotPulse 1.2s ease-in-out infinite; animation-delay: 0s; }
       .jim-dot-2     { transform-origin: center; animation: jimDotPulse 1.2s ease-in-out infinite; animation-delay: 0.2s; }
       .jim-dot-3     { transform-origin: center; animation: jimDotPulse 1.2s ease-in-out infinite; animation-delay: 0.4s; }
@@ -211,296 +211,144 @@
 
   const JimMascot = ({ size = 36, state = 'idle' }) => {
     const s = state;
-    const wrapCls = (s==='idle'||s==='wave') ? 'jim-idle' : s==='empty' ? 'jim-sway' : s==='error' ? 'jim-shake' : '';
-    const eyeColor = s==='error' ? '#ef4444' : s==='thinking' ? '#a78bfa' : '#f97316';
-    const eyeCls   = (s==='idle'||s==='wave') ? 'jim-eye-pulse' : s==='thinking' ? 'jim-scan' : '';
-    const h = Math.round(size * 1.1);
+    const wrapCls = s === 'error' ? 'jim-shake' : s === 'empty' ? 'jim-sway' : 'jim-idle';
+    const h = Math.round(size * 1.3);
+    const isWave = s === 'wave';
+    const isThink = s === 'thinking';
     return (
       <div className={wrapCls} style={{ width: size, height: h, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg viewBox="0 0 120 180" width={size} height={h} fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              {/* Hard Hat Plastic Gradient */}
-              <linearGradient id="jim-hat-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#fb923c" />
-                <stop offset="60%" stopColor="#ea580c" />
-                <stop offset="100%" stopColor="#9a3412" />
-              </linearGradient>
-          
-              {/* Hard Hat Brim Gradient */}
-              <linearGradient id="jim-brim-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#f97316" />
-                <stop offset="100%" stopColor="#c2410c" />
-              </linearGradient>
-          
-              {/* Skin Tone Gradient */}
-              <linearGradient id="jim-skin-grad" x1="10%" y1="0%" x2="90%" y2="100%">
-                <stop offset="0%" stopColor="#fddcc5" />
-                <stop offset="50%" stopColor="#f5c5a3" />
-                <stop offset="100%" stopColor="#e8b08a" />
-              </linearGradient>
-          
-              {/* High-Vis Vest Gradient */}
-              <linearGradient id="jim-vest-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#f97316" />
-                <stop offset="100%" stopColor="#c2410c" />
-              </linearGradient>
-          
-              {/* Jeans Gradient */}
-              <linearGradient id="jim-jeans-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#1e40af" />
-                <stop offset="50%" stopColor="#2563eb" />
-                <stop offset="100%" stopColor="#1e3a8a" />
-              </linearGradient>
-          
-              {/* Drop Shadow */}
-              <filter id="jim-shadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#000000" floodOpacity="0.35" />
-              </filter>
-            </defs>
-          
-            {/* ==========================================
-                BACKGROUND: FULL ARMS (attached to shoulders)
-            ========================================== */}
-          
-            {s === 'empty' && (
-              <g filter="url(#jim-shadow)">
-                {/* Left Shoulder Ball Joint */}
-                <circle cx="26" cy="80" r="11" fill="url(#jim-skin-grad)" />
-                {/* Left Upper Arm — drops straight down from shoulder */}
-                <path d="M18 82 L14 82 L10 135 L16 135 L18 128 Z" fill="url(#jim-skin-grad)" />
-                {/* Left Forearm */}
-                <path d="M15 135 L10 155 L16 155 L18 135 Z" fill="url(#jim-skin-grad)" />
-                {/* Left Hand */}
-                <circle cx="13" cy="158" r="5" fill="url(#jim-skin-grad)" />
-                <path d="M8 156 L6 160 M9 154 L7 159 M11 153 L9 158" stroke="#f5c5a3" strokeWidth="2" strokeLinecap="round" />
-          
-                {/* Right Shoulder Ball Joint */}
-                <circle cx="94" cy="80" r="11" fill="url(#jim-skin-grad)" />
-                {/* Right Upper Arm — drops straight down from shoulder */}
-                <path d="M102 82 L106 82 L110 135 L104 135 L102 128 Z" fill="url(#jim-skin-grad)" />
-                {/* Right Forearm */}
-                <path d="M105 135 L110 155 L104 155 L102 135 Z" fill="url(#jim-skin-grad)" />
-                {/* Right Hand */}
-                <circle cx="107" cy="158" r="5" fill="url(#jim-skin-grad)" />
-                <path d="M112 156 L114 160 M111 154 L113 159 M109 153 L111 158" stroke="#f5c5a3" strokeWidth="2" strokeLinecap="round" />
+        <svg viewBox="0 0 60 80" width={size} height={h} overflow="visible">
+            <style>{`
+            .jim-body { animation: bounce 0.6s ease-in-out infinite alternate; }
+            .jim-head { animation: nod 1.2s ease-in-out infinite; transform-origin: 30px 38px; }
+            .jim-arm-left { animation: swingLeft 1.5s ease-in-out infinite; transform-origin: 15px 48px; }
+            .jim-arm-right { animation: swingRight 1.5s ease-in-out infinite 0.75s; transform-origin: 44px 46px; }
+            .jim-foot-left { animation: tapLeft 0.8s ease-in-out infinite; }
+            .jim-foot-right { animation: tapRight 0.8s ease-in-out infinite 0.4s; }
+            .jim-mustache { animation: twitch 3s ease-in-out infinite 1s; transform-origin: 30px 37px; }
+
+            @keyframes bounce {
+              0% { transform: translateY(0); }
+              100% { transform: translateY(-3px); }
+            }
+            @keyframes nod {
+              0%, 100% { transform: rotate(0deg); }
+              30% { transform: rotate(-4deg); }
+              70% { transform: rotate(3deg); }
+            }
+            @keyframes swingLeft {
+              0%, 100% { transform: rotate(0deg); }
+              50% { transform: rotate(10deg); }
+            }
+            @keyframes swingRight {
+              0%, 100% { transform: rotate(0deg); }
+              50% { transform: rotate(10deg); }
+            }
+            @keyframes tapLeft {
+              0%, 100% { transform: rotate(0deg); }
+              50% { transform: rotate(6deg); }
+            }
+            @keyframes tapRight {
+              0%, 100% { transform: rotate(0deg); }
+              50% { transform: rotate(-6deg); }
+            }
+            @keyframes twitch {
+              0%, 100% { transform: translateY(0); }
+              5% { transform: translateY(1.5px); }
+              10% { transform: translateY(0); }
+            }
+          `}</style>
+
+          <g class="jim-body">
+            {/* ── left arm (behind torso) – same thickness as legs ── */}
+            <g class="jim-arm-left">
+              <line x1="15" y1="48" x2="5" y2="59" stroke="#fbbf24" strokeWidth="6" strokeLinecap="round"/>
+              <line x1="5" y1="59" x2="8" y2="69" stroke="#fcd9b6" strokeWidth="6" strokeLinecap="round"/>
+              {/* Hand */}
+              <circle cx="8" cy="70" r="3.5" fill="#fcd9b6"/>
+            </g>
+
+            {/* clipboard – fixed to left hand at (8, 70) */}
+            <g transform="translate(-5, 54)">
+              <rect x="0" y="0" width="12" height="17" rx="1.5" fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.8"/>
+              <rect x="3" y="-2" width="5" height="3.5" rx="1" fill="#64748b"/>
+              <rect x="1.5" y="4" width="8.5" height="1" rx="0.5" fill="#cbd5e1"/>
+              <rect x="1.5" y="7.5" width="8.5" height="1" rx="0.5" fill="#cbd5e1"/>
+              <rect x="1.5" y="11" width="8.5" height="1" rx="0.5" fill="#cbd5e1"/>
+              <rect x="1.5" y="14.5" width="5" height="1" rx="0.5" fill="#e2e8f0"/>
+            </g>
+
+            {/* ── legs – 6px thick ── */}
+            <rect x="22" y="63" width="6" height="12" rx="2" fill="#334155"/>
+            <rect x="32" y="63" width="6" height="12" rx="2" fill="#334155"/>
+
+            {/* ── boots ── */}
+            <g className="jim-foot-left" style={{ transformOrigin: '22px 73px' }}>
+              <rect x="19" y="73" width="11" height="7" rx="3" fill="#1e293b"/>
+              <rect x="21" y="74.5" width="5" height="1.5" rx="0.5" fill="#475569" opacity="0.5"/>
+            </g>
+            <g className="jim-foot-right" style={{ transformOrigin: '35px 73px' }}>
+              <rect x="32" y="73" width="11" height="7" rx="3" fill="#1e293b"/>
+              <rect x="34" y="74.5" width="5" height="1.5" rx="0.5" fill="#475569" opacity="0.5"/>
+            </g>
+
+            {/* ── torso: hi-vis vest + dark shirt centre ── */}
+            <polygon points="13,46 47,46 44,64 16,64" fill="#fbbf24"/>
+            <polygon points="25,46 35,46 34,64 26,64" fill="#1e3a5f"/>
+            <polygon points="27,46 30,53 33,46" fill="#1e3a5f"/>
+            <rect x="13" y="55" width="11" height="2.5" rx="0.5" fill="#f1f5f9" opacity="0.85"/>
+            <rect x="36" y="55" width="11" height="2.5" rx="0.5" fill="#f1f5f9" opacity="0.85"/>
+
+            {/* ── right arm – 6px thick, same as legs ── */}
+            <g class="jim-arm-right">
+              <line x1="44" y1="46" x2="53" y2="58" stroke="#fbbf24" strokeWidth="6" strokeLinecap="round"/>
+              <line x1="53" y1="58" x2="54" y2="68" stroke="#fcd9b6" strokeWidth="6" strokeLinecap="round"/>
+              {/* Hand */}
+              <circle cx="54" cy="70" r="3.5" fill="#fcd9b6"/>
+            </g>
+
+            {/* ── neck ── */}
+            <rect x="26" y="40" width="8" height="8" rx="3" fill="#fcd9b6"/>
+
+            {/* ── head ── */}
+            <g class="jim-head">
+              <circle cx="30" cy="30" r="12" fill="#fcd9b6"/>
+              <ellipse cx="30" cy="39" rx="7" ry="3" fill="#f9b885" opacity="0.3"/>
+
+              {/* ── face: brows ── */}
+              <path d="M21.5 25 Q25 23 28.5 25" stroke="#374151" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+              <path d="M31.5 25 Q35 23 38.5 25" stroke="#374151" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+
+              {/* ── eyes (green, no pulse) ── */}
+              <ellipse cx="25" cy="29" rx="2.3" ry="2.8" fill="#15803d"/>
+              <ellipse cx="35" cy="29" rx="2.3" ry="2.8" fill="#15803d"/>
+              <circle cx="26" cy="27.5" r="1" fill="white"/>
+              <circle cx="36" cy="27.5" r="1" fill="white"/>
+
+              {/* ── nose ── */}
+              <ellipse cx="30" cy="33.5" rx="1.2" ry="0.8" fill="#e8956d" opacity="0.5"/>
+
+              {/* ── mouth ── */}
+              <path d="M26 37 Q30 40.5 34 37" stroke="#9a6b4b" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+
+              {/* ── mustache ── */}
+              <g class="jim-mustache">
+                <path d="M23 37.5 Q27 34 30 37" stroke="#6b4c3b" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
+                <path d="M30 37 Q33 34 37 37.5" stroke="#6b4c3b" strokeWidth="1.8" fill="none" strokeLinecap="round"/>
               </g>
-            )}
-          
-            {s === 'wave' && (
-              <g filter="url(#jim-shadow)" className="jim-wave-arm">
-                {/* Left Shoulder */}
-                <circle cx="26" cy="80" r="11" fill="url(#jim-skin-grad)" />
-                {/* Left Arm — resting */}
-                <path d="M18 82 L14 82 L10 135 L16 135 L18 128 Z" fill="url(#jim-skin-grad)" />
-                <path d="M15 135 L10 155 L16 155 L18 135 Z" fill="url(#jim-skin-grad)" />
-                <circle cx="13" cy="158" r="5" fill="url(#jim-skin-grad)" />
-                <path d="M8 156 L6 160 M9 154 L7 159 M11 153 L9 158" stroke="#f5c5a3" strokeWidth="2" strokeLinecap="round" />
-          
-                {/* Right Shoulder */}
-                <circle cx="94" cy="80" r="11" fill="url(#jim-skin-grad)" />
-                {/* Right Upper Arm — raised out to side */}
-                <path d="M94 75 L98 70 L110 80 L106 85 Z" fill="url(#jim-skin-grad)" />
-                {/* Right Forearm — raised up for waving */}
-                <path d="M109 79 L118 55 L112 52 L104 76 Z" fill="url(#jim-skin-grad)" />
-                {/* Right Hand — waving */}
-                <circle cx="115" cy="53" r="5" fill="url(#jim-skin-grad)" />
-                <path d="M112 48 L110 44 M115 47 L113 43 M118 48 L116 44 M121 50 L120 46" stroke="#f5c5a3" strokeWidth="2" strokeLinecap="round" />
-              </g>
-            )}
-          
-            {s === 'thinking' && (
-              <g filter="url(#jim-shadow)">
-                {/* Left Shoulder */}
-                <circle cx="26" cy="80" r="11" fill="url(#jim-skin-grad)" />
-                {/* Left Arm — resting */}
-                <path d="M18 82 L14 82 L10 135 L16 135 L18 128 Z" fill="url(#jim-skin-grad)" />
-                <path d="M15 135 L10 155 L16 155 L18 135 Z" fill="url(#jim-skin-grad)" />
-                <circle cx="13" cy="158" r="5" fill="url(#jim-skin-grad)" />
-                <path d="M8 156 L6 160 M9 154 L7 159 M11 153 L9 158" stroke="#f5c5a3" strokeWidth="2" strokeLinecap="round" />
-          
-                {/* Right Shoulder */}
-                <circle cx="94" cy="80" r="11" fill="url(#jim-skin-grad)" />
-                {/* Right Upper Arm — bent up towards face */}
-                <path d="M94 78 L98 74 L102 62 L96 60 Z" fill="url(#jim-skin-grad)" />
-                {/* Right Forearm — hand under chin */}
-                <path d="M97 61 L95 50 L101 50 L102 62 Z" fill="url(#jim-skin-grad)" />
-                {/* Right Hand — under chin */}
-                <circle cx="98" cy="48" r="5" fill="url(#jim-skin-grad)" />
-              </g>
-            )}
-          
-            {s === 'error' && (
-              <g filter="url(#jim-shadow)">
-                {/* Left Shoulder */}
-                <circle cx="26" cy="80" r="11" fill="url(#jim-skin-grad)" />
-                {/* Left Upper Arm — hand on side of head */}
-                <path d="M20 78 L16 76 L14 48 L18 48 Z" fill="url(#jim-skin-grad)" />
-                {/* Left Forearm — hand on temple */}
-                <path d="M15 48 L18 28 L24 28 L18 48 Z" fill="url(#jim-skin-grad)" />
-                <circle cx="21" cy="26" r="5" fill="url(#jim-skin-grad)" />
-          
-                {/* Right Shoulder */}
-                <circle cx="94" cy="80" r="11" fill="url(#jim-skin-grad)" />
-                {/* Right Upper Arm — hand on side of head */}
-                <path d="M100 78 L104 76 L106 48 L102 48 Z" fill="url(#jim-skin-grad)" />
-                {/* Right Forearm — hand on temple */}
-                <path d="M105 48 L102 28 L96 28 L102 48 Z" fill="url(#jim-skin-grad)" />
-                <circle cx="99" cy="26" r="5" fill="url(#jim-skin-grad)" />
-              </g>
-            )}
-          
-            {/* ==========================================
-                BACKGROUND: LEGS & LOWER BODY
-            ========================================== */}
-            <g filter="url(#jim-shadow)">
-              {/* Jeans - Left Leg */}
-              <path d="M32 140 L24 185 L52 185 L50 140 Z" fill="url(#jim-jeans-grad)" />
-              {/* Jeans - Right Leg */}
-              <path d="M88 140 L96 185 L68 185 L70 140 Z" fill="url(#jim-jeans-grad)" />
-              {/* Jeans detail — center seam */}
-              <line x1="60" y1="140" x2="60" y2="145" stroke="#1e3a8a" strokeWidth="2" />
-          
-              {/* Work Boots */}
-              <path d="M22 185 L20 195 L55 195 L55 185 Z" fill="#78350f" />
-              <path d="M98 185 L100 195 L65 195 L65 185 Z" fill="#78350f" />
-              <rect x="23" y="188" width="30" height="3" rx="1.5" fill="#92400e" />
-              <rect x="67" y="188" width="30" height="3" rx="1.5" fill="#92400e" />
-          
-              {/* Tool Belt */}
-              <rect x="18" y="133" width="84" height="12" rx="3" fill="#451a03" />
-              <rect x="38" y="134" width="14" height="10" rx="2" fill="#78350f" />
-              <rect x="68" y="134" width="14" height="10" rx="2" fill="#78350f" />
-              <circle cx="60" cy="139" r="7" fill="#d97706" />
-              <circle cx="60" cy="139" r="4" fill="#f59e0b" />
             </g>
-          
-            {/* ==========================================
-                MIDDLE LAYER: TORSO
-            ========================================== */}
-            <g filter="url(#jim-shadow)">
-              {/* Broad chest / lats — foundation of shoulders */}
-              <path d="M22 95 C20 70 30 60 60 58 C90 60 100 70 98 95 L100 135 L20 135 Z" fill="#1e3a8a" />
-          
-              {/* Deltoid muscles (shoulder caps) built into the torso shape */}
-              <path d="M22 95 C18 78 22 70 38 68" stroke="url(#jim-skin-grad)" strokeWidth="16" strokeLinecap="round" fill="none" />
-              <path d="M98 95 C102 78 98 70 82 68" stroke="url(#jim-skin-grad)" strokeWidth="16" strokeLinecap="round" fill="none" />
-          
-              {/* High-Vis Vest — left panel */}
-              <path d="M22 95 L42 95 L35 135 L18 135 Z" fill="url(#jim-vest-grad)" />
-              {/* High-Vis Vest — right panel */}
-              <path d="M98 95 L78 95 L85 135 L102 135 Z" fill="url(#jim-vest-grad)" />
-          
-              {/* Vest reflective stripes — left */}
-              <rect x="26" y="108" width="14" height="5" rx="2" fill="#fef08a" opacity="0.9" />
-              <rect x="26" y="120" width="14" height="5" rx="2" fill="#fef08a" opacity="0.9" />
-              {/* Vest reflective stripes — right */}
-              <rect x="80" y="108" width="14" height="5" rx="2" fill="#fef08a" opacity="0.9" />
-              <rect x="80" y="120" width="14" height="5" rx="2" fill="#fef08a" opacity="0.9" />
-          
-              {/* Pec definition showing through the shirt */}
-              <path d="M46 98 C44 90 50 86 56 88 C60 86 64 86 68 88 C74 86 80 90 78 98" fill="#bfdbfe" opacity="0.25" />
+
+            {/* ── hard hat ── */}
+            <g>
+              <path d="M16 20 Q16 8 24 5 L36 5 Q44 8 44 20 Z" fill="#f97316"/>
+              <path d="M22 18 Q22 11 28 8 Q26 12 25 18 Z" fill="#fb923c" opacity="0.5"/>
+              <path d="M27 18 L27 7 L33 7 L33 18" fill="#ea580c" opacity="0.4"/>
+              <path d="M12 20 Q10 20 10 22 L14 23 L46 23 L50 22 Q50 20 48 20 Z" fill="#ea580c"/>
+              <path d="M14 20.5 L46 20.5 L48 21.5 L12 21.5 Z" fill="#f97316" opacity="0.5"/>
+              <rect x="13" y="23" width="34" height="1.5" rx="0.5" fill="#c2410c" opacity="0.3"/>
             </g>
-          
-            {/* ==========================================
-                MIDDLE LAYER: NECK
-            ========================================== */}
-            <g filter="url(#jim-shadow)">
-              {/* Strong neck — connects head to torso */}
-              <rect x="44" y="58" width="32" height="28" rx="8" fill="url(#jim-skin-grad)" />
-              {/* Neck muscle lines */}
-              <path d="M50 62 L54 82" stroke="#e8b08a" strokeWidth="1.5" opacity="0.4" />
-              <path d="M70 62 L66 82" stroke="#e8b08a" strokeWidth="1.5" opacity="0.4" />
-              {/* Adam's apple */}
-              <ellipse cx="60" cy="78" rx="4" ry="5" fill="#e8b08a" opacity="0.5" />
-          
-              {/* Shirt Collar */}
-              <path d="M38 88 L50 74 L56 88 Z" fill="#1e3a8a" />
-              <path d="M82 88 L70 74 L64 88 Z" fill="#1e3a8a" />
-            </g>
-          
-            {/* ==========================================
-                FOREGROUND LAYER: FACE & HEAD
-            ========================================== */}
-            <g filter="url(#jim-shadow)">
-              {/* Face Oval */}
-              <ellipse cx="60" cy="46" rx="28" ry="32" fill="url(#jim-skin-grad)" />
-          
-              {/* Jaw Line */}
-              <path d="M36 56 L36 65 Q60 76 84 65 L84 56 Z" fill="#f5c5a3" />
-              <path d="M38 62 Q60 74 82 62" stroke="#e8b08a" strokeWidth="1.5" fill="none" />
-          
-              {/* Ears */}
-              <ellipse cx="31" cy="46" rx="6" ry="9" fill="url(#jim-skin-grad)" stroke="#e8b08a" strokeWidth="1" />
-              <ellipse cx="89" cy="46" rx="6" ry="9" fill="url(#jim-skin-grad)" stroke="#e8b08a" strokeWidth="1" />
-              <ellipse cx="31" cy="48" rx="3" ry="5" fill="#e8b08a" />
-              <ellipse cx="89" cy="48" rx="3" ry="5" fill="#e8b08a" />
-          
-              {/* Hair */}
-              <path d="M34 34 C34 16 86 16 86 34 C86 30 78 22 60 22 C42 22 34 30 34 34 Z" fill="#78350f" />
-              <path d="M36 30 C42 23 78 23 84 30 C78 25 42 25 36 30 Z" fill="#92400e" />
-          
-              {/* Thick Eyebrows */}
-              <path d="M37 38 Q44 33 51 38" stroke="#78350f" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-              <path d="M69 38 Q76 33 83 38" stroke="#78350f" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-          
-              {/* Eyes */}
-              {s === 'error' ? (
-                <g>
-                  <ellipse cx="44" cy="45" rx="7" ry="6" fill="white" />
-                  <line x1="38" y1="43" x2="50" y2="50" stroke="#1e293b" strokeWidth="3" strokeLinecap="round" />
-                  <line x1="50" y1="43" x2="38" y2="50" stroke="#1e293b" strokeWidth="3" strokeLinecap="round" />
-          
-                  <ellipse cx="76" cy="45" rx="7" ry="6" fill="white" />
-                  <line x1="70" y1="43" x2="82" y2="50" stroke="#1e293b" strokeWidth="3" strokeLinecap="round" />
-                  <line x1="82" y1="43" x2="70" y2="50" stroke="#1e293b" strokeWidth="3" strokeLinecap="round" />
-                </g>
-              ) : (
-                <g>
-                  <ellipse cx="44" cy="45" rx="7" ry="6" fill="white" />
-                  <circle cx="45" cy="45" r="3.5" fill={eyeColor} className={eyeCls} />
-                  <circle cx="45" cy="45" r="1.5" fill="#1e293b" />
-          
-                  <ellipse cx="76" cy="45" rx="7" ry="6" fill="white" />
-                  <circle cx="77" cy="45" r="3.5" fill={eyeColor} className={eyeCls} />
-                  <circle cx="77" cy="45" r="1.5" fill="#1e293b" />
-                </g>
-              )}
-          
-              {/* Nose */}
-              <path d="M60 43 L57 54 Q60 57 63 54 Z" fill="#e8b08a" />
-              <circle cx="56.5" cy="54" r="2.5" fill="#e8b08a" />
-              <circle cx="63.5" cy="54" r="2.5" fill="#e8b08a" />
-          
-              {/* Mouth */}
-              {s === 'thinking' ? (
-                <ellipse cx="68" cy="62" rx="5" ry="7" fill="#9a3412" />
-              ) : s === 'error' ? (
-                <path d="M48 62 L54 68 M54 62 L48 68 M66 62 L72 68 M72 62 L66 68" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" />
-              ) : (
-                <path d="M48 62 Q60 70 72 62" stroke="#9a3412" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-              )}
-          
-              {/* Stubble */}
-              <path d="M38 58 C46 60 74 60 82 58 C78 63 42 63 38 58 Z" fill="#d4a574" opacity="0.35" />
-            </g>
-          
-            {/* ==========================================
-                FOREGROUND TOP: HARD HAT
-            ========================================== */}
-            <g filter="url(#jim-shadow)">
-              {/* Main Dome */}
-              <path d="M28 34 C28 6 92 6 92 34 Z" fill="url(#jim-hat-grad)" />
-              {/* Ridge */}
-              <path d="M56 34 L58 10 C59 8 61 8 62 10 L64 34 Z" fill="#ea580c" />
-              <path d="M57 34 L58 10.5 C59 9.5 61 9.5 62 10.5 L63 34 Z" fill="#fb923c" />
-              {/* Shine */}
-              <path d="M32 30 C32 18 42 14 52 12 C48 16 36 22 34 30 Z" fill="#ffffff" opacity="0.25" />
-          
-              {/* Brim */}
-              <rect x="18" y="32" width="84" height="9" rx="4.5" fill="url(#jim-brim-grad)" />
-              <rect x="20" y="33" width="80" height="2" rx="1" fill="#ffffff" opacity="0.3" />
-            </g>
-          </svg>
+          </g>
+        </svg>
       </div>
     );
   };
@@ -523,8 +371,16 @@
     if (!p || p.credentials !== undefined) return p;
     const creds = [];
     if (p.abn) creds.push({ label: 'ABN', value: p.abn, expiry: '' });
-    (p.licences||[]).forEach(l => creds.push({ label: l.customType||l.type, value: l.number+(l.state?` (${l.state})`:''), expiry: l.expiry||'' }));
-    if (p.insurance) creds.push({ label: 'Public Liability Insurance', value: p.insurance+(p.insurancePolicy?` · ${p.insurancePolicy}`:''), expiry: p.insuranceExpiry||'' });
+    (p.licences || []).forEach(l => creds.push({
+      label: l.customType || l.type,
+      value: l.number + (l.state ? ` (${l.state})` : ''),
+      expiry: l.expiry || ''
+    }));
+    if (p.insurance) creds.push({
+      label: 'Public Liability Insurance',
+      value: p.insurance + (p.insurancePolicy ? ' - ' + p.insurancePolicy : ''),
+      expiry: p.insuranceExpiry || ''
+    });
     const { abn, licences, insurance, insurancePolicy, insuranceExpiry, ...rest } = p;
     return { ...rest, credentials: creds };
   };
@@ -1114,8 +970,8 @@
                       {expiringCount > 0 && <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{expiringCount}</span>}
                     </div>
                     {hasBiz && businessProfile.abn && <p className="text-[10px] text-slate-400 font-mono">ABN {businessProfile.abn}</p>}
-                    {hasBiz && businessProfile.licences?.length > 0 && <p className="text-[10px] text-slate-400">{businessProfile.licences.length} credential{businessProfile.licences.length !== 1 ? 's' : ''} saved</p>}
-                    {!hasBiz && <p className="text-[10px] text-slate-400">Logo, ABN, licences, T&Cs</p>}
+                    {hasBiz && (businessProfile.credentials?.length > 0) && <p className="text-[10px] text-slate-400">{businessProfile.credentials.length} credential{businessProfile.credentials.length !== 1 ? 's' : ''} saved</p>}
+                    {!hasBiz && <p className="text-[10px] text-slate-400">Logo, ABN, credentials, T&Cs</p>}
                   </div>
                 </div>
                 <Pencil size={14} className="text-slate-400"/>
@@ -2063,14 +1919,14 @@
     );
   };
 
-      
+
   /* ════════════════════════════════════════════
        JIM LIVE PANEL
     ════════════════════════════════════════════ */
     const JimLivePanel = ({ status, transcript, onClose, onMicTap }) => {
       const transcriptRef = useRef(null);
       useEffect(() => { if (transcriptRef.current) transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight; }, [transcript]);
-  
+
       const mascotState = status === 'error' ? 'error' : status === 'speaking' ? 'thinking' : status === 'listening' ? 'wave' : 'idle';
       const statusLabel = {
         connecting: 'Initialising...',
@@ -2080,9 +1936,9 @@
         error: 'Connection error',
         idle: 'Paused'
       };
-  
+
       return (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm z-[600] bg-slate-900/95 backdrop-blur-xl border border-slate-700 shadow-2xl rounded-3xl p-4 flex flex-col gap-4 animate-slide-up pointer-events-auto">
+        <div className="fixed bottom-20 inset-x-4 max-w-sm mx-auto z-[600] bg-slate-900/95 backdrop-blur-xl border border-slate-700 shadow-2xl rounded-3xl p-4 flex flex-col gap-4 animate-slide-up pointer-events-auto">
           {/* Header */}
           <div className="flex justify-between items-center px-2">
             <div className="flex items-center gap-2">
@@ -2093,7 +1949,7 @@
               <X size={16} />
             </button>
           </div>
-  
+
           {/* Transcript */}
           {transcript.length > 0 ? (
             <div ref={transcriptRef} className="w-full max-h-32 overflow-y-auto custom-scrollbar bg-slate-800/50 rounded-2xl p-3 space-y-2 border border-slate-700/50">
@@ -2119,7 +1975,7 @@
               <p>Ask about jobs, invoices, or revenue...</p>
             </div>
           )}
-  
+
           {/* Bottom Row: Mascot & Mic */}
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-3">
@@ -2130,7 +1986,7 @@
                 {statusLabel[status] || '...'}
               </p>
             </div>
-  
+
             <button
               onClick={onMicTap}
               className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all ${status === 'speaking' || status === 'thinking' ? 'bg-amber-600 hover:bg-amber-500' : status === 'listening' ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
@@ -2143,7 +1999,7 @@
       );
     };
 
-      
+
 
   /* ════════════════════════════════════════════
      APP
@@ -2195,9 +2051,6 @@
     const [isGenerating, setIsGenerating] = useState(false);
     const [isScanningReceipt, setIsScanningReceipt] = useState(false);
     const [isProfessionalizing, setIsProfessionalizing] = useState(false);
-    const [isProcessingLive, setIsProcessingLive] = useState(false);
-    const [isAwaitingResponse, setIsAwaitingResponse] = useState(false);
-    const [pendingUserInput, setPendingUserInput] = useState(null);
     const jimRecognitionRef = useRef(null);
     const jimActiveRef = useRef(false);
 
@@ -2231,11 +2084,6 @@
     const [jimLiveOpen, setJimLiveOpen] = useState(false);
     const [jimLiveStatus, setJimLiveStatus] = useState('idle');
     const [jimLiveTranscript, setJimLiveTranscript] = useState([]);
-    const jimWsRef = useRef(null);
-    const jimStreamRef = useRef(null);
-    const jimAudioCtxRef = useRef(null);
-    const jimMicCtxRef = useRef(null);
-    const jimNextPlayTimeRef = useRef(0);
     const jimCancelledRef = useRef(false);
     const showToast = (message, type = 'info') => setToast({ message, type });
 
@@ -2316,22 +2164,58 @@
 
     const buildJimContext = () => {
       const biz = businessProfile || {};
-      const jobLines = jobs.slice(-20).map(j => {
-        const total = getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate).total;
-        return `  - ${j.address || 'Unknown site'} | Client: ${j.clientName || '—'} | Status: ${j.status || 'draft'} | Total: $${total.toFixed(2)}${j.invoiceNumber ? ` | ${j.invoiceNumber}` : ''}`;
-      }).join('\n');
-      return `You are JIM (Jobs Invoice Manager), a friendly AI assistant for an Australian trade and construction business. You have a casual, helpful Aussie personality. Help with jobs, invoices, quotes, scheduling, and business advice.
 
-Business: ${biz.name || 'Not set'} | ABN: ${biz.abn || '—'} | Phone: ${biz.phone || '—'}
-Today: ${new Date().toLocaleDateString('en-AU', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+      const jobDetails = jobs.map(j => {
+        const qt = getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate);
+        const paid = parseFloat(j.amountPaid) || 0;
+        const balance = qt.total - paid;
+        const taskLines = (j.tasks || []).map(t =>
+          `      • ${t.title}${t.time ? ` (${t.time})` : ''}${t.rate ? ` @ $${t.rate}/hr` : ''}${t.materialsCost ? ` + $${t.materialsCost} mats` : ''}${t.materials ? `: ${t.materials}` : ''}`
+        ).join('\n');
+        return [
+          `  [${(j.status || 'draft').toUpperCase()}] ${j.address || 'Unknown site'}${j.createdAt ? ` — created ${new Date(j.createdAt).toLocaleDateString('en-AU')}` : ''}`,
+          `    Client: ${j.clientName || '—'}${j.clientPhone ? ` | Ph: ${j.clientPhone}` : ''}`,
+          `    Total: $${qt.total.toFixed(2)} (excl GST: $${qt.subtotal.toFixed(2)})${j.invoiceNumber ? ` | Invoice: ${j.invoiceNumber}` : ''}`,
+          paid > 0 ? `    Paid: $${paid.toFixed(2)} | Balance owing: $${balance.toFixed(2)}` : '',
+          j.projectNotes ? `    Notes: ${j.projectNotes.slice(0, 120)}${j.projectNotes.length > 120 ? '...' : ''}` : '',
+          taskLines ? `    Tasks:\n${taskLines}` : '    Tasks: none',
+        ].filter(Boolean).join('\n');
+      }).join('\n\n');
 
-Revenue Snapshot:
+      const now = Date.now();
+      const upcomingAppts = (appointments || [])
+        .filter(a => { const t = new Date(a.start).getTime(); return t > now && t < now + 7*24*60*60*1000; })
+        .sort((a, b) => new Date(a.start) - new Date(b.start))
+        .map(a => {
+          const j = jobs.find(x => x.id === a.jobId);
+          return `  • ${new Date(a.start).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })} ${new Date(a.start).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}: ${a.title}${j ? ` — ${j.address}` : ''}`;
+        }).join('\n');
+
+      const weekStart = now - (new Date().getDay() || 7) * 24*60*60*1000;
+      const weekSheets = (timesheets || [])
+        .filter(t => new Date(t.date).getTime() >= weekStart)
+        .map(t => {
+          const j = jobs.find(x => x.id === t.jobId);
+          const mins = (new Date(`${t.date}T${t.endTime}`) - new Date(`${t.date}T${t.startTime}`)) / 60000;
+          return `  • ${t.date}: ${t.category} — ${Math.floor(mins/60)}h${mins % 60 ? ` ${mins % 60}m` : ''}${j ? ` at ${j.address}` : ''}${t.notes ? ` (${t.notes})` : ''}`;
+        }).join('\n');
+
+      return `You are JIM, a friendly Aussie AI assistant built into a trade job management app. Casual tone — use "mate", "no worries" etc. Keep voice responses to 2-3 sentences max unless asked for more detail.
+
+BUSINESS: ${biz.name || 'Not set'} | ABN: ${biz.abn || '—'} | Ph: ${biz.phone || '—'}
+TODAY: ${new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+
+REVENUE SNAPSHOT:
   Quoted: $${revenueStats.quoted.toFixed(2)} | Outstanding: $${revenueStats.outstanding.toFixed(2)} | Received: $${revenueStats.received.toFixed(2)}
 
-Recent Jobs (${jobs.length} total):
-${jobLines || '  No jobs yet.'}
+ALL JOBS (${jobs.length} total):
+${jobDetails || '  No jobs yet.'}
 
-Respond conversationally and concisely — this is a voice chat. 2-3 sentences is usually enough unless the user asks for detail.`;
+UPCOMING SCHEDULE (next 7 days):
+${upcomingAppts || '  No appointments scheduled.'}
+
+TIMESHEETS THIS WEEK:
+${weekSheets || '  No time entries this week.'}`;
     };
 
     const startJimLive = async () => {
@@ -2364,7 +2248,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
       };
 
       const voices = await loadVoices();
-      
+
       // Aggressively hunt for a male voice (especially on iOS/Mac)
       const knownMaleNames = ['daniel', 'james', 'william', 'arthur', 'aaron', 'bruce', 'gordon', 'mark', 'david', 'male', 'guy', 'boy'];
       const isMale = (v) => knownMaleNames.some(name => v.name.toLowerCase().includes(name));
@@ -2391,40 +2275,39 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
       recognition.interimResults = false;
       recognition.lang = 'en-AU';
 
-      let isProcessing = false;  // Prevent concurrent API calls
+      let isProcessing = false;
+      let isSpeaking = false;
       let lastProcessedText = '';
+      const active = () => !jimCancelledRef.current;
+      const tryRestart = (delay = 300) => setTimeout(() => {
+        if (active() && !isProcessing && !isSpeaking) {
+          try { recognition.start(); } catch(_) {}
+        }
+      }, delay);
 
-      recognition.onstart = () => {
-        setJimLiveStatus('listening');
-      };
+      recognition.onstart = () => setJimLiveStatus('listening');
 
       recognition.onresult = async (event) => {
-        if (isProcessing) return;  // Already answering, ignore new input
-
+        if (isProcessing) return;
         const userText = event.results[0][0].transcript.trim();
-        if (!userText || userText === lastProcessedText) return;  // Dedupe
-
+        if (!userText || userText === lastProcessedText) return;
         lastProcessedText = userText;
         isProcessing = true;
-
         setJimLiveTranscript(prev => [...prev, { role: 'user', text: userText }]);
         setJimLiveStatus('thinking');
 
         try {
-          const context = buildJimContext();
-          const fullPrompt = `${context}\n\nUser said: "${userText}"\n\nRespond as JIM - a experienced Aussie tradie who runs a construction business. Use casual Australian expressions like "mate", "no worries". Keep it brief - ONE OR TWO SENTENCES MAX. Be direct and helpful.`;
-
           const response = await smartFetchAI(
             'light',
-            [{ parts: [{ text: fullPrompt }] }],
-            { temperature: 0.7, maxOutputTokens: 100 },
+            [{ parts: [{ text: `${buildJimContext()}\n\nUser said: "${userText}"\n\nReply as JIM. Casual Aussie. 1-2 sentences max unless detail was asked for.` }] }],
+            { temperature: 0.7, maxOutputTokens: 150 },
             apiKey,
             geminiModel
           );
+          if (!active()) { isProcessing = false; return; }
 
-          let jimResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry mate, try again.";
+          let jimResponse = response?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry mate, couldn't get an answer.";
           jimResponse = jimResponse.replace(/\[.*?\]/g, '').replace(/\(.*?\)/g, '').trim();
-
           setJimLiveTranscript(prev => [...prev, { role: 'jim', text: jimResponse }]);
 
           const utterance = new SpeechSynthesisUtterance(jimResponse);
@@ -2433,79 +2316,44 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
           utterance.volume = 1;
           if (maleVoice) utterance.voice = maleVoice;
 
-          utterance.onstart = () => setJimLiveStatus('speaking');
+          utterance.onstart = () => { isSpeaking = true; setJimLiveStatus('speaking'); };
           utterance.onend = () => {
+            isSpeaking = false;
             isProcessing = false;
             lastProcessedText = '';
-            if (!jimCancelledRef.current && jimLiveOpen) {
-              setJimLiveStatus('listening');
-              // Restart recognition after a short delay
-              setTimeout(() => {
-                if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
-                  try { recognition.start(); } catch(e) { console.log('restart error', e); }
-                }
-              }, 500);
-            } else {
-              jimActiveRef.current = false;
-            }
+            if (active()) { setJimLiveStatus('listening'); tryRestart(500); }
+            else { jimActiveRef.current = false; }
           };
           utterance.onerror = () => {
+            isSpeaking = false;
             isProcessing = false;
-            setJimLiveStatus('listening');
-            setTimeout(() => {
-              if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
-                try { recognition.start(); } catch(e) {}
-              }
-            }, 500);
+            if (active()) { setJimLiveStatus('listening'); tryRestart(500); }
           };
 
           window.speechSynthesis.cancel();
           window.speechSynthesis.speak(utterance);
 
         } catch (err) {
-          console.error('JIM error:', err);
-          setJimLiveTranscript(prev => [...prev, { role: 'jim', text: `Error: ${err.message}` }]);
+          setJimLiveTranscript(prev => [...prev, { role: 'jim', text: `Couldn't connect: ${err.message}` }]);
           isProcessing = false;
-          setJimLiveStatus('listening');
-          setTimeout(() => {
-            if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
-              try { recognition.start(); } catch(e) {}
-            }
-          }, 1000);
+          if (active()) { setJimLiveStatus('listening'); tryRestart(1000); }
         }
       };
 
       recognition.onerror = (event) => {
-        console.error('Recognition error:', event.error);
         if (event.error === 'not-allowed') {
           showToast('Microphone access denied', 'error');
           stopJimLive();
         } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
           setJimLiveStatus('error');
-          setTimeout(() => {
-            if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
-              setJimLiveStatus('listening');
-              try { recognition.start(); } catch(e) {}
-            }
-          }, 2000);
-        } else {
-          // No speech or aborted, just restart listening
-          if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
-            setTimeout(() => {
-              try { recognition.start(); } catch(e) {}
-            }, 300);
-          }
+          tryRestart(2000);
+        } else if (active() && !isProcessing) {
+          tryRestart(300);
         }
       };
 
       recognition.onend = () => {
-        if (!jimCancelledRef.current && jimLiveOpen && !isProcessing && jimLiveStatus !== 'speaking') {
-          setTimeout(() => {
-            if (!jimCancelledRef.current && jimLiveOpen && !isProcessing) {
-              try { recognition.start(); } catch(e) {}
-            }
-          }, 300);
-        }
+        if (active() && !isProcessing && !isSpeaking) tryRestart(300);
       };
 
       jimRecognitionRef.current = recognition;
@@ -2531,7 +2379,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
     const handleMicTap = () => {
           // Always kill current speech
           window.speechSynthesis.cancel();
-          
+
           if (jimLiveStatus === 'speaking' || jimLiveStatus === 'thinking') {
             // If he's talking/thinking, stop him and go idle
             if (jimRecognitionRef.current) {
@@ -2836,7 +2684,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
         <header className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md text-slate-900 dark:text-white px-4 py-3 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
             {businessProfile?.logo ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5" alt=""/> : <JimMascot size={36} state="idle"/>}
-            <h1 className="font-black text-lg tracking-tight uppercase">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'JIM')}</h1>
+            <h1 className="font-black text-lg tracking-tight uppercase">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'J.I.M. jobs invoices manager')}</h1>
           </div>
           <div className="flex items-center gap-2">
             {viewMode === 'detail' && activeJob && (
@@ -3241,7 +3089,7 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
 
         {/* JIM Live Voice Panel */}
         {jimLiveOpen && <JimLivePanel status={jimLiveStatus} transcript={jimLiveTranscript} onClose={stopJimLive} onMicTap={handleMicTap}/>}
-                
+
         {/* Modals */}
         {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} countryCode={countryCode} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} onSave={(k,m,t,cc) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); const c = cc||'AU'; localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); localStorage.setItem('jim-country', c); _cc = c; setCountryCode(c); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
         {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUnlock={handleUnlockSuccess} showToast={showToast}/>}
