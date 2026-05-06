@@ -2181,97 +2181,112 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
           // 4. Ultimate fallback
           'models/gemini-2.0-flash-live-001'
         ];
-
-    const startJimLive = async (modelIdx = 0) => {
-      if (!apiKey) { showToast('Add your Gemini API key in Settings first.', 'error'); return; }
-      if (modelIdx === 0) {
-        jimCancelledRef.current = false;
-        setJimLiveOpen(true);
-        setJimLiveStatus('connecting');
-        setJimLiveTranscript([]);
-      }
-      if (jimCancelledRef.current) return;
-      if (modelIdx >= LIVE_MODELS.length) {
-        setJimLiveStatus('error');
-        showToast('Gemini Live API not available — none of the live models worked. Check your region or API key.', 'error');
-        return;
-      }
-
-      const model = LIVE_MODELS[modelIdx];
-      let setupReceived = false;
-
-      const ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`);
-      jimWsRef.current = ws;
-
-      ws.onopen = () => {
-        ws.send(JSON.stringify({
-          setup: {
-            model,
-            generation_config: {
-              response_modalities: ['AUDIO', 'TEXT'],
-              speech_config: { voice_config: { prebuilt_voice_config: { voice_name: 'Kore' } } }
-            },
-            system_instruction: { parts: [{ text: buildJimContext() }] }
+    
+    const startJimLive = async (modelIdx = 0, lastErrorMsg = '') => {
+          if (!apiKey) { showToast('Add your Gemini API key in Settings first.', 'error'); return; }
+          if (modelIdx === 0) {
+            jimCancelledRef.current = false;
+            setJimLiveOpen(true);
+            setJimLiveStatus('connecting');
+            setJimLiveTranscript([]);
           }
-        }));
-      };
-
-      ws.onmessage = async (event) => {
-        let data;
-        try { data = JSON.parse(event.data instanceof Blob ? await event.data.text() : event.data); } catch { return; }
-
-        if (data.error) {
-          ws.close();
-          startJimLive(modelIdx + 1);
-          return;
-        }
-
-        if (data.setupComplete) {
-          setupReceived = true;
-          setJimLiveStatus('listening');
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: { ideal: 16000 }, channelCount: 1, echoCancellation: true } });
-            jimStreamRef.current = stream;
-            const micCtx = new AudioContext({ sampleRate: 16000 });
-            jimMicCtxRef.current = micCtx;
-            const source = micCtx.createMediaStreamSource(stream);
-            const processor = micCtx.createScriptProcessor(4096, 1, 1);
-            processor.onaudioprocess = (e) => {
-              if (jimWsRef.current?.readyState !== WebSocket.OPEN) return;
-              const f32 = e.inputBuffer.getChannelData(0);
-              const i16 = new Int16Array(f32.length);
-              for (let i = 0; i < f32.length; i++) i16[i] = Math.max(-32768, Math.min(32767, f32[i] * 32768));
-              const b64 = btoa(String.fromCharCode(...new Uint8Array(i16.buffer)));
-              jimWsRef.current.send(JSON.stringify({ realtime_input: { media_chunks: [{ mime_type: 'audio/pcm;rate=16000', data: b64 }] } }));
-            };
-            source.connect(processor);
-            processor.connect(micCtx.destination);
-          } catch {
-            showToast('Microphone access denied.', 'error');
-            stopJimLive();
+          if (jimCancelledRef.current) return;
+          
+          // IF ALL MODELS FAIL, SHOW THE EXACT ERROR IN THE TOAST
+          if (modelIdx >= LIVE_MODELS.length) {
+            setJimLiveStatus('error');
+            showToast(`Live API failed: ${lastErrorMsg || 'Connection rejected by server'}`, 'error');
+            console.error("All Live Models failed. Last error:", lastErrorMsg);
+            return;
           }
-          return;
-        }
-
-        const parts = data.serverContent?.modelTurn?.parts || [];
-        let gotAudio = false;
-        for (const part of parts) {
-          if (part.inlineData?.data) { jimPlayAudio(part.inlineData.data); gotAudio = true; }
-          if (part.text?.trim()) setJimLiveTranscript(t => [...t, { role: 'jim', text: part.text.trim() }]);
-        }
-        if (gotAudio) setJimLiveStatus('speaking');
-        if (data.serverContent?.turnComplete) setJimLiveStatus('listening');
-      };
-
-      ws.onerror = () => {
-        if (!setupReceived && !jimCancelledRef.current) { startJimLive(modelIdx + 1); }
-        else if (setupReceived) { setJimLiveStatus('error'); }
-      };
-      ws.onclose = (e) => {
-        if (!setupReceived && e.code !== 1000 && !jimCancelledRef.current) { startJimLive(modelIdx + 1); }
-        else if (e.code !== 1000 && setupReceived) { setJimLiveStatus('error'); }
-      };
-    };
+    
+          const model = LIVE_MODELS[modelIdx];
+          let setupReceived = false;
+    
+          const ws = new WebSocket(`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${apiKey}`);
+          jimWsRef.current = ws;
+    
+          ws.onopen = () => {
+            console.log(`[JIM Live] Trying model: ${model}...`);
+            ws.send(JSON.stringify({
+              setup: {
+                model,
+                generation_config: {
+                  response_modalities: ['AUDIO', 'TEXT'],
+                  speech_config: { voice_config: { prebuilt_voice_config: { voice_name: 'Kore' } } }
+                },
+                system_instruction: { parts: [{ text: buildJimContext() }] }
+              }
+            }));
+          };
+    
+          ws.onmessage = async (event) => {
+            let data;
+            try { data = JSON.parse(event.data instanceof Blob ? await event.data.text() : event.data); } catch { return; }
+    
+            // CAPTURE EXACT GOOGLE ERROR
+            if (data.error) {
+              console.warn(`[JIM Live] ${model} rejected. Error:`, data.error.message || data.error);
+              ws.close();
+              // Pass the exact error message to the next loop
+              startJimLive(modelIdx + 1, data.error.message || `Code ${data.error.code}`);
+              return;
+            }
+    
+            if (data.setupComplete) {
+              console.log(`[JIM Live] Connected to ${model}!`);
+              setupReceived = true;
+              setJimLiveStatus('listening');
+              try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: { ideal: 16000 }, channelCount: 1, echoCancellation: true } });
+                jimStreamRef.current = stream;
+                const micCtx = new AudioContext({ sampleRate: 16000 });
+                jimMicCtxRef.current = micCtx;
+                const source = micCtx.createMediaStreamSource(stream);
+                const processor = micCtx.createScriptProcessor(4096, 1, 1);
+                processor.onaudioprocess = (e) => {
+                  if (jimWsRef.current?.readyState !== WebSocket.OPEN) return;
+                  const f32 = e.inputBuffer.getChannelData(0);
+                  const i16 = new Int16Array(f32.length);
+                  for (let i = 0; i < f32.length; i++) i16[i] = Math.max(-32768, Math.min(32767, f32[i] * 32768));
+                  const b64 = btoa(String.fromCharCode(...new Uint8Array(i16.buffer)));
+                  jimWsRef.current.send(JSON.stringify({ realtime_input: { media_chunks: [{ mime_type: 'audio/pcm;rate=16000', data: b64 }] } }));
+                };
+                source.connect(processor);
+                processor.connect(micCtx.destination);
+              } catch {
+                showToast('Microphone access denied.', 'error');
+                stopJimLive();
+              }
+              return;
+            }
+    
+            const parts = data.serverContent?.modelTurn?.parts || [];
+            let gotAudio = false;
+            for (const part of parts) {
+              if (part.inlineData?.data) { jimPlayAudio(part.inlineData.data); gotAudio = true; }
+              if (part.text?.trim()) setJimLiveTranscript(t => [...t, { role: 'jim', text: part.text.trim() }]);
+            }
+            if (gotAudio) setJimLiveStatus('speaking');
+            if (data.serverContent?.turnComplete) setJimLiveStatus('listening');
+          };
+    
+          ws.onerror = () => {
+            if (!setupReceived && !jimCancelledRef.current) { 
+              startJimLive(modelIdx + 1, "WebSocket Error (Network or 403 Forbidden)"); 
+            } else if (setupReceived) { 
+              setJimLiveStatus('error'); 
+            }
+          };
+          
+          ws.onclose = (e) => {
+            if (!setupReceived && e.code !== 1000 && !jimCancelledRef.current) { 
+              startJimLive(modelIdx + 1, `WebSocket closed unexpectedly (Code ${e.code})`); 
+            } else if (e.code !== 1000 && setupReceived) { 
+              setJimLiveStatus('error'); 
+            }
+          };
+        };
 
     const openTimeEntryForJob = (jobId) => {
       setTimeEntryModal({
