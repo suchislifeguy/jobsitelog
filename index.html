@@ -609,7 +609,7 @@
     };
     const s = styles[type] || styles.info;
     return (
-      <div className="fixed bottom-24 inset-x-4 z-[9999] flex justify-center pointer-events-auto animate-slide-up">
+      <div className="fixed top-4 inset-x-4 z-[9999] flex justify-center pointer-events-auto animate-slide-down" style={{ marginTop: 'env(safe-area-inset-top)' }}>
         <div className={`w-full max-w-sm rounded-2xl shadow-2xl p-4 flex items-start gap-3 border ${s.wrap}`}>
           <div className="mt-0.5">{s.icon}</div>
           <div className="flex-1 min-w-0 max-h-[40vh] overflow-y-auto custom-scrollbar">
@@ -2004,14 +2004,13 @@
             </div>
 
             <button
-              onClick={onInterrupt}
-              className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all ${status === 'speaking' ? 'bg-amber-600 hover:bg-amber-500' : status === 'listening' ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
-              title={status === 'speaking' ? "Interrupt JIM" : "Tap to Speak"}
+              onClick={onMicTap}
+              className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-all ${status === 'speaking' || status === 'thinking' ? 'bg-amber-600 hover:bg-amber-500' : status === 'listening' ? 'bg-red-600 hover:bg-red-500' : 'bg-emerald-600 hover:bg-emerald-500'}`}
+              title={status === 'speaking' || status === 'thinking' ? "Stop JIM" : "Tap to Speak"}
             >
-              {status === 'speaking' ? <Square size={20} className="text-white fill-white"/> : <Mic size={24} className="text-white"/>}
+              {status === 'speaking' || status === 'thinking' ? <Square size={20} className="text-white fill-white"/> : <Mic size={24} className="text-white"/>}
             </button>
           </div>
-        </div>
       );
     };
 
@@ -2229,23 +2228,22 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
       const loadVoices = () => {
         return new Promise((resolve) => {
           let voices = window.speechSynthesis.getVoices();
-          if (voices.length) {
-            resolve(voices);
-          } else {
-            window.speechSynthesis.onvoiceschanged = () => {
-              resolve(window.speechSynthesis.getVoices());
-            };
-          }
+          if (voices.length) resolve(voices);
+          else window.speechSynthesis.onvoiceschanged = () => resolve(window.speechSynthesis.getVoices());
         });
       };
 
       const voices = await loadVoices();
       
-      const maleVoice = voices.find(v => v.lang.includes('en-AU') && (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('b') || v.name.toLowerCase().includes('c') || v.name.toLowerCase().includes('d')))
-        || voices.find(v => v.lang.includes('en-GB') && v.name.toLowerCase().includes('male'))
-        || voices.find(v => v.name.toLowerCase().includes('male'))
-        || voices.find(v => ['david','daniel','james','william','mark','george','gordon'].some(n => v.name.toLowerCase().includes(n)))
-        || voices.find(v => v.lang.includes('en-AU'))
+      // Aggressively hunt for a male voice (especially on iOS/Mac)
+      const knownMaleNames = ['daniel', 'james', 'william', 'arthur', 'aaron', 'bruce', 'gordon', 'mark', 'david', 'male', 'guy', 'boy'];
+      const isMale = (v) => knownMaleNames.some(name => v.name.toLowerCase().includes(name));
+
+      const maleVoice = voices.find(v => v.lang.includes('en-AU') && isMale(v))
+        || voices.find(v => v.lang.includes('en-GB') && isMale(v))
+        || voices.find(v => v.lang.includes('en-US') && isMale(v))
+        || voices.find(v => isMale(v))
+        || voices.find(v => v.lang.includes('en-AU')) // Fallback to Aussie
         || voices[0];
 
       setJimLiveStatus('listening');
@@ -2400,12 +2398,29 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
       setJimLiveStatus('idle');
     };
 
-    const handleInterruptJim = () => {
-      window.speechSynthesis.cancel();
-      if (jimRecognitionRef.current) {
-        try { jimRecognitionRef.current.stop(); } catch(e) {}
-      }
-    };
+    const handleMicTap = () => {
+          // Always kill current speech
+          window.speechSynthesis.cancel();
+          
+          if (jimLiveStatus === 'speaking' || jimLiveStatus === 'thinking') {
+            // If he's talking/thinking, stop him and go idle
+            if (jimRecognitionRef.current) {
+              try { jimRecognitionRef.current.stop(); } catch(e) {}
+            }
+            setJimLiveStatus('idle');
+          } else {
+            // If he's idle or already listening, force a fresh listen
+            if (jimRecognitionRef.current) {
+              try { jimRecognitionRef.current.abort(); } catch(e) {}
+            }
+            setJimLiveStatus('listening');
+            setTimeout(() => {
+              if (jimRecognitionRef.current) {
+                try { jimRecognitionRef.current.start(); } catch(e) {}
+              }
+            }, 100);
+          }
+        };
 
     const showConfirm = (message, onConfirm, confirmLabel = 'Delete', danger = true) => setConfirmDialog({ message, onConfirm, confirmLabel, danger });
     const dismissConfirm = () => setConfirmDialog(null);
@@ -3095,8 +3110,8 @@ Respond conversationally and concisely — this is a voice chat. 2-3 sentences i
         </div>
 
         {/* JIM Live Voice Panel */}
-        {jimLiveOpen && <JimLivePanel status={jimLiveStatus} transcript={jimLiveTranscript} onClose={stopJimLive} onInterrupt={handleInterruptJim}/>}
-
+        {jimLiveOpen && <JimLivePanel status={jimLiveStatus} transcript={jimLiveTranscript} onClose={stopJimLive} onMicTap={handleMicTap}/>}
+                
         {/* Modals */}
         {showSettings && <SettingsModal apiKey={apiKey} geminiModel={geminiModel} extraTaxRate={extraTaxRate} countryCode={countryCode} isDarkMode={isDarkMode} toggleTheme={() => setIsDarkMode(!isDarkMode)} exportData={exportData} importData={importData} userTemplates={userTemplates} saveUserTemplates={saveUserTemplates} userMaterials={userMaterials} saveUserMaterials={saveUserMaterials} businessProfile={businessProfile} saveBusinessProfile={saveBusinessProfile} onSave={(k,m,t,cc) => { setApiKey(k); setGeminiModel(m); setExtraTaxRate(Number(t)); const c = cc||'AU'; localStorage.setItem('geminiApiKey',k); localStorage.setItem('geminiModel',m); localStorage.setItem('joblog-extratax', t); localStorage.setItem('jim-country', c); _cc = c; setCountryCode(c); }} onClose={() => setShowSettings(false)} showToast={showToast} dbSize={dbSize} isPro={isUnlocked} onUnlockPro={handleUnlockSuccess}/>}
         {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} onUnlock={handleUnlockSuccess} showToast={showToast}/>}
