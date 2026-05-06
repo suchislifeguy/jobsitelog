@@ -328,18 +328,22 @@
         });
         
         if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`API error ${res.status} on ${model}: ${errText}`);
+          let errText = await res.text();
+          try {
+            const parsed = JSON.parse(errText);
+            if (parsed.error && parsed.error.message) {
+              errText = parsed.error.message;
+            }
+          } catch(e) {}
+          throw new Error(`[${model}] ${errText}`);
         }
         
         return await res.json();
       } catch (err) {
-        // Retry on rate limits (429), model missing (404), or server errors (500/503/fetch fails)
         if (err.message.includes('429') || err.message.includes('404') || err.message.includes('50') || err.message.includes('fetch')) {
           lastError = err;
           continue;
         }
-        // Do not retry on 400 Bad Request, immediately throw to user
         throw err;
       }
     }
@@ -472,7 +476,7 @@
         <div className="bg-slate-900 dark:bg-slate-800 text-white rounded-2xl shadow-2xl p-4 sm:p-5 flex items-start gap-3 border border-slate-700">
           <div className="mt-0.5">{icons[type]}</div>
           <div className="flex-1 min-w-0 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
-            <p className="text-sm font-bold break-words leading-relaxed whitespace-pre-wrap">{message}</p>
+            <p className="text-sm font-bold break-all leading-relaxed whitespace-pre-wrap">{message}</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white flex-shrink-0 p-1.5 bg-slate-800/50 hover:bg-slate-700 rounded-lg transition-colors"><X size={16}/></button>
         </div>
@@ -1036,7 +1040,7 @@
         const fileParts = [];
         for (const file of files) {
           if (file.type === 'application/pdf') {
-            let uploadedUri = null;
+            let useFallback = false;
             try {
               const uploadRes = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`, {
                 method: 'POST',
@@ -1049,17 +1053,30 @@
                 body: file
               });
               if (!uploadRes.ok) {
-                const errText = await uploadRes.text();
-                throw new Error(`Upload API rejected file: ${uploadRes.status} ${errText}`);
+                console.warn(`Upload API rejected: ${uploadRes.status}`);
+                useFallback = true;
+              } else {
+                const uploadData = await uploadRes.json();
+                if (!uploadData.file || !uploadData.file.uri) {
+                  useFallback = true;
+                } else {
+                  fileParts.push({ fileData: { mimeType: file.type, fileUri: uploadData.file.uri } });
+                }
               }
-              const uploadData = await uploadRes.json();
-              if (!uploadData.file || !uploadData.file.uri) {
-                throw new Error(`Upload API missing URI: ${JSON.stringify(uploadData)}`);
-              }
-              uploadedUri = uploadData.file.uri;
-              fileParts.push({ fileData: { mimeType: file.type, fileUri: uploadedUri } });
             } catch (err) {
-              throw new Error(`PDF Upload Failed: ${err.message}`);
+              console.warn("Upload fetch error:", err);
+              useFallback = true;
+            }
+
+            if (useFallback) {
+              console.log("Using inline base64 fallback for PDF...");
+              const base64Data = await new Promise((resolve, reject) => { 
+                const reader = new FileReader(); 
+                reader.onload = () => resolve(reader.result.split(',')[1]); 
+                reader.onerror = reject; 
+                reader.readAsDataURL(file); 
+              });
+              fileParts.push({ inlineData: { mimeType: file.type, data: base64Data } });
             }
           } else if (file.type.startsWith('image/')) {
             const base64Data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
@@ -2295,7 +2312,7 @@
               </div>
             </div>
             
-            <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4 pb-1">
+            <div className="flex gap-2 overflow-x-auto custom-scrollbar mb-4 pb-1">
               {[{key:'all',label:'All Projects'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'},{key:'unpaid',label:'Unpaid',icon:<Wallet size={12}/>}].map(f => (
                 <button key={f.key} onClick={() => setFilterType(f.key)} 
                   className={`flex-shrink-0 min-w-[110px] px-4 py-2 flex items-center justify-center gap-1.5 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border 
@@ -2382,9 +2399,9 @@
                   </div>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
                   <div className="mb-3"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date</label><input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none font-medium text-sm dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/></div>
-                  <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e=>setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
+                  <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3 custom-scrollbar" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e=>setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
                   <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase w-fit"><ImageIcon size={14}/> Add Photos<input type="file" multiple accept="image/*" className="hidden" onChange={handleProjectPhotoUpload}/></label>
-                  {headerDraft.projectPhotos.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-2 mt-2">{headerDraft.projectPhotos.map((p,i) => (<div key={i} className="relative h-16 w-16 flex-shrink-0"><img src={p} className="w-full h-full object-cover rounded-lg" alt=""/><button onClick={() => setHeaderDraft(d=>({...d,projectPhotos:d.projectPhotos.filter((_,idx)=>idx!==i)}))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button></div>))}</div>)}
+                  {headerDraft.projectPhotos.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-2 mt-2 custom-scrollbar">{headerDraft.projectPhotos.map((p,i) => (<div key={i} className="relative h-16 w-16 flex-shrink-0"><img src={p} className="w-full h-full object-cover rounded-lg" alt=""/><button onClick={() => setHeaderDraft(d=>({...d,projectPhotos:d.projectPhotos.filter((_,idx)=>idx!==i)}))} className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5"><X size={10}/></button></div>))}</div>)}
                   <div className="flex gap-3 mt-4">
                     <button onClick={saveHeaderEdit} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"><Check size={16}/> Save</button>
                     <button onClick={() => setIsEditingHeader(false)} className="flex-1 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 py-3 rounded-xl font-black text-sm">Cancel</button>
@@ -2399,7 +2416,7 @@
                     {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
                     {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {formatLocal(activeJob.dueDate)}</p>}
                     {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3 whitespace-pre-wrap">{activeJob.projectNotes}</p>}
-                    {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
+                    {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto custom-scrollbar">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
                   </div>
                   
                   {getTotals(activeJob?.tasks||[]).mins > 0 && (
