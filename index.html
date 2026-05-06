@@ -58,7 +58,11 @@
         #print-container { position: static !important; display: block !important; padding: 0 !important; margin: 0 !important; background: white !important; overflow: visible !important; }
         .no-print { display: none !important; }
         .no-print-border { border: none !important; background: transparent !important; }
-        .print-card { break-inside: avoid; page-break-inside: avoid; border: 2px solid #cbd5e1 !important; margin-bottom: 12px; border-radius: 8px; overflow: hidden; background: white !important; }
+        
+        /* Stop html2pdf from arbitrarily cutting text fields in half */
+        .print-card { border: 2px solid #cbd5e1 !important; margin-bottom: 12px; border-radius: 8px; overflow: visible !important; background: white !important; display: block; }
+        .print-card-header { break-after: avoid; page-break-after: avoid; }
+        
         .print-img-container { break-inside: avoid; page-break-inside: avoid; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
         .print-img-container img { width: 100%; height: auto; max-height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; page-break-inside: avoid; }
         .print-header { break-after: avoid; page-break-after: avoid; }
@@ -68,6 +72,14 @@
         input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="date"]::-webkit-inner-spin-button,
         input[type="datetime-local"]::-webkit-calendar-picker-indicator { display: none !important; opacity: 0 !important; }
+        
+        /* Hide all default placeholders so empty fields don't print them out */
+        ::-webkit-input-placeholder { color: transparent !important; }
+        :-moz-placeholder { color: transparent !important; }
+        ::-moz-placeholder { color: transparent !important; }
+        :-ms-input-placeholder { color: transparent !important; }
+        ::placeholder { color: transparent !important; }
+        [data-placeholder]:empty::before { content: "" !important; display: none !important; color: transparent !important; }
       }
       #pdf-content input[type="date"]::-webkit-calendar-picker-indicator,
       #pdf-content input[type="date"]::-webkit-inner-spin-button {
@@ -174,8 +186,8 @@
 
   // --- Core AI "Smart Router" & Waterfall ---
   const smartFetchAI = async (taskType, contents, generationConfig, apiKey, userModel) => {
-    const heavyModels = [userModel, 'gemini-1.5-pro', 'gemini-1.5-flash'];
-    const lightModels = [userModel, 'gemini-1.5-flash-8b', 'gemini-1.5-flash'];
+    const heavyModels = [userModel, 'gemini-2.5-pro', 'gemini-2.5-flash'];
+    const lightModels = [userModel, 'gemini-2.5-flash-lite', 'gemini-2.5-flash'];
     
     const models = taskType === 'heavy' ? heavyModels : lightModels;
     const uniqueModels = [...new Set(models)].filter(Boolean);
@@ -295,7 +307,7 @@
     <div
       contentEditable suppressContentEditableWarning
       onBlur={e => onChange(e.currentTarget.innerText)}
-      className={`empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 whitespace-pre-wrap outline-none ${className}`}
+      className={`empty:before:content-[attr(data-placeholder)] whitespace-pre-wrap outline-none ${className}`}
       data-placeholder={placeholder}
     >{value}</div>
   );
@@ -848,7 +860,7 @@
               <input type="password" className="w-full p-3.5 mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
               <div className="relative">
                 <Bot size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-1.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
+                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-2.5-flash" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
               </div>
             </div>
 
@@ -1121,7 +1133,14 @@
       const element = document.getElementById('pdf-content');
       setIsGeneratingPDF(true);
       try {
-        const opt = { margin: 10, filename: `${job.clientName || 'Job'}-${formatLocal(header.date, 'short')}.pdf`, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+        const opt = { 
+          margin: 10, 
+          filename: `${job.clientName || 'Job'}-${formatLocal(header.date, 'short')}.pdf`, 
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          pagebreak: { mode: ['css', 'legacy'] },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+        };
         const pdfBlob = await window.html2pdf().set(opt).from(element).output('blob');
         const file = new File([pdfBlob], `${job.clientName || 'Job_Report'}.pdf`, { type: 'application/pdf' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1185,11 +1204,16 @@
                   <div className="flex items-center gap-1.5"><span className="text-[10px] font-black text-slate-400 uppercase">Date:</span><input type="date" className="bg-transparent border-b border-dashed border-slate-400 text-right outline-none text-slate-800 text-xs font-bold cursor-pointer focus:border-orange-400" value={header.date} onChange={e => setHeader({...header, date: e.target.value})}/></div>
                 </div>
               </div>
-              <input className="w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
-              {header.clientRef && <input className="w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1 outline-none" value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>}
-              <input className="w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none" value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
-              <div className="flex items-center gap-2 mb-2"><span className="text-xs font-black text-slate-400 uppercase tracking-widest">Due Date:</span><input type="date" className="bg-transparent border-b border-dashed border-amber-400 outline-none text-amber-600 font-bold text-sm cursor-pointer focus:border-orange-500" value={header.dueDate} onChange={e => setHeader({...header, dueDate: e.target.value})}/></div>
-              <PrintEditableDiv value={header.projectNotes} onChange={v => setHeader({...header, projectNotes: v})} placeholder="Project notes / Document Summary" className="w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1"/>
+              <input className={`w-full text-3xl font-black bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none ${!header.clientName ? 'print:hidden' : ''}`} value={header.clientName} onChange={e => setHeader({...header, clientName: e.target.value})} placeholder="Client Name"/>
+              <input className={`w-full text-lg font-bold bg-transparent border-b border-dashed border-slate-300 mb-1 pb-1 outline-none ${!header.clientRef ? 'print:hidden' : ''}`} value={header.clientRef} onChange={e => setHeader({...header, clientRef: e.target.value})} placeholder="Reference"/>
+              <input className={`w-full text-slate-500 font-medium bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 outline-none ${!header.address ? 'print:hidden' : ''}`} value={header.address} onChange={e => setHeader({...header, address: e.target.value})} placeholder="Address"/>
+              
+              <div className={`flex items-center gap-2 mb-2 ${!header.dueDate ? 'print:hidden' : ''}`}>
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Due Date:</span>
+                <input type="date" className="bg-transparent border-b border-dashed border-amber-400 outline-none text-amber-600 font-bold text-sm cursor-pointer focus:border-orange-500" value={header.dueDate} onChange={e => setHeader({...header, dueDate: e.target.value})}/>
+              </div>
+              
+              <PrintEditableDiv value={header.projectNotes} onChange={v => setHeader({...header, projectNotes: v})} placeholder="Project notes / Document Summary" className={`w-full text-sm italic bg-transparent border-b border-dashed border-slate-300 mb-2 pb-1 ${!header.projectNotes ? 'print:hidden' : ''}`}/>
               {header.projectPhotos?.length > 0 && <div className="flex gap-2 mt-2 overflow-x-auto">{header.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
               <div className="flex gap-4 mt-2 text-sm font-medium text-slate-600">
                 <span>TOTAL TIME: {fmtMins(totalHours)}</span>
@@ -1203,21 +1227,35 @@
               const subtotal = labour + mats;
               return (
                 <div key={idx} className="print-card">
-                  <div className={`px-5 py-3 font-black border-b flex justify-between items-center text-lg uppercase ${job.type==='handover' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-800 border-slate-200'}`}>
-                    <input className="flex-1 font-black bg-transparent border-none outline-none" value={t.title} onChange={e => updateTask(idx, 'title', e.target.value)}/>
-                    <input className="w-20 text-sm bg-transparent border-none outline-none text-right" value={t.time} onChange={e => updateTask(idx, 'time', e.target.value)}/>
+                  <div className={`print-card-header px-5 py-3 font-black border-b flex justify-between items-center text-lg uppercase ${job.type==='handover' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-800 border-slate-200'}`}>
+                    <input className="flex-1 font-black bg-transparent border-none outline-none" value={t.title} onChange={e => updateTask(idx, 'title', e.target.value)} placeholder="Task Title"/>
+                    <input className="w-20 text-sm bg-transparent border-none outline-none text-right" value={t.time} onChange={e => updateTask(idx, 'time', e.target.value)} placeholder="Time"/>
                     {showCosts && subtotal > 0 && <span className="text-sm text-emerald-700 ml-4">{fmtAUD(subtotal)}</span>}
                   </div>
                   <div className="p-6">
-                    <PrintEditableDiv value={t.desc} onChange={v => updateTask(idx, 'desc', v)} placeholder="Task description" className="w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent outline-none"/>
+                    <PrintEditableDiv value={t.desc} onChange={v => updateTask(idx, 'desc', v)} placeholder="Task description" className={`w-full text-[14px] text-slate-700 mb-6 border-l-4 border-slate-200 pl-4 italic font-medium bg-transparent outline-none ${!t.desc ? 'print:hidden' : ''}`}/>
+                    
                     <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div className="p-4 bg-slate-50 rounded-xl border"><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label><input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)}/></div>
-                      <div className="p-4 bg-slate-50 rounded-xl border"><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}</label><input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)}/></div>
-                      {showCosts && (labour > 0 || mats > 0) && (
-                        <>
-                          <div className="p-4 bg-slate-50 rounded-xl border"><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label><span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}{t.rate ? ` ($${t.rate}/hr)` : ''}</span></div>
-                          <div className="p-4 bg-slate-50 rounded-xl border"><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label><span className="text-[12px] font-bold text-slate-600">{fmtAUD(mats)}</span></div>
-                        </>
+                      <div className={`p-4 bg-slate-50 rounded-xl border ${!t.materials ? 'print:hidden' : ''}`}>
+                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
+                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)} placeholder="Materials"/>
+                      </div>
+                      <div className={`p-4 bg-slate-50 rounded-xl border ${!t.tools ? 'print:hidden' : ''}`}>
+                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}</label>
+                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)} placeholder={job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}/>
+                      </div>
+                      
+                      {showCosts && labour > 0 && (
+                        <div className="p-4 bg-slate-50 rounded-xl border">
+                          <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Labour Cost</label>
+                          <span className="text-[12px] font-bold text-slate-600">{fmtAUD(labour)}{t.rate ? ` ($${t.rate}/hr)` : ''}</span>
+                        </div>
+                      )}
+                      {showCosts && mats > 0 && (
+                        <div className="p-4 bg-slate-50 rounded-xl border">
+                          <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials Cost</label>
+                          <span className="text-[12px] font-bold text-slate-600">{fmtAUD(mats)}</span>
+                        </div>
                       )}
                     </div>
                     {t.images?.length > 0 && <div className="print-img-container">{t.images.map((img,i) => <div key={i} className="rounded-lg overflow-hidden border aspect-[4/3] shadow-sm bg-slate-100"><img src={img} className="w-full h-full object-cover"/></div>)}</div>}
@@ -1359,7 +1397,7 @@
           <div className="flex gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             {editing && (<button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-3.5 rounded-xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={18}/></button>)}
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-3.5 rounded-xl font-black text-sm text-slate-600 dark:text-slate-300">Cancel</button>
-            <button onClick={save} className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white py-3.5 rounded-xl font-black text-sm shadow-lg flex justify-center items-center gap-2"><Check size={16}/> Save</button>
+            <button onClick={save} className="flex-1 bg-cyan-600 hover:bg-cyan-50 text-white py-3.5 rounded-xl font-black text-sm shadow-lg flex justify-center items-center gap-2"><Check size={16}/> Save</button>
           </div>
         </div>
       </div>
@@ -1607,7 +1645,7 @@
     const [listeningField, setListeningField] = useState(null);
     const recognitionRef = useRef(null);
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
-    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-1.5-flash');
+    const [geminiModel, setGeminiModel] = useState(() => localStorage.getItem('geminiModel') || 'gemini-2.5-flash');
     const [googleClientId, setGoogleClientId] = useState(() => localStorage.getItem('googleClientId') || '');
     const [googleToken, setGoogleToken] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState(null);
