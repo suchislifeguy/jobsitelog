@@ -229,7 +229,7 @@
 
             @keyframes bounce {
               0% { transform: translateY(0); }
-              100% { transform: translateY(-3px); }
+              100% { transform: translateY(-1px); }
             }
             @keyframes nod {
               0%, 100% { transform: rotate(0deg); }
@@ -2200,7 +2200,7 @@
           return `  • ${t.date}: ${t.category} — ${Math.floor(mins/60)}h${mins % 60 ? ` ${mins % 60}m` : ''}${j ? ` at ${j.address}` : ''}${t.notes ? ` (${t.notes})` : ''}`;
         }).join('\n');
 
-      return `You are JIM, a friendly Aussie AI assistant built into a trade job management app. Casual tone — use "mate", "no worries" etc. Keep voice responses to 2-3 sentences max unless asked for more detail.
+      return `You are JIM, a blunt Aussie tradie assistant. Never start with "G'day" or any greeting — get straight to the answer. 1-2 short sentences max unless more detail is asked for. Use "mate" occasionally but sparingly. Be direct, specific, and reference actual job data when relevant.
 
 BUSINESS: ${biz.name || 'Not set'} | ABN: ${biz.abn || '—'} | Ph: ${biz.phone || '—'}
 TODAY: ${new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
@@ -2250,7 +2250,7 @@ ${weekSheets || '  No time entries this week.'}`;
       const voices = await loadVoices();
 
       // Aggressively hunt for a male voice (especially on iOS/Mac)
-      const knownMaleNames = ['daniel', 'james', 'william', 'arthur', 'aaron', 'bruce', 'gordon', 'mark', 'david', 'male', 'guy', 'boy'];
+      const knownMaleNames = ['daniel', 'james', 'william', 'arthur', 'aaron', 'bruce', 'gordon', 'mark', 'david', 'male', 'guy', 'boy', 'alex', 'fred', 'oliver', 'liam', 'thomas', 'rishi', 'google uk english male', 'microsoft david', 'microsoft mark', 'microsoft james'];
       const isMale = (v) => knownMaleNames.some(name => v.name.toLowerCase().includes(name));
 
       const maleVoice = voices.find(v => v.lang.includes('en-AU') && isMale(v))
@@ -2299,7 +2299,7 @@ ${weekSheets || '  No time entries this week.'}`;
         try {
           const response = await smartFetchAI(
             'light',
-            [{ parts: [{ text: `${buildJimContext()}\n\nUser said: "${userText}"\n\nReply as JIM. Casual Aussie. 1-2 sentences max unless detail was asked for.` }] }],
+            [{ parts: [{ text: `${buildJimContext()}\n\nUser said: "${userText}"\n\nReply as JIM. No greeting. Get straight to the point. 1-2 sentences max, use actual job data.` }] }],
             { temperature: 0.7, maxOutputTokens: 150 },
             apiKey,
             geminiModel
@@ -2311,8 +2311,8 @@ ${weekSheets || '  No time entries this week.'}`;
           setJimLiveTranscript(prev => [...prev, { role: 'jim', text: jimResponse }]);
 
           const utterance = new SpeechSynthesisUtterance(jimResponse);
-          utterance.rate = 1.0;
-          utterance.pitch = 0.95;
+          utterance.rate = 0.95;
+          utterance.pitch = 0.7;
           utterance.volume = 1;
           if (maleVoice) utterance.voice = maleVoice;
 
