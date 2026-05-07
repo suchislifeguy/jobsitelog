@@ -2749,7 +2749,7 @@ ${weekSheets || '  No time entries this week.'}`;
         {jimLiveOpen && <FloatingJimMascot status={jimLiveStatus}/>}
 
         {/* Top Header */}
-        <header className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-md text-slate-900 dark:text-white px-4 h-14 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print">
+        <header className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-md text-slate-900 dark:text-white px-4 h-14 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print overflow-hidden">
           <div className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
             {businessProfile?.logo
               ? <img src={businessProfile.logo} className="h-9 w-9 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 flex-shrink-0" alt=""/>
@@ -2757,7 +2757,7 @@ ${weekSheets || '  No time entries this week.'}`;
             <div className="min-w-0">
               <h1 className="font-extrabold text-lg tracking-tight truncate leading-none">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'JIM')}</h1>
               {!businessProfile?.name && viewMode !== 'detail' && (
-                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 leading-none">Jobs · Invoices · Quotes</p>
+                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1 leading-none truncate">Jobs Invoices Manager</p>
               )}
             </div>
           </div>
@@ -2813,10 +2813,10 @@ ${weekSheets || '  No time entries this week.'}`;
             )}
             {!selectionMode && (
               <>
-                {/* JIM Insight Card */}
+                {/* JIM Insight — speech bubble from the header mascot */}
                 {jobs.length > 0 && (
-                  <div className={`flex items-center gap-3 p-3.5 rounded-2xl mb-3 border ${jimInsight.state==='error' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
-                    {!jimLiveOpen && <div className="flex-shrink-0"><JimMascot size={32} state={jimInsight.state}/></div>}
+                  <div className={`relative px-4 py-3 rounded-2xl mb-3 border ${jimInsight.state==='error' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
+                    <div className={`absolute -top-1.5 left-4 w-3 h-3 rotate-45 border-l border-t ${jimInsight.state==='error' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}/>
                     <p className={`text-sm font-medium leading-snug ${jimInsight.state==='error' ? 'text-red-700 dark:text-red-300' : 'text-slate-700 dark:text-slate-300'}`}>{jimInsight.msg}</p>
                   </div>
                 )}
