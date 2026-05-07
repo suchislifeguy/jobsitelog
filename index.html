@@ -2750,11 +2750,18 @@ ${weekSheets || '  No time entries this week.'}`;
 
         {/* Top Header */}
         <header className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-md text-slate-900 dark:text-white px-4 h-14 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print">
-          <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
-            {businessProfile?.logo ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 flex-shrink-0" alt=""/> : (!jimLiveOpen && !(viewMode === 'dashboard' && jobs.length > 0)) ? <JimMascot size={32} state="idle"/> : null}
-            <h1 className="font-extrabold text-base tracking-tight truncate">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'JIM')}</h1>
+          <div className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
+            {businessProfile?.logo
+              ? <img src={businessProfile.logo} className="h-9 w-9 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 flex-shrink-0" alt=""/>
+              : <JimMascot size={36} state="idle"/>}
+            <div className="min-w-0">
+              <h1 className="font-extrabold text-lg tracking-tight truncate leading-none">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'JIM')}</h1>
+              {!businessProfile?.name && viewMode !== 'detail' && (
+                <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-0.5 leading-none">Jobs · Invoices · Quotes</p>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             {viewMode === 'detail' && activeJob && (
               <>
                 <button onClick={handleShare} aria-label="Share" className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"><Share2 size={16}/></button>
@@ -2762,7 +2769,7 @@ ${weekSheets || '  No time entries this week.'}`;
               </>
             )}
             <button onClick={() => startJimLive()} aria-label="Talk to JIM" title="Talk to JIM" className="w-10 h-10 flex items-center justify-center bg-purple-600 hover:bg-purple-500 text-white rounded-full active:scale-95 shadow-sm transition-colors">
-              <Radio size={16}/>
+              <Mic size={18}/>
             </button>
           </div>
         </header>
@@ -2811,28 +2818,6 @@ ${weekSheets || '  No time entries this week.'}`;
                   <div className={`flex items-center gap-3 p-3.5 rounded-2xl mb-3 border ${jimInsight.state==='error' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
                     {!jimLiveOpen && <div className="flex-shrink-0"><JimMascot size={32} state={jimInsight.state}/></div>}
                     <p className={`text-sm font-medium leading-snug ${jimInsight.state==='error' ? 'text-red-700 dark:text-red-300' : 'text-slate-700 dark:text-slate-300'}`}>{jimInsight.msg}</p>
-                  </div>
-                )}
-
-                {/* Revenue Snapshot */}
-                {(revenueStats.quoted > 0 || revenueStats.outstanding > 0 || revenueStats.received > 0) && (
-                  <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 border border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center gap-2 mb-3"><TrendingUp size={13} className="text-slate-400"/><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Revenue</span></div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
-                        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Quoted</p>
-                        <p className="font-extrabold text-slate-900 dark:text-white text-sm">{fmtAUD(revenueStats.quoted)}</p>
-                      </div>
-                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
-                        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Outstanding</p>
-                        <p className={`font-extrabold text-sm ${revenueStats.overdueCount > 0 ? 'text-red-500' : 'text-amber-600 dark:text-amber-400'}`}>{fmtAUD(revenueStats.outstanding)}</p>
-                        {(revenueStats.overdueCount > 0 || revenueStats.invoicedCount > 0) && <p className="text-[9px] font-medium text-slate-400 mt-0.5">{revenueStats.overdueCount > 0 && <span className="text-red-500">{revenueStats.overdueCount} overdue </span>}{revenueStats.invoicedCount > 0 && <span>{revenueStats.invoicedCount} invoiced</span>}</p>}
-                      </div>
-                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
-                        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Received</p>
-                        <p className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">{fmtAUD(revenueStats.received)}</p>
-                      </div>
-                    </div>
                   </div>
                 )}
 
@@ -2945,6 +2930,28 @@ ${weekSheets || '  No time entries this week.'}`;
                 </div>
               )}
             </div>
+            )}
+
+            {/* Revenue Snapshot — bottom of dashboard */}
+            {!selectionMode && (revenueStats.quoted > 0 || revenueStats.outstanding > 0 || revenueStats.received > 0) && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mt-6 border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-3"><TrendingUp size={13} className="text-slate-400"/><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Revenue</span></div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                    <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Quoted</p>
+                    <p className="font-extrabold text-slate-900 dark:text-white text-sm whitespace-nowrap">{fmtAUD(revenueStats.quoted)}</p>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                    <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Owed</p>
+                    <p className={`font-extrabold text-sm whitespace-nowrap ${revenueStats.overdueCount > 0 ? 'text-red-500' : 'text-amber-600 dark:text-amber-400'}`}>{fmtAUD(revenueStats.outstanding)}</p>
+                    {(revenueStats.overdueCount > 0 || revenueStats.invoicedCount > 0) && <p className="text-[9px] font-medium text-slate-400 mt-0.5">{revenueStats.overdueCount > 0 && <span className="text-red-500">{revenueStats.overdueCount} overdue </span>}{revenueStats.invoicedCount > 0 && <span>{revenueStats.invoicedCount} invoiced</span>}</p>}
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                    <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Paid</p>
+                    <p className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm whitespace-nowrap">{fmtAUD(revenueStats.received)}</p>
+                  </div>
+                </div>
+              </div>
             )}
           </main>
         )}
