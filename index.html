@@ -628,7 +628,7 @@
     return (
       <div className="fixed inset-0 z-[300] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto">
         <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl border dark:border-slate-800 animate-slide-up sm:animate-none pb-safe text-center my-auto">
-          <div className="flex justify-end mb-2"><button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600"><X size={18}/></button></div>
+          <div className="flex justify-end mb-2"><button onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"><X size={18}/></button></div>
           <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center mx-auto mb-4"><Lock size={32} className="text-orange-500"/></div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Limit Reached</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">You've reached the 3-job free limit. Purchase a licence or enter an existing key to unlock unlimited features.</p>
@@ -640,7 +640,7 @@
           <div className="text-left mb-6">
             <h3 className="font-black text-sm mb-2 text-slate-800 dark:text-white">2. Enter your Key</h3>
             <div className="flex gap-2">
-              <input className="flex-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-mono font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 uppercase text-sm border border-slate-200 dark:border-slate-700" placeholder="ENTER LICENCE KEY" value={key} onChange={e => setKey(e.target.value.toUpperCase())}/>
+              <input className="flex-1 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-mono font-bold dark:text-white dark:placeholder-slate-500 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 uppercase text-sm border border-slate-200 dark:border-slate-700" placeholder="ENTER LICENCE KEY" value={key} onChange={e => setKey(e.target.value.toUpperCase())}/>
               <button onClick={handleUnlock} className="bg-orange-500 hover:bg-orange-400 text-white px-5 rounded-xl font-black text-sm">Unlock</button>
             </div>
           </div>
@@ -656,7 +656,7 @@
         <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 pb-safe">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-black text-lg flex items-center gap-2"><Sparkles className="text-purple-500" size={20}/> Ask JIM</h3>
-            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-full"><X size={20}/></button>
+            <button onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"><X size={18}/></button>
           </div>
           {!apiKey ? (
             <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-bold mb-4">Please add your Gemini API Key in Settings to use Ask JIM features.</div>
@@ -749,7 +749,7 @@
         <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[92vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg flex items-center gap-2 text-slate-900 dark:text-white"><Building2 size={18} className="text-orange-500"/> Business Profile</h3>
-            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white"><X size={18}/></button>
+            <button onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"><X size={18}/></button>
           </div>
           <div className="overflow-y-auto flex-1 custom-scrollbar pb-2 pr-1 space-y-5">
             {expiringCreds.length > 0 && (
@@ -771,14 +771,14 @@
             </div>
 
             <div className="space-y-3">
-              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div>
-              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Name *</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-bold outline-none border border-slate-100 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Trading Name</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white dark:placeholder-slate-500" value={form.tradingName} onChange={e=>setForm(f=>({...f,tradingName:e.target.value}))}/></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Phone</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div>
-                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div>
+                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Phone</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white dark:placeholder-slate-500" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div>
+                <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Email</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white dark:placeholder-slate-500" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div>
               </div>
-              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Address</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400 dark:text-white dark:placeholder-slate-500" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/></div>
-              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Global Terms & Conditions</label><textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-xs h-24 resize-none dark:text-white border border-slate-100 dark:border-slate-700 focus:ring-2 focus:ring-orange-400" placeholder="e.g. Quote valid for 30 days..." value={form.termsAndConditions} onChange={e=>setForm(f=>({...f,termsAndConditions:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Business Address</label><input className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none border border-slate-100 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white dark:placeholder-slate-500" value={form.address} onChange={e=>setForm(f=>({...f,address:e.target.value}))}/></div>
+              <div><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Global Terms & Conditions</label><textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-xs h-24 resize-none dark:text-white border border-slate-100 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40" placeholder="e.g. Quote valid for 30 days..." value={form.termsAndConditions} onChange={e=>setForm(f=>({...f,termsAndConditions:e.target.value}))}/></div>
             </div>
 
             <div>
@@ -814,7 +814,7 @@
         <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[85vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">Task Templates</h3>
-            <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
+            <button onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"><X size={18}/></button>
           </div>
           <div className="overflow-y-auto flex-1 custom-scrollbar mb-2">
             {editing === null ? (
@@ -832,18 +832,18 @@
               </>
             ) : (
               <div className="space-y-3 pb-2 pr-1">
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Template Name *" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Task Title *" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Template Name *" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Task Title *" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/>
                 <div className="grid grid-cols-2 gap-3">
-                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Time (e.g. 2h)" value={form.time} onChange={e=>setForm({...form,time:e.target.value})}/>
-                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Rate/hr $" value={form.rate} onChange={e=>setForm({...form,rate:e.target.value})}/>
+                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Time (e.g. 2h)" value={form.time} onChange={e=>setForm({...form,time:e.target.value})}/>
+                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Rate/hr $" value={form.rate} onChange={e=>setForm({...form,rate:e.target.value})}/>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Materials $" value={form.materialsCost} onChange={e=>setForm({...form,materialsCost:e.target.value})}/>
-                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Materials list" value={form.materials} onChange={e=>setForm({...form,materials:e.target.value})}/>
+                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Materials $" value={form.materialsCost} onChange={e=>setForm({...form,materialsCost:e.target.value})}/>
+                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Materials list" value={form.materials} onChange={e=>setForm({...form,materials:e.target.value})}/>
                 </div>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Tools" value={form.tools} onChange={e=>setForm({...form,tools:e.target.value})}/>
-                <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl h-24 resize-none text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Description" value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})}/>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Tools" value={form.tools} onChange={e=>setForm({...form,tools:e.target.value})}/>
+                <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl h-24 resize-none text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Description" value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})}/>
               </div>
             )}
           </div>
@@ -878,7 +878,7 @@
         <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl border dark:border-slate-800 max-h-[85vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">Saved Materials</h3>
-            <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
+            <button onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"><X size={18}/></button>
           </div>
           <div className="overflow-y-auto flex-1 custom-scrollbar mb-2">
             {!editing ? (
@@ -896,8 +896,8 @@
               </>
             ) : (
               <div className="space-y-3 pb-2 pr-1">
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Material Name *" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Price $ *" type="number" step="0.01" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl font-bold text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Material Name *" value={form.name} onChange={e=>setForm({...form,name:e.target.value})}/>
+                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Price $ *" type="number" step="0.01" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/>
               </div>
             )}
           </div>
@@ -926,6 +926,7 @@
     const [showMaterials, setShowMaterials] = useState(false);
     const [showBusiness, setShowBusiness] = useState(false);
     const [licenceInput, setLicenceInput] = useState('');
+    const [activeTab, setActiveTab] = useState('business');
     const save = () => { onSave(draftKey, draftModel, draftExtraTax, draftCountry); onClose(); showToast('Settings Saved', 'success'); };
     const hasBiz = !!businessProfile?.name;
 
@@ -939,139 +940,170 @@
 
     const expiringCount = (businessProfile?.credentials || []).filter(c => isExpiringSoon(c.expiry) || isExpired(c.expiry)).length;
 
+    const tabs = [
+      { key: 'business', label: 'Business', badge: expiringCount > 0 ? expiringCount : (!hasBiz ? '!' : null) },
+      { key: 'library',  label: 'Library' },
+      { key: 'app',      label: 'App',     badge: !apiKey ? '!' : null },
+    ];
+
+    const sectionLabel = "text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2";
+
     return (
       <div className="fixed inset-0 z-[160] bg-slate-900/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
-        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-5 sm:p-7 shadow-2xl border dark:border-slate-800 max-h-[90vh] overflow-y-auto custom-scrollbar animate-slide-up sm:animate-none pb-safe">
-          <div className="flex justify-between items-center mb-5 sticky top-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur py-2 z-10">
-            <div className="flex items-center gap-3">
-              <JimMascot size={40} state="idle"/>
-              <div>
-                <span className="text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">Configuration</span>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1.5">Settings</h2>
-              </div>
-            </div>
-            <button onClick={onClose} className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white text-[10px] font-black uppercase"><X size={14}/> Close</button>
+        <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-2xl border dark:border-slate-800 max-h-[92vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
+
+          {/* Header */}
+          <div className="flex justify-between items-center px-5 pt-5 pb-3 flex-shrink-0">
+            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">Settings</h2>
+            <button onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"><X size={18}/></button>
           </div>
 
-          <div className="space-y-5">
-            {/* Business Profile */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Business</label>
-              <button onClick={() => setShowBusiness(true)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl active:scale-95 transition-all hover:border-orange-400 dark:hover:border-orange-500">
-                <div className="flex items-center gap-3">
-                  {businessProfile?.logo
-                    ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-white dark:bg-slate-700 p-0.5" alt="logo"/>
-                    : <div className="bg-orange-100 dark:bg-orange-900/40 p-2 rounded-xl"><Building2 size={16} className="text-orange-500"/></div>
-                  }
-                  <div className="text-left">
-                    <div className="flex items-center gap-2">
-                      <p className="font-black text-sm text-slate-800 dark:text-white">{hasBiz ? businessProfile.name : 'Set Up Business Profile'}</p>
-                      {expiringCount > 0 && <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">{expiringCount}</span>}
+          {/* Tab Bar */}
+          <div className="flex bg-slate-100 dark:bg-slate-800/60 rounded-xl p-1 mx-5 mb-1 flex-shrink-0">
+            {tabs.map(t => (
+              <button key={t.key} onClick={() => setActiveTab(t.key)} className={`relative flex-1 h-9 rounded-lg text-sm font-semibold transition-all ${activeTab===t.key ? 'bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}>
+                {t.label}
+                {t.badge && <span className="absolute top-0.5 right-1 min-w-[16px] h-4 px-1 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{t.badge}</span>}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-4">
+
+            {activeTab === 'business' && (
+              <div className="space-y-5">
+                {/* Business Profile */}
+                <div>
+                  <label className={sectionLabel}>Profile</label>
+                  <button onClick={() => setShowBusiness(true)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-orange-400 dark:hover:border-orange-500 transition-all">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {businessProfile?.logo
+                        ? <img src={businessProfile.logo} className="h-9 w-9 object-contain rounded-lg bg-white dark:bg-slate-700 p-0.5 flex-shrink-0" alt="logo"/>
+                        : <div className="w-9 h-9 bg-orange-100 dark:bg-orange-950/40 rounded-lg flex items-center justify-center flex-shrink-0"><Building2 size={16} className="text-orange-500"/></div>
+                      }
+                      <div className="text-left min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-sm text-slate-900 dark:text-white truncate">{hasBiz ? businessProfile.name : 'Set up business profile'}</p>
+                          {expiringCount > 0 && <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">{expiringCount}</span>}
+                        </div>
+                        {hasBiz
+                          ? <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{(businessProfile.credentials?.length || 0)} credential{(businessProfile.credentials?.length || 0) !== 1 ? 's' : ''} saved</p>
+                          : <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Logo, ABN, credentials, T&Cs</p>
+                        }
+                      </div>
                     </div>
-                    {hasBiz && businessProfile.abn && <p className="text-[10px] text-slate-400 font-mono">ABN {businessProfile.abn}</p>}
-                    {hasBiz && (businessProfile.credentials?.length > 0) && <p className="text-[10px] text-slate-400">{businessProfile.credentials.length} credential{businessProfile.credentials.length !== 1 ? 's' : ''} saved</p>}
-                    {!hasBiz && <p className="text-[10px] text-slate-400">Logo, ABN, credentials, T&Cs</p>}
+                    <Pencil size={14} className="text-slate-400 flex-shrink-0 ml-2"/>
+                  </button>
+                </div>
+
+                {/* Region / Currency */}
+                <div>
+                  <label className={sectionLabel}>Region &amp; Currency</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {Object.entries(COUNTRY_CONFIGS).map(([code, cfg]) => (
+                      <button key={code} onClick={() => setDraftCountry(code)}
+                        className={`flex flex-col items-center gap-0.5 py-2.5 rounded-xl border font-semibold text-xs transition-all ${draftCountry === code ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400' : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'}`}>
+                        <span className="text-xl leading-none">{cfg.flag}</span>
+                        <span>{cfg.name.split(' ')[0]}</span>
+                        <span className="font-medium text-[10px] text-slate-500 dark:text-slate-500">{cfg.currency}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <Pencil size={14} className="text-slate-400"/>
-              </button>
-            </div>
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
 
-            {/* Region / Currency */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Region &amp; Currency</label>
-              <div className="grid grid-cols-3 gap-2">
-                {Object.entries(COUNTRY_CONFIGS).map(([code, cfg]) => (
-                  <button key={code} onClick={() => setDraftCountry(code)}
-                    className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 font-black text-[10px] uppercase tracking-wide transition-all ${draftCountry === code ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400' : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'}`}>
-                    <span className="text-xl leading-none">{cfg.flag}</span>
-                    <span>{cfg.name.split(' ')[0]}</span>
-                    <span className="font-medium normal-case text-[9px] opacity-70">{cfg.currency} · {cfg.taxLabel}</span>
+                {/* Extra Tax */}
+                <div>
+                  <label className={sectionLabel}>{COUNTRY_CONFIGS[draftCountry]?.markupLabel || 'Additional Markup'}</label>
+                  <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/60 px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <input type="range" min="0" max="50" step="0.5" value={draftExtraTax} onChange={e => setDraftExtraTax(e.target.value)} className="flex-1 accent-orange-500"/>
+                    <span className="font-bold text-slate-900 dark:text-white w-12 text-right text-sm">{draftExtraTax}%</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'library' && (
+              <div className="space-y-5">
+                <div>
+                  <label className={sectionLabel}>Your Library</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={() => { setShowTemplates(true); setShowMaterials(false); }} className="flex flex-col items-start gap-1 p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                      <div className="flex items-center gap-2 text-slate-500"><Bookmark size={14}/><span className="text-[11px] font-semibold uppercase tracking-wider">Templates</span></div>
+                      <span className="font-extrabold text-slate-900 dark:text-white text-lg">{userTemplates.length}</span>
+                    </button>
+                    <button onClick={() => { setShowMaterials(true); setShowTemplates(false); }} className="flex flex-col items-start gap-1 p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-slate-300 dark:hover:border-slate-700 transition-colors">
+                      <div className="flex items-center gap-2 text-slate-500"><Package size={14}/><span className="text-[11px] font-semibold uppercase tracking-wider">Materials</span></div>
+                      <span className="font-extrabold text-slate-900 dark:text-white text-lg">{userMaterials.length}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className={`${sectionLabel} mb-0`}>Backup &amp; Restore</label>
+                    <div className={`flex items-center gap-1 px-2 h-6 rounded-md text-[10px] font-semibold ${parseFloat(dbSize)>4 ? 'text-red-500 bg-red-50 dark:bg-red-950/30' : 'text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800'}`}><HardDrive size={10}/> {dbSize}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button onClick={exportData} className="flex items-center justify-center gap-2 h-11 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><Download size={15}/> Export</button>
+                    <label className="flex items-center justify-center gap-2 h-11 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"><Upload size={15}/> Import<input type="file" accept=".json" className="hidden" onChange={importData}/></label>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">Export creates a JSON backup of all jobs, templates, materials, and settings. Import replaces existing data.</p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'app' && (
+              <div className="space-y-5">
+                {/* Appearance */}
+                <div>
+                  <label className={sectionLabel}>Appearance</label>
+                  <button onClick={toggleTheme} className="w-full flex items-center justify-between px-4 h-14 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-800 transition-all">
+                    <div className="flex items-center gap-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      {isDarkMode ? <Moon size={17} className="text-slate-400"/> : <Sun size={17} className="text-amber-500"/>}
+                      {isDarkMode ? 'Dark' : 'Light'}
+                    </div>
+                    <div className={`w-10 h-6 rounded-full transition-all flex items-center px-0.5 ${isDarkMode ? 'bg-orange-500 justify-end' : 'bg-slate-300 justify-start'}`}>
+                      <div className="w-5 h-5 rounded-full bg-white shadow"/>
+                    </div>
                   </button>
-                ))}
-              </div>
-            </div>
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-
-            {/* Extra Tax */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">{COUNTRY_CONFIGS[draftCountry]?.markupLabel || 'Additional Markup'}</label>
-              <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
-                <input type="range" min="0" max="50" step="0.5" value={draftExtraTax} onChange={e => setDraftExtraTax(e.target.value)} className="flex-1 accent-orange-500"/>
-                <span className="font-black text-slate-700 dark:text-slate-200 w-12 text-right">{draftExtraTax}%</span>
-              </div>
-            </div>
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-
-            {/* Appearance */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Appearance</label>
-              <button onClick={toggleTheme} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl active:scale-95 transition-all border border-slate-200 dark:border-slate-700">
-                <div className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-200">
-                  {isDarkMode ? <Moon size={18} className="text-indigo-400"/> : <Sun size={18} className="text-amber-500"/>}
-                  {isDarkMode ? 'Dark Mode Active' : 'Light Mode Active'}
                 </div>
-                <div className={`w-11 h-6 rounded-full transition-all flex items-center px-1 ${isDarkMode ? 'bg-indigo-500 justify-end' : 'bg-slate-300 justify-start'}`}>
-                  <div className="w-4 h-4 rounded-full bg-white shadow"/>
+
+                {/* Gemini API */}
+                <div>
+                  <label className={sectionLabel}>Google AI</label>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">JIM uses smart routing with intelligent fallback models. Add your free Gemini API key to enable AI features.</p>
+                  <input type="password" className="w-full h-11 px-3.5 mb-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
+                  <div className="relative">
+                    <Bot size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input type="text" className="w-full pl-10 pr-3.5 h-11 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl outline-none font-mono text-sm text-slate-700 dark:text-slate-200 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all" placeholder="Model name" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
+                  </div>
                 </div>
-              </button>
-            </div>
 
-            {/* Backup */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Backup & Restore</label>
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${parseFloat(dbSize)>4 ? 'text-red-400 bg-red-900/20 border-red-900/40' : 'text-emerald-500 bg-emerald-900/10 border-emerald-900/30'}`}><HardDrive size={10}/> {dbSize}</div>
+                {/* Pro Licence */}
+                <div>
+                  <label className={sectionLabel}>Pro Licence</label>
+                  {isPro ? (
+                    <div className="flex items-center gap-2 px-4 h-14 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl text-emerald-700 dark:text-emerald-400 font-semibold text-sm"><CheckCircle2 size={16}/> Full version active</div>
+                  ) : (
+                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed">Purchase a 1-year licence or enter your existing key.</p>
+                      <PayPalButton />
+                      <div className="flex items-center gap-2"><div className="flex-1 h-px bg-slate-200 dark:bg-slate-700"/><span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">or</span><div className="flex-1 h-px bg-slate-200 dark:bg-slate-700"/></div>
+                      <input type="text" className="w-full h-11 px-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl font-mono text-sm dark:text-white uppercase outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all" placeholder="Licence key" value={licenceInput} onChange={e => setLicenceInput(e.target.value)}/>
+                      <button onClick={handleLicenceUnlock} className="w-full bg-orange-500 hover:bg-orange-400 text-white h-11 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors"><Lock size={15}/> Unlock</button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={exportData} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"><Download size={16}/> Export</button>
-                <label className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer"><Upload size={16}/> Import<input type="file" accept=".json" className="hidden" onChange={importData}/></label>
-              </div>
-            </div>
-
-            {/* Library */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Your Library</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={() => { setShowTemplates(true); setShowMaterials(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-blue-50 hover:text-blue-600 transition-colors"><Bookmark size={16}/> Templates ({userTemplates.length})</button>
-                <button onClick={() => { setShowMaterials(true); setShowTemplates(false); }} className="flex items-center justify-center gap-2 p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-xs font-black uppercase text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"><Package size={16}/> Materials ({userMaterials.length})</button>
-              </div>
-            </div>
-            <div className="h-px w-full bg-slate-100 dark:bg-slate-800"/>
-
-            {/* Gemini API */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Google AI Integration</label>
-              <p className="text-[10px] text-slate-400 font-medium mb-3">JIM uses a smart routing AI framework. Ensure your API key is active. Free tier requests are handled via intelligent fallback models.</p>
-              <input type="password" className="w-full p-3.5 mb-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-mono text-sm dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400" placeholder="Paste your Gemini API key…" value={draftKey} onChange={e => setDraftKey(e.target.value)}/>
-              <div className="relative">
-                <Bot size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input type="text" className="w-full pl-10 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none font-bold font-mono text-sm text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-orange-400" placeholder="e.g. gemini-3.1-flash-lite-preview" value={draftModel} onChange={e => setDraftModel(e.target.value)}/>
-              </div>
-            </div>
-
-
-            {/* Pro Licence */}
-            <div>
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Pro Licence</label>
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/40 rounded-2xl p-4 space-y-3">
-                {isPro ? (
-                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-black text-sm"><CheckCircle2 size={16}/> Full version active – All Features Available</div>
-                ) : (
-                  <>
-                    <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Purchase a 1-year licence or enter your existing key.</p>
-                    <PayPalButton />
-                    <div className="flex items-center gap-2 my-2"><div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div><span className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase">OR</span><div className="flex-1 h-px bg-amber-200 dark:bg-amber-700/40"></div></div>
-                    <input type="text" className="w-full p-3 bg-white dark:bg-slate-700 border border-amber-200 dark:border-amber-700/40 rounded-xl font-mono text-sm dark:text-white uppercase outline-none focus:ring-2 focus:ring-amber-400" placeholder="Licence key" value={licenceInput} onChange={e => setLicenceInput(e.target.value)}/>
-                    <button onClick={handleLicenceUnlock} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2"><Lock size={16}/> Unlock Full Version</button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"><Check size={16}/> Save Settings</button>
+            )}
           </div>
+
+          {/* Footer Save */}
+          <div className="px-5 pt-3 pb-5 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
+            <button onClick={save} className="w-full bg-orange-500 hover:bg-orange-400 text-white h-12 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-all"><Check size={16}/> Save Settings</button>
+          </div>
+
           {showBusiness && <BusinessProfileEditor profile={businessProfile || {}} onSave={saveBusinessProfile} onClose={() => setShowBusiness(false)} showToast={showToast}/>}
           {showTemplates && <TemplateManager templates={userTemplates} onSave={saveUserTemplates} onClose={() => setShowTemplates(false)}/>}
           {showMaterials && <MaterialManager materials={userMaterials} onSave={saveUserMaterials} onClose={() => setShowMaterials(false)}/>}
@@ -1222,14 +1254,14 @@
               <span className={`inline-block text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest mb-1.5 ${isHandover ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300' : 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{isHandover ? 'Completion Report' : 'Job Sheet'}</span>
               <h2 className="text-xl font-black text-slate-900 dark:text-white">New Project</h2>
             </div>
-            <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white mt-1"><X size={18}/></button>
+            <button onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors mt-1"><X size={18}/></button>
           </div>
 
           <div className="px-5 py-4 space-y-3 max-h-[65vh] overflow-y-auto custom-scrollbar">
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Job Address *</label>
               <div className="relative">
-                <input autoFocus className="w-full px-4 py-3 pr-11 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)} />
+                <input autoFocus className="w-full px-4 py-3 pr-11 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold dark:text-white dark:placeholder-slate-500 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-200 dark:border-slate-700 text-sm" placeholder="e.g. 42 Acacia Ave, Sydney NSW" value={addr} onChange={e => setAddr(e.target.value)} />
                 <button type="button" onClick={() => toggleVoice('newJobAddr', setAddr)} className={`absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobAddr'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={15}/></button>
               </div>
             </div>
@@ -1238,7 +1270,7 @@
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Client Name</label>
                 <div className="relative">
-                  <input className="w-full px-4 py-3 pr-9 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" placeholder="John Smith" value={client} onChange={e => { setClient(e.target.value); setShowClientSuggestions(true); }} onFocus={() => setShowClientSuggestions(true)} />
+                  <input className="w-full px-4 py-3 pr-9 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-200 dark:border-slate-700 text-sm" placeholder="John Smith" value={client} onChange={e => { setClient(e.target.value); setShowClientSuggestions(true); }} onFocus={() => setShowClientSuggestions(true)} />
                   <button type="button" onClick={() => toggleVoice('newJobClient', setClient)} className={`absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors ${listeningField==='newJobClient'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={13}/></button>
                   {showClientSuggestions && clientSuggestions.length > 0 && (
                     <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 mt-1 overflow-hidden">
@@ -1255,13 +1287,13 @@
               </div>
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Client Phone</label>
-                <input className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" placeholder="04xx xxx xxx" value={phone} onChange={e => setPhone(e.target.value)} />
+                <input className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-200 dark:border-slate-700 text-sm" placeholder="04xx xxx xxx" value={phone} onChange={e => setPhone(e.target.value)} />
               </div>
             </div>
 
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Due Date (optional)</label>
-              <input type="date" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:ring-2 focus:ring-orange-400 border border-slate-200 dark:border-slate-700 text-sm" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+              <input type="date" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-200 dark:border-slate-700 text-sm" value={dueDate} onChange={e => setDueDate(e.target.value)} />
             </div>
 
             <div className="flex items-center gap-3 py-1">
@@ -1278,7 +1310,7 @@
                 <div className="mb-3 space-y-1">{files.map((f, i) => (<div key={i} className="flex items-center gap-2 bg-white dark:bg-slate-600 px-3 py-2 rounded-lg shadow-sm"><span className="text-[11px] font-medium truncate flex-1 dark:text-white">{f.name}</span><button onClick={() => removeFile(i)} className="text-red-400 flex-shrink-0"><X size={13}/></button></div>))}</div>
               )}
 
-              <div className="border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 overflow-hidden shadow-sm focus-within:ring-2 focus-within:ring-orange-400 transition-shadow">
+              <div className="border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-700 overflow-hidden shadow-sm focus-within:border-orange-400 focus-within:ring-1 focus-within:ring-orange-400/40 transition-shadow">
                 <textarea
                   className="w-full px-4 py-3 bg-transparent outline-none text-xs font-medium resize-none h-20 dark:text-white dark:placeholder-slate-400"
                   placeholder="Paste text or dictate..."
@@ -1512,16 +1544,16 @@
         <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 flex flex-col my-auto animate-slide-up sm:animate-none">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">{editing ? 'Edit Appointment' : 'New Appointment'}</h3>
-            <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
+            <button onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"><X size={18}/></button>
           </div>
           <div className="overflow-y-auto flex-1 custom-scrollbar space-y-4 pb-2 pr-1">
-            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Title *</label><input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="e.g. Site Visit" value={form.title} onChange={e => setForm({...form, title: e.target.value})}/></div>
-            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Link to Project</label><select className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-medium text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}><option value="">No linked job</option>{jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}</select></div>
+            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Title *</label><input className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold dark:text-white outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" placeholder="e.g. Site Visit" value={form.title} onChange={e => setForm({...form, title: e.target.value})}/></div>
+            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Link to Project</label><select className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-medium text-sm dark:text-white outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}><option value="">No linked job</option>{jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}</select></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start *</label><input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.start} onChange={e => setForm({...form, start: e.target.value})}/></div>
-              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End *</label><input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.end} onChange={e => setForm({...form, end: e.target.value})}/></div>
+              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start *</label><input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" value={form.start} onChange={e => setForm({...form, start: e.target.value})}/></div>
+              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End *</label><input type="datetime-local" className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl font-bold text-sm dark:text-white outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" value={form.end} onChange={e => setForm({...form, end: e.target.value})}/></div>
             </div>
-            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label><textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-medium h-24 resize-none dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="Additional details..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/></div>
+            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label><textarea className="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl text-sm font-medium h-24 resize-none dark:text-white outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" placeholder="Additional details..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/></div>
           </div>
           <div className="flex gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             {editing && (<button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-4 rounded-2xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={20}/></button>)}
@@ -1560,42 +1592,42 @@
         <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 shadow-2xl border dark:border-slate-800 flex flex-col pb-safe max-h-[90vh]">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
             <h3 className="font-black text-lg text-slate-900 dark:text-white">{editing ? 'Edit Time Entry' : 'Log Time'}</h3>
-            <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={18}/></button>
+            <button onClick={onClose} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"><X size={18}/></button>
           </div>
 
           <div className="overflow-y-auto flex-1 custom-scrollbar space-y-4 pb-2">
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Date</label>
-              <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.date} onChange={e => setForm({...form, date: e.target.value})}/>
+              <input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" value={form.date} onChange={e => setForm({...form, date: e.target.value})}/>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start Time</label><input type="time" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.startTime} onChange={e => setForm({...form, startTime: e.target.value})}/></div>
-              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End Time</label><input type="time" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.endTime} onChange={e => setForm({...form, endTime: e.target.value})}/></div>
+              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Start Time</label><input type="time" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" value={form.startTime} onChange={e => setForm({...form, startTime: e.target.value})}/></div>
+              <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">End Time</label><input type="time" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" value={form.endTime} onChange={e => setForm({...form, endTime: e.target.value})}/></div>
             </div>
 
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Category</label>
-              <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+              <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-bold text-sm dark:text-white focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
 
             <div>
               <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Link to Project (Optional)</label>
-              <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-medium text-sm dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}>
+              <select className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-medium text-sm dark:text-white outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" value={form.jobId} onChange={e => setForm({...form, jobId: e.target.value})}>
                 <option value="">No linked project</option>
                 {jobs.map(j => <option key={j.id} value={j.id}>{j.address} – {j.clientName}</option>)}
               </select>
             </div>
 
-            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label><textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm font-medium h-20 resize-none dark:text-white outline-none focus:ring-2 focus:ring-orange-400 border border-slate-100 dark:border-slate-700" placeholder="e.g. Rough in bathroom..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/></div>
+            <div><label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Notes</label><textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-sm font-medium h-20 resize-none dark:text-white outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-100 dark:border-slate-700" placeholder="e.g. Rough in bathroom..." value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}/></div>
           </div>
 
           <div className="flex gap-2 pt-4 mt-2 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
             {editing && (<button onClick={onDelete} className="bg-red-50 dark:bg-red-900/20 text-red-500 p-3.5 rounded-xl font-black hover:bg-red-100 transition-colors flex items-center justify-center"><Trash2 size={18}/></button>)}
             <button onClick={onClose} className="flex-1 bg-slate-100 dark:bg-slate-800 py-3.5 rounded-xl font-black text-sm text-slate-600 dark:text-slate-300">Cancel</button>
-            <button onClick={save} className="flex-1 bg-cyan-600 hover:bg-cyan-50 text-white py-3.5 rounded-xl font-black text-sm shadow-lg flex justify-center items-center gap-2"><Check size={16}/> Save</button>
+            <button onClick={save} className="flex-1 bg-orange-500 hover:bg-orange-400 text-white py-3.5 rounded-xl font-bold text-sm shadow-lg flex justify-center items-center gap-2"><Check size={16}/> Save</button>
           </div>
         </div>
       </div>
@@ -1637,7 +1669,7 @@
             <h2 className="text-xl font-black text-slate-800 dark:text-white">Timesheet Preview</h2>
             <div className="flex flex-wrap items-center gap-2">
               <button onClick={() => window.print()} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-sm border dark:border-slate-700 text-sm"><Printer size={15}/> Print</button>
-              <button onClick={handleSharePDF} disabled={isGeneratingPDF} className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-sm text-sm">
+              <button onClick={handleSharePDF} disabled={isGeneratingPDF} className="bg-orange-500 hover:bg-orange-400 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow-sm text-sm">
                 {isGeneratingPDF ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/> : <Share2 size={15}/>} Share PDF
               </button>
               <button onClick={onClose} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-black text-sm">Close</button>
@@ -1812,22 +1844,30 @@
       <div className="max-w-6xl mx-auto p-4 animate-slide-up pb-24">
 
         {/* Toggle Bar */}
-        <div className="flex bg-slate-200 dark:bg-slate-800 rounded-xl p-1 mb-6 max-w-sm mx-auto shadow-inner">
-          <button onClick={() => setViewTab('upcoming')} className={`flex-1 py-2 font-black text-sm rounded-lg transition-all ${viewTab==='upcoming'?'bg-white dark:bg-slate-700 shadow text-purple-600 dark:text-purple-400':'text-slate-500'}`}>Appointments</button>
-          <button onClick={() => setViewTab('timesheet')} className={`flex-1 py-2 font-black text-sm rounded-lg transition-all ${viewTab==='timesheet'?'bg-white dark:bg-slate-700 shadow text-cyan-600 dark:text-cyan-400':'text-slate-500'}`}>Timesheets</button>
+        <div className="flex bg-slate-100 dark:bg-slate-800/60 rounded-xl p-1 mb-5 max-w-sm mx-auto">
+          <button onClick={() => setViewTab('upcoming')} className={`flex-1 h-9 font-semibold text-sm rounded-lg transition-all ${viewTab==='upcoming'?'bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-white':'text-slate-500'}`}>Appointments</button>
+          <button onClick={() => setViewTab('timesheet')} className={`flex-1 h-9 font-semibold text-sm rounded-lg transition-all ${viewTab==='timesheet'?'bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-white':'text-slate-500'}`}>Timesheets</button>
         </div>
 
         <div className="flex justify-between items-center mb-4 max-w-sm mx-auto">
-          <button onClick={() => setWeekOffset(o => o-1)} className="p-3 bg-slate-200 dark:bg-slate-800 rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"><ChevronRight size={18} className="rotate-180"/></button>
-          <h2 className="text-xl font-black uppercase text-center">{days[0].toLocaleDateString('en-AU', {day:'numeric',month:'short'})} – {days[6].toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'})}</h2>
-          <button onClick={() => setWeekOffset(o => o+1)} className="p-3 bg-slate-200 dark:bg-slate-800 rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors"><ChevronRight size={18}/></button>
+          <button onClick={() => setWeekOffset(o => o-1)} aria-label="Previous week" className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><ChevronRight size={16} className="rotate-180"/></button>
+          <h2 className="text-base font-bold text-center text-slate-900 dark:text-white">{days[0].toLocaleDateString('en-AU', {day:'numeric',month:'short'})} – {days[6].toLocaleDateString('en-AU', {day:'numeric',month:'short',year:'2-digit'})}</h2>
+          <button onClick={() => setWeekOffset(o => o+1)} aria-label="Next week" className="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"><ChevronRight size={16}/></button>
         </div>
 
         {viewTab === 'upcoming' ? (
           <>
             <div className="calendar-grid shadow-sm">
-              <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center">Time</div>
-              {days.map((d,i) => (<div key={i} className={`bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 font-black text-[10px] uppercase text-slate-500 dark:text-slate-400 flex items-center justify-center py-2 ${d.toDateString()===today.toDateString()?'text-orange-500':''}`}>{dayNames[i]}<br/>{d.getDate()}</div>))}
+              <div className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 font-semibold text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-center">Time</div>
+              {days.map((d,i) => {
+                const isToday = d.toDateString()===today.toDateString();
+                return (
+                  <div key={i} className={`bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center py-2 ${isToday?'text-orange-500':'text-slate-500 dark:text-slate-400'}`}>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider">{dayNames[i]}</span>
+                    <span className={`text-sm ${isToday?'font-extrabold':'font-semibold text-slate-700 dark:text-slate-300'}`}>{d.getDate()}</span>
+                  </div>
+                );
+              })}
               {hours.map(hour => (
                 <React.Fragment key={hour}>
                   <div className="calendar-hour">{hour}:00</div>
@@ -1848,55 +1888,58 @@
                 </React.Fragment>
               ))}
             </div>
-            <div className="mt-6 bg-white dark:bg-slate-800 rounded-3xl p-5 border dark:border-slate-700 shadow-sm max-w-sm mx-auto">
-              <h3 className="font-black text-sm uppercase tracking-widest mb-3 flex items-center gap-2"><Clock size={14} className="text-orange-500"/> Upcoming Appointments</h3>
+            <div className="mt-4 bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 max-w-sm mx-auto">
+              <div className="flex items-center gap-2 mb-3"><Clock size={13} className="text-slate-400"/><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Upcoming</span></div>
               {allEvents.filter(ev => ev.start >= new Date()).sort((a,b)=>a.start-b.start).slice(0,5).map(ev => (
-                <div key={ev.id} className="flex items-center justify-between py-2 border-b dark:border-slate-700 last:border-0">
-                  <div><p className="font-bold text-sm">{ev.title}</p><p className="text-[10px] text-slate-400">{formatLocal(ev.start.toISOString(), 'datetime')} – {formatLocal(ev.end.toISOString(), 'datetime')}</p></div>
-                  <button onClick={() => handleDeleteAppointment(ev.id)} className="text-red-400 hover:text-red-600 p-2"><Trash2 size={16}/></button>
+                <div key={ev.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                  <div className="min-w-0 flex-1 pr-2"><p className="font-semibold text-sm text-slate-900 dark:text-white truncate">{ev.title}</p><p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{formatLocal(ev.start.toISOString(), 'datetime')} – {formatLocal(ev.end.toISOString(), 'datetime')}</p></div>
+                  <button onClick={() => handleDeleteAppointment(ev.id)} aria-label="Delete appointment" className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors flex-shrink-0"><Trash2 size={15}/></button>
                 </div>
               ))}
-              {allEvents.length===0 && <p className="text-sm text-slate-400">No upcoming appointments.</p>}
+              {allEvents.length===0 && <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">No upcoming appointments</p>}
             </div>
           </>
         ) : (
-          <div className="space-y-4 max-w-sm mx-auto">
-            <div className="bg-cyan-600 text-white rounded-3xl p-6 flex justify-between items-center shadow-lg relative overflow-hidden">
-              <div className="relative z-10">
-                <p className="text-cyan-200 font-black text-xs uppercase tracking-widest">This Week's Hours</p>
-                <h2 className="text-4xl font-black mt-1">{fmtMins(weeklyTotalMins)}</h2>
+          <div className="space-y-3 max-w-sm mx-auto">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 flex justify-between items-center">
+              <div>
+                <p className="text-slate-500 dark:text-slate-400 font-semibold text-[11px] uppercase tracking-wider">This week</p>
+                <h2 className="text-3xl font-extrabold mt-0.5 text-slate-900 dark:text-white">{fmtMins(weeklyTotalMins)}</h2>
               </div>
-              <div className="flex flex-col gap-2 relative z-10">
-                <button onClick={onNewTimeEntry} className="bg-white text-cyan-600 hover:bg-cyan-50 px-4 py-2 rounded-xl text-xs font-black shadow transition-all active:scale-95 flex items-center gap-1 justify-center"><Plus size={14}/> Log Time</button>
-                <button onClick={exportCSV} className="bg-cyan-800/40 hover:bg-cyan-800/60 text-white px-4 py-2 rounded-xl text-xs font-black transition-colors active:scale-95 flex items-center gap-1 justify-center"><FileDown size={14}/> CSV</button>
-                <button onClick={openTimesheetPrint} className="bg-cyan-800/40 hover:bg-cyan-800/60 text-white px-4 py-2 rounded-xl text-xs font-black transition-colors active:scale-95 flex items-center gap-1 justify-center"><Printer size={14}/> PDF</button>
+              <div className="flex flex-col gap-1.5">
+                <button onClick={onNewTimeEntry} className="bg-orange-500 hover:bg-orange-400 text-white h-9 px-3.5 rounded-lg text-xs font-bold shadow-sm transition-all active:scale-95 flex items-center gap-1.5 justify-center"><Plus size={14}/> Log Time</button>
+                <div className="flex gap-1.5">
+                  <button onClick={exportCSV} className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 h-8 px-3 rounded-lg text-xs font-semibold transition-colors active:scale-95 flex items-center gap-1 justify-center"><FileDown size={12}/> CSV</button>
+                  <button onClick={openTimesheetPrint} className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 h-8 px-3 rounded-lg text-xs font-semibold transition-colors active:scale-95 flex items-center gap-1 justify-center"><Printer size={12}/> PDF</button>
+                </div>
               </div>
-              <div className="absolute -right-4 -bottom-8 opacity-10 pointer-events-none"><Clock size={120}/></div>
             </div>
-            <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 border dark:border-slate-700 shadow-sm space-y-3">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 space-y-3">
               {fullDayNames.map((d,i) => {
                 const logs = weeklyLogs.filter(l => l.day === d);
                 if (logs.length === 0) return null;
                 return (
-                  <div key={d} className="border-b dark:border-slate-700 pb-3 last:border-0 last:pb-0">
-                    <div className="flex justify-between items-end mb-2"><h4 className="font-black text-slate-800 dark:text-white">{d}</h4><span className="font-black text-cyan-600 text-sm">{fmtMins(dailyMins[i])}</span></div>
-                    {logs.map((l,idx) => {
-                      const jobInfo = jobs.find(j => j.id === l.jobId);
-                      return (
-                        <div key={l.id} onClick={() => onEditTimeEntry(l.originalEntry)} className="flex flex-col justify-center text-xs bg-slate-50 dark:bg-slate-900 p-3 rounded-xl mb-2 border border-slate-100 dark:border-slate-800 cursor-pointer hover:border-cyan-300 transition-colors">
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="font-black text-slate-900 dark:text-white text-sm">{l.category}</span>
-                            <span className="font-bold whitespace-nowrap bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 px-2 py-1 rounded-md">{l.timeStr} ({l.hours})</span>
+                  <div key={d} className="border-b border-slate-100 dark:border-slate-800 pb-3 last:border-0 last:pb-0">
+                    <div className="flex justify-between items-end mb-2"><h4 className="font-bold text-slate-900 dark:text-white text-sm">{d}</h4><span className="font-bold text-slate-600 dark:text-slate-400 text-xs">{fmtMins(dailyMins[i])}</span></div>
+                    <div className="space-y-1.5">
+                      {logs.map((l,idx) => {
+                        const jobInfo = jobs.find(j => j.id === l.jobId);
+                        return (
+                          <div key={l.id} onClick={() => onEditTimeEntry(l.originalEntry)} className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-transparent hover:border-slate-300 dark:hover:border-slate-700 cursor-pointer transition-colors">
+                            <div className="flex justify-between items-start mb-0.5">
+                              <span className="font-semibold text-slate-900 dark:text-white text-sm">{l.category}</span>
+                              <span className="font-semibold text-xs text-slate-600 dark:text-slate-400 whitespace-nowrap">{l.timeStr} · {l.hours}</span>
+                            </div>
+                            {jobInfo && <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate"><MapPinned size={11}/> {jobInfo.address}</p>}
+                            {l.notes && <p className="text-xs text-slate-500 italic truncate mt-0.5">{l.notes}</p>}
                           </div>
-                          {jobInfo && <p className="font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1 mb-1 truncate"><MapPinned size={12}/> {jobInfo.address}</p>}
-                          {l.notes && <p className="text-slate-500 italic truncate pl-2 border-l-2 border-slate-300 dark:border-slate-600">{l.notes}</p>}
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })}
-              {weeklyTotalMins === 0 && <p className="text-center text-slate-400 text-sm font-bold py-4">No hours logged this week.</p>}
+              {weeklyTotalMins === 0 && <p className="text-center text-slate-500 dark:text-slate-400 text-sm font-medium py-4">No hours logged this week</p>}
             </div>
           </div>
         )}
@@ -2686,7 +2729,7 @@ ${weekSheets || '  No time entries this week.'}`;
     const expiringCreds = (businessProfile?.credentials || []).filter(c => isExpiringSoon(c.expiry) || isExpired(c.expiry));
     const expiringLicences = expiringCreds;
     const insuranceExpiring = false;
-    const actionBtnClass = "flex-1 min-w-[100px] flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95";
+    const actionBtnClass = "flex items-center justify-center gap-1.5 h-10 px-3 rounded-lg text-xs font-semibold border transition-all active:scale-95";
 
     if (isLoading) {
       return (
@@ -2706,21 +2749,21 @@ ${weekSheets || '  No time entries this week.'}`;
         {jimLiveOpen && <FloatingJimMascot status={jimLiveStatus}/>}
 
         {/* Top Header */}
-        <header className="bg-white/90 dark:bg-slate-950/90 backdrop-blur-md text-slate-900 dark:text-white px-4 py-3 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
-            {businessProfile?.logo ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5" alt=""/> : (!jimLiveOpen && !(viewMode === 'dashboard' && jobs.length > 0)) ? <JimMascot size={36} state="idle"/> : null}
-            <h1 className="font-black text-lg tracking-tight uppercase">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'J.I.M. jobs invoices manager')}</h1>
+        <header className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-md text-slate-900 dark:text-white px-4 h-14 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print">
+          <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
+            {businessProfile?.logo ? <img src={businessProfile.logo} className="h-8 w-8 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 flex-shrink-0" alt=""/> : (!jimLiveOpen && !(viewMode === 'dashboard' && jobs.length > 0)) ? <JimMascot size={32} state="idle"/> : null}
+            <h1 className="font-extrabold text-base tracking-tight truncate">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'JIM')}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {viewMode === 'detail' && activeJob && (
               <>
-                <button onClick={handleShare} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 active:scale-95"><Share2 size={16}/></button>
-                <button onClick={() => setPrintPreviewJob(activeJob)} className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-black text-xs active:scale-95 shadow-md"><Printer size={14}/> Print PDF</button>
+                <button onClick={handleShare} aria-label="Share" className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"><Share2 size={16}/></button>
+                <button onClick={() => setPrintPreviewJob(activeJob)} className="flex items-center gap-1.5 h-10 px-3.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-bold text-xs active:scale-95 shadow-sm"><Printer size={14}/> PDF</button>
               </>
             )}
-          <button onClick={() => startJimLive()} title="Talk to JIM" className="flex items-center gap-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-black text-xs active:scale-95 shadow-md transition-colors">
-            <Radio size={14}/> CALL JIM
-          </button>
+            <button onClick={() => startJimLive()} aria-label="Talk to JIM" title="Talk to JIM" className="w-10 h-10 flex items-center justify-center bg-purple-600 hover:bg-purple-500 text-white rounded-full active:scale-95 shadow-sm transition-colors">
+              <Radio size={16}/>
+            </button>
           </div>
         </header>
 
@@ -2740,24 +2783,24 @@ ${weekSheets || '  No time entries this week.'}`;
         {viewMode==='dashboard' && (
           <main className="p-4 max-w-2xl mx-auto animate-slide-down">
             {selectionMode && (
-              <div className="bg-blue-950 border border-blue-800 rounded-3xl p-5 mb-5">
-                <div className="flex items-start gap-3 mb-4">
-                  <Navigation size={18} className="text-blue-400 flex-shrink-0 mt-0.5"/>
-                  <div><p className="text-white font-black text-sm uppercase tracking-widest mb-1">Route Planning</p><p className="text-blue-300 text-xs font-medium">Tap jobs in visit order — numbered badges show your stop sequence.</p></div>
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-4">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0"><Navigation size={15} className="text-orange-400"/></div>
+                  <div><p className="text-white font-bold text-sm">Route Planning</p><p className="text-slate-400 text-xs font-medium mt-0.5">Tap jobs in visit order. Numbers show your stop sequence.</p></div>
                 </div>
-                <div className="flex items-center justify-between bg-blue-900/60 rounded-2xl px-4 py-3 mb-3">
+                <div className="flex items-center justify-between bg-slate-800/60 rounded-xl px-3.5 py-2.5 mb-3">
                   <div className="flex items-center gap-2">
-                    <LocateFixed size={15} className={locStatus==='ok'?'text-emerald-400':locStatus==='denied'?'text-red-400':'text-blue-400'}/>
-                    <span className="text-white font-black text-xs uppercase tracking-widest">{locStatus==='loading'?'Getting location…':locStatus==='denied'?'Location denied':locStatus==='ok'?'Location acquired':'Start from my location'}</span>
+                    <LocateFixed size={14} className={locStatus==='ok'?'text-emerald-400':locStatus==='denied'?'text-red-400':'text-slate-400'}/>
+                    <span className="text-white font-medium text-xs">{locStatus==='loading'?'Getting location…':locStatus==='denied'?'Location denied':locStatus==='ok'?'Using my location':'Start from my location'}</span>
                   </div>
-                  <button onClick={handleLocToggle} className={`w-12 h-6 rounded-full transition-all flex items-center px-1 ${useMyLocation&&locStatus==='ok'?'bg-emerald-500 justify-end':useMyLocation&&locStatus==='loading'?'bg-blue-500 justify-end':'bg-slate-700 justify-start'}`}><div className="w-4 h-4 rounded-full bg-white shadow"/></button>
+                  <button onClick={handleLocToggle} aria-label="Toggle location" className={`w-10 h-6 rounded-full transition-all flex items-center px-0.5 ${useMyLocation&&locStatus==='ok'?'bg-emerald-500 justify-end':useMyLocation&&locStatus==='loading'?'bg-orange-500 justify-end':'bg-slate-700 justify-start'}`}><div className="w-5 h-5 rounded-full bg-white shadow"/></button>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <button onClick={selectAllVisible} disabled={atStopLimit} className={`text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-xl border transition-all ${atStopLimit?'border-slate-700 text-slate-600 cursor-not-allowed':'border-blue-600 text-blue-400 hover:bg-blue-900/40'}`}>Select All Visible</button>
-                    {selectedJobs.length > 0 && <button onClick={clearSelection} className="text-[11px] font-black uppercase px-3 py-2 rounded-xl border border-red-700 text-red-400 hover:bg-red-900/40">Clear</button>}
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={selectAllVisible} disabled={atStopLimit} className={`text-xs font-semibold px-3 h-8 rounded-lg transition-all ${atStopLimit?'text-slate-600 cursor-not-allowed':'text-slate-300 hover:bg-slate-800'}`}>Select all</button>
+                    {selectedJobs.length > 0 && <button onClick={clearSelection} className="text-xs font-semibold px-3 h-8 rounded-lg text-red-400 hover:bg-red-900/30">Clear</button>}
                   </div>
-                  <span className={`text-sm font-black ${atStopLimit?'text-amber-400':'text-white'}`}>{selectedJobs.length}/{MAX_STOPS} stops</span>
+                  <span className={`text-xs font-semibold ${atStopLimit?'text-amber-400':'text-slate-400'}`}>{selectedJobs.length}/{MAX_STOPS} stops</span>
                 </div>
               </div>
             )}
@@ -2765,61 +2808,61 @@ ${weekSheets || '  No time entries this week.'}`;
               <>
                 {/* JIM Insight Card */}
                 {jobs.length > 0 && (
-                  <div className={`flex items-center gap-3 p-4 rounded-2xl mb-3 border ${jimInsight.state==='error' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700'}`}>
-                    {!jimLiveOpen && <div className="flex-shrink-0"><JimMascot size={36} state={jimInsight.state}/></div>}
-                    <p className={`text-sm font-bold leading-snug ${jimInsight.state==='error' ? 'text-red-700 dark:text-red-400' : 'text-slate-600 dark:text-slate-300'}`}>{jimInsight.msg}</p>
+                  <div className={`flex items-center gap-3 p-3.5 rounded-2xl mb-3 border ${jimInsight.state==='error' ? 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
+                    {!jimLiveOpen && <div className="flex-shrink-0"><JimMascot size={32} state={jimInsight.state}/></div>}
+                    <p className={`text-sm font-medium leading-snug ${jimInsight.state==='error' ? 'text-red-700 dark:text-red-300' : 'text-slate-700 dark:text-slate-300'}`}>{jimInsight.msg}</p>
                   </div>
                 )}
 
                 {/* Revenue Snapshot */}
                 {(revenueStats.quoted > 0 || revenueStats.outstanding > 0 || revenueStats.received > 0) && (
-                  <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-4 mb-4 border border-slate-800">
-                    <div className="flex items-center gap-2 mb-3"><TrendingUp size={14} className="text-orange-500"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Revenue Snapshot</span></div>
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 border border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-2 mb-3"><TrendingUp size={13} className="text-slate-400"/><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Revenue</span></div>
                     <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 text-center">
-                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Quoted</p>
-                        <p className="font-black text-white text-sm">{fmtAUD(revenueStats.quoted)}</p>
+                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Quoted</p>
+                        <p className="font-extrabold text-slate-900 dark:text-white text-sm">{fmtAUD(revenueStats.quoted)}</p>
                       </div>
-                      <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 text-center">
-                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Outstanding</p>
-                        <p className={`font-black text-sm ${revenueStats.overdueCount > 0 ? 'text-red-400' : 'text-amber-400'}`}>{fmtAUD(revenueStats.outstanding)}</p>
-                        {(revenueStats.overdueCount > 0 || revenueStats.invoicedCount > 0) && <p className="text-[8px] text-slate-500 mt-0.5">{revenueStats.overdueCount > 0 && <span className="text-red-400">{revenueStats.overdueCount} overdue </span>}{revenueStats.invoicedCount > 0 && <span className="text-amber-400">{revenueStats.invoicedCount} invoiced</span>}</p>}
+                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Outstanding</p>
+                        <p className={`font-extrabold text-sm ${revenueStats.overdueCount > 0 ? 'text-red-500' : 'text-amber-600 dark:text-amber-400'}`}>{fmtAUD(revenueStats.outstanding)}</p>
+                        {(revenueStats.overdueCount > 0 || revenueStats.invoicedCount > 0) && <p className="text-[9px] font-medium text-slate-400 mt-0.5">{revenueStats.overdueCount > 0 && <span className="text-red-500">{revenueStats.overdueCount} overdue </span>}{revenueStats.invoicedCount > 0 && <span>{revenueStats.invoicedCount} invoiced</span>}</p>}
                       </div>
-                      <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 text-center">
-                        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Received</p>
-                        <p className="font-black text-emerald-400 text-sm">{fmtAUD(revenueStats.received)}</p>
+                      <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3">
+                        <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Received</p>
+                        <p className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm">{fmtAUD(revenueStats.received)}</p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <button onClick={() => handleNewJobClick('quote')} className="bg-orange-500 hover:bg-orange-400 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"><Plus size={18}/> New Quote</button>
-                  <button onClick={() => handleNewJobClick('handover')} className="bg-emerald-600 hover:bg-emerald-500 text-white p-3 rounded-2xl text-sm font-black shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"><CheckCircle2 size={18}/> Completion</button>
+                <div className="flex gap-2 mb-4">
+                  <button onClick={() => handleNewJobClick('quote')} className="flex-[2] h-12 bg-orange-500 hover:bg-orange-400 text-white rounded-2xl text-sm font-bold shadow-sm flex items-center justify-center gap-2 active:scale-95 transition-all"><Plus size={18}/> New Quote</button>
+                  <button onClick={() => handleNewJobClick('handover')} className="flex-1 h-12 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 active:scale-95 transition-all"><CheckCircle2 size={16}/> Completion</button>
                 </div>
               </>
             )}
             <div className="flex items-center gap-2 mb-3">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
-                <input className="w-full pl-9 pr-8 py-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 outline-none font-medium text-sm dark:text-white dark:placeholder-slate-500 focus:border-orange-400 shadow-sm transition-all" placeholder="Search address or client…" value={searchQ} onChange={e => setSearchQ(e.target.value)}/>
-                {searchQ && <button onClick={() => setSearchQ('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={14}/></button>}
+                <input className="w-full pl-9 pr-8 h-11 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 outline-none font-medium text-sm dark:text-white dark:placeholder-slate-500 focus:border-orange-400 transition-all" placeholder="Search address or client…" value={searchQ} onChange={e => setSearchQ(e.target.value)}/>
+                {searchQ && <button onClick={() => setSearchQ('')} className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X size={14}/></button>}
               </div>
-              <div className="relative w-28 flex-shrink-0">
-                <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-3 pr-8 rounded-xl text-[11px] font-black uppercase tracking-widest outline-none focus:border-orange-400 shadow-sm cursor-pointer">
+              <div className="relative w-24 flex-shrink-0">
+                <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="w-full appearance-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 px-3 h-11 pr-8 rounded-xl text-xs font-semibold outline-none focus:border-orange-400 cursor-pointer">
                   <option value="created_desc">Newest</option><option value="created_asc">Oldest</option><option value="due_asc">Due Soon</option><option value="due_desc">Due Late</option><option value="az">A-Z</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"/>
               </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto custom-scrollbar mb-4 pb-1">
-              {[{key:'all',label:'All Projects'},{key:'quote',label:'Quotations'},{key:'handover',label:'Completed'},{key:'unpaid',label:'Unpaid',icon:<Wallet size={12}/>},{key:'clients',label:'Clients',icon:<Users size={12}/>}].map(f => (
+            <div className="flex gap-1.5 overflow-x-auto custom-scrollbar mb-4 pb-1">
+              {[{key:'all',label:'All'},{key:'quote',label:'Quotes'},{key:'handover',label:'Completed'},{key:'unpaid',label:'Unpaid',icon:<Wallet size={12}/>},{key:'clients',label:'Clients',icon:<Users size={12}/>}].map(f => (
                 <button key={f.key} onClick={() => setFilterType(f.key)}
-                  className={`flex-shrink-0 min-w-[100px] px-4 py-2 flex items-center justify-center gap-1.5 rounded-full text-xs font-black tracking-wide whitespace-nowrap transition-all border
+                  className={`flex-shrink-0 px-3.5 h-8 flex items-center gap-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all
                     ${filterType===f.key
-                      ? 'bg-slate-900 dark:bg-slate-700 text-white border-slate-900 dark:border-slate-700 shadow-md'
-                      : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}>
+                      ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'}`}>
                   {f.icon}{f.label}
                 </button>
               ))}
@@ -2851,11 +2894,12 @@ ${weekSheets || '  No time entries this week.'}`;
                 ))}
               </div>
             ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-2">
               {filteredJobs.map(j => {
                 const status = getStatus(j.status||'draft');
                 const qt = j.type==='quote' ? getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate) : null;
                 const handoverQt = j.type==='handover' ? getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate) : null;
+                const total = (qt && qt.total>0) ? qt.total : (handoverQt && handoverQt.total>0 ? handoverQt.total : 0);
                 const stopIdx = selectedJobs.indexOf(j.id);
                 const isSelected = stopIdx !== -1;
                 const canSelect = !atStopLimit || isSelected;
@@ -2864,32 +2908,30 @@ ${weekSheets || '  No time entries this week.'}`;
                 const isOverdue = dueDate && dueDate < Date.now();
                 return (
                   <div key={j.id} onClick={() => { if (selectionMode) { if (canSelect) toggleJobSelection(j.id); } else { setActiveJobId(j.id); setViewMode('detail'); setIsEditingHeader(false); }}}
-                    className={`bg-white dark:bg-slate-800 rounded-2xl border-2 transition-all cursor-pointer shadow-sm ${selectionMode?(isSelected?'border-blue-500 ring-2 ring-blue-500/30':canSelect?'border-slate-200 dark:border-slate-700 hover:border-blue-400':'border-slate-200 dark:border-slate-700 opacity-40 cursor-not-allowed'):j.type==='handover'?'border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-500':'border-slate-100 dark:border-slate-700 hover:border-orange-500'}`}>
-                    <div className="p-4 flex justify-between items-start">
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        {selectionMode && (<div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-black transition-all ${isSelected?'bg-blue-500 text-white shadow-lg shadow-blue-500/30':'border-2 border-slate-300 dark:border-slate-600 text-transparent'}`}>{isSelected ? stopIdx+1 : ''}</div>)}
-                        <div className="flex-1 min-w-0">
+                    className={`bg-white dark:bg-slate-900 rounded-2xl border transition-all cursor-pointer ${selectionMode?(isSelected?'border-orange-500 ring-2 ring-orange-500/20':canSelect?'border-slate-200 dark:border-slate-800 hover:border-slate-300':'border-slate-200 dark:border-slate-800 opacity-40 cursor-not-allowed'):'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'}`}>
+                    <div className="p-4 flex items-center gap-3">
+                      {selectionMode && (<div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-bold transition-all ${isSelected?'bg-orange-500 text-white':'border-2 border-slate-300 dark:border-slate-700 text-transparent'}`}>{isSelected ? stopIdx+1 : ''}</div>)}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-slate-900 dark:text-white text-[15px] leading-tight truncate">{j.address}</p>
+                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                           {!selectionMode && (
-                            <div className="flex items-center gap-1.5 flex-wrap mb-1">
-                              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest ${j.type==='handover'?'bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300':'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300'}`}>{j.type==='handover' ? 'Completion' : 'Quote'}</span>
-                              <button onClick={e=>{e.stopPropagation();cycleStatus(j.id);}} className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest border ${status.cls} cursor-pointer`}>{status.label}</button>
-                              {j.gstEnabled && getCC().taxRate > 0 && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">+{getCC().taxLabel}</span>}
-                              {j.invoiceNumber && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-mono">{j.invoiceNumber}</span>}
-                              {isDueSoon && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300">Due soon</span>}
-                              {isOverdue && <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300">Overdue</span>}
-                            </div>
+                            <>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${status.cls}`}>{status.label}</span>
+                              {j.type==='handover' && <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">Completion</span>}
+                              {isOverdue && <span className="text-[10px] font-semibold text-red-500">Overdue</span>}
+                              {isDueSoon && !isOverdue && <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Due soon</span>}
+                            </>
                           )}
-                          <p className={`font-black text-slate-900 dark:text-white text-base leading-tight truncate ${selectionMode?'':'mt-0.5'}`}>{j.address}</p>
-                          <p className="text-slate-400 dark:text-slate-500 text-[11px] font-medium mt-0.5">{j.clientName||'—'}{!selectionMode&&` · ${formatLocal(j.date, 'short')}`}</p>
-                          {j.dueDate && !selectionMode && <p className="text-[10px] font-black text-amber-600 mt-1"><Calendar size={10} className="inline mr-1"/>Due: {formatLocal(j.dueDate, 'short')}</p>}
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{j.clientName||'—'}</p>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0 ml-3">
-                        {getTotals(j.tasks).mins > 0 && <>
-                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Hrs</span>
-                          <span className="font-black text-slate-900 dark:text-slate-200 text-sm">{getTotals(j.tasks).str}</span>
-                        </>}
-                        {((qt && qt.total>0) || (handoverQt && handoverQt.total>0)) && <div className="flex flex-col items-end mt-1"><span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">{fmtAUD((qt||handoverQt).total)}</span>{j.status==='paid' && j.amountPaid>0 && <span className="text-[9px] font-black text-teal-500">Paid {fmtAUD(j.amountPaid)}</span>}</div>}
+                      <div className="flex flex-col items-end flex-shrink-0">
+                        {total > 0 ? (
+                          <span className="font-extrabold text-slate-900 dark:text-white text-sm whitespace-nowrap">{fmtAUD(total)}</span>
+                        ) : getTotals(j.tasks).mins > 0 ? (
+                          <span className="font-bold text-slate-600 dark:text-slate-300 text-sm whitespace-nowrap">{getTotals(j.tasks).str}</span>
+                        ) : null}
+                        {j.status==='paid' && j.amountPaid>0 && <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">Paid</span>}
                       </div>
                     </div>
                   </div>
@@ -2897,11 +2939,9 @@ ${weekSheets || '  No time entries this week.'}`;
               })}
               {filteredJobs.length===0 && (
                 <div className="flex flex-col items-center py-16 gap-3">
-                  <div className="w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                    <JimMascot size={40} state="empty"/>
-                  </div>
-                  <p className="text-slate-500 dark:text-slate-400 font-black text-sm uppercase tracking-widest">{searchQ ? 'No Results' : 'No Projects Yet'}</p>
-                  {!searchQ && <p className="text-slate-400 dark:text-slate-500 text-xs text-center font-medium">Create your first quote or completion report above</p>}
+                  <JimMascot size={48} state="empty"/>
+                  <p className="text-slate-600 dark:text-slate-400 font-semibold text-sm">{searchQ ? 'No results' : 'No projects yet'}</p>
+                  {!searchQ && <p className="text-slate-500 dark:text-slate-500 text-xs text-center font-medium">Tap <span className="font-semibold">New Quote</span> to get started</p>}
                 </div>
               )}
             </div>
@@ -2921,12 +2961,12 @@ ${weekSheets || '  No time entries this week.'}`;
               {isEditingHeader ? (
                 <div>
                   <div className="flex items-center gap-2 mb-3"><Edit3 size={14} className="text-orange-500"/><span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Editing Job Details</span></div>
-                  <input className="w-full text-xl font-black bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e=>setHeaderDraft(d=>({...d,address:e.target.value}))}/>
+                  <input className="w-full text-xl font-black bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Job Address" value={headerDraft.address} onChange={e=>setHeaderDraft(d=>({...d,address:e.target.value}))}/>
                   <div className="grid grid-cols-2 gap-3 mb-3">
-                    <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
-                    <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Phone" value={headerDraft.clientPhone || ''} onChange={e=>setHeaderDraft(d=>({...d,clientPhone:e.target.value}))}/>
+                    <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
+                    <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Phone" value={headerDraft.clientPhone || ''} onChange={e=>setHeaderDraft(d=>({...d,clientPhone:e.target.value}))}/>
                   </div>
-                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:ring-2 focus:ring-orange-400 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
+                  <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
                   <div className="mb-3"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date</label><input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none font-medium text-sm dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/></div>
                   <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3 custom-scrollbar" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e=>setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
                   <label className="flex items-center gap-2 mb-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-black uppercase w-fit"><ImageIcon size={14}/> Add Photos<input type="file" multiple accept="image/*" className="hidden" onChange={handleProjectPhotoUpload}/></label>
@@ -2939,51 +2979,53 @@ ${weekSheets || '  No time entries this week.'}`;
               ) : (
                 <div className="flex flex-col gap-4">
                   <div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white leading-tight">{activeJob?.address}</h2>
-                    <p className="text-slate-500 dark:text-slate-400 font-bold text-sm mt-1">{activeJob?.clientName}</p>
-                    {activeJob?.clientPhone && <p className="text-slate-400 text-xs font-bold mt-1"><Phone size={10} className="inline mr-1"/>{activeJob.clientPhone}</p>}
-                    {activeJob?.clientRef && <p className="text-slate-400 text-xs font-bold mt-1 uppercase tracking-widest">REF: {activeJob.clientRef}</p>}
-                    {activeJob?.dueDate && <p className="text-amber-600 text-xs font-black mt-1"><Calendar size={10} className="inline mr-1"/>Due: {formatLocal(activeJob.dueDate)}</p>}
-                    {activeJob?.projectNotes && <p className="text-slate-500 dark:text-slate-400 italic text-sm mt-2 border-l-4 border-slate-300 pl-3 whitespace-pre-wrap">{activeJob.projectNotes}</p>}
+                    <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white leading-tight">{activeJob?.address}</h2>
+                    <p className="text-slate-600 dark:text-slate-400 font-semibold text-sm mt-1">{activeJob?.clientName}</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+                      {activeJob?.clientPhone && <p className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1"><Phone size={11}/>{activeJob.clientPhone}</p>}
+                      {activeJob?.clientRef && <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">Ref: {activeJob.clientRef}</p>}
+                      {activeJob?.dueDate && <p className="text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-1"><Calendar size={11}/>Due {formatLocal(activeJob.dueDate)}</p>}
+                    </div>
+                    {activeJob?.projectNotes && <p className="text-slate-600 dark:text-slate-400 italic text-sm mt-3 border-l-2 border-slate-300 dark:border-slate-700 pl-3 whitespace-pre-wrap leading-relaxed">{activeJob.projectNotes}</p>}
                     {activeJob?.projectPhotos?.length > 0 && <div className="flex gap-2 mt-3 overflow-x-auto custom-scrollbar">{activeJob.projectPhotos.map((p,i) => <img key={i} src={p} className="h-16 rounded-lg" alt=""/>)}</div>}
                   </div>
 
                   {getTotals(activeJob?.tasks||[]).mins > 0 && (
-                    <div className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 shadow-sm border border-orange-200 dark:border-orange-800 w-fit">
-                      <Clock size={12}/> {getTotals(activeJob?.tasks||[]).str}
+                    <div className="text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 w-fit">
+                      <Clock size={13} className="text-orange-500"/> {getTotals(activeJob?.tasks||[]).str} logged
                     </div>
                   )}
 
-                  <div className="flex flex-wrap items-stretch gap-2">
+                  <div className="flex flex-wrap items-stretch gap-1.5">
                     <button onClick={() => cycleStatus(activeJobId)} className={`${actionBtnClass} ${getStatus(activeJob?.status || 'draft').cls}`}>
                       {getStatus(activeJob?.status || 'draft').label}
                     </button>
 
-                    <button onClick={() => toggleCosts(activeJobId)} className={`${actionBtnClass} ${activeJob.showCosts ? 'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
-                      <DollarSign size={14}/> Costs {activeJob.showCosts ? 'ON' : 'OFF'}
+                    <button onClick={() => toggleCosts(activeJobId)} className={`${actionBtnClass} ${activeJob.showCosts ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
+                      <DollarSign size={13}/> Costs {activeJob.showCosts ? 'on' : 'off'}
                     </button>
 
                     {getCC().taxRate > 0 && (
-                      <button onClick={() => toggleGST(activeJobId)} className={`${actionBtnClass} ${activeJob.gstEnabled ? 'bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>
-                        <Receipt size={14}/> {getCC().taxLabel} {activeJob.gstEnabled ? 'ON' : 'OFF'}
+                      <button onClick={() => toggleGST(activeJobId)} className={`${actionBtnClass} ${activeJob.gstEnabled ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
+                        <Receipt size={13}/> {getCC().taxLabel} {activeJob.gstEnabled ? 'on' : 'off'}
                       </button>
                     )}
 
-                    <button onClick={() => openTimeEntryForJob(activeJobId)} className={`${actionBtnClass} bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800 hover:bg-cyan-200 dark:hover:bg-cyan-800/60`}>
-                      <Timer size={14}/> Log Time
+                    <button onClick={() => openTimeEntryForJob(activeJobId)} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300`}>
+                      <Timer size={13}/> Log Time
                     </button>
 
                     {activeJob.clientPhone && (
-                      <a href={`sms:${activeJob.clientPhone}?body=${encodeURIComponent(`Hi ${activeJob.clientName||''}, this is ${businessProfile?.name || 'your tradie'}. I'm on my way to ${activeJob.address} now. ETA is about __ mins.`)}`} className={`${actionBtnClass} bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-800/60`}>
-                        <Phone size={14}/> SMS Transit
+                      <a href={`sms:${activeJob.clientPhone}?body=${encodeURIComponent(`Hi ${activeJob.clientName||''}, this is ${businessProfile?.name || 'your tradie'}. I'm on my way to ${activeJob.address} now. ETA is about __ mins.`)}`} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300`}>
+                        <Phone size={13}/> SMS ETA
                       </a>
                     )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2 mt-2">
-                    <button onClick={startEditHeader} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><Pencil size={16}/> Edit</button>
-                    <button onClick={() => openAppointmentForJob(activeJobId)} className="bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex flex-col items-center gap-1 transition-colors"><CalendarPlus size={16}/> Schedule</button>
-                    <button onClick={() => setShowAIAssistModal(true)} className="bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 border border-purple-100 dark:border-purple-800 p-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-purple-600 dark:text-purple-400 flex flex-col items-center gap-1 transition-colors"><Sparkles size={16}/> Ask JIM</button>
+                  <div className="grid grid-cols-3 gap-1.5 mt-1">
+                    <button onClick={startEditHeader} className="h-12 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"><Pencil size={14}/> Edit</button>
+                    <button onClick={() => openAppointmentForJob(activeJobId)} className="h-12 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"><CalendarPlus size={14}/> Schedule</button>
+                    <button onClick={() => setShowAIAssistModal(true)} className="h-12 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-950/50 rounded-xl text-xs font-semibold text-purple-700 dark:text-purple-400 flex items-center justify-center gap-1.5 transition-colors"><Sparkles size={14}/> Ask JIM</button>
                   </div>
                 </div>
               )}
@@ -2991,13 +3033,13 @@ ${weekSheets || '  No time entries this week.'}`;
 
             {/* Invoice Panel */}
             {['invoiced','paid','overdue','sent'].includes(activeJob?.status) && (
-              <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-5 mb-5 border border-slate-800 shadow-lg">
-                <div className="flex items-center gap-2 mb-4"><CreditCard size={16} className="text-indigo-400"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Invoice</span></div>
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-3"><CreditCard size={14} className="text-slate-400"/><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Invoice</span></div>
                 <div className="space-y-3">
                   {activeJob.invoiceNumber ? (
-                    <div className="flex items-center justify-between"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Invoice No.</span><span className="font-black text-white font-mono">{activeJob.invoiceNumber}</span></div>
+                    <div className="flex items-center justify-between"><span className="text-xs font-medium text-slate-500 dark:text-slate-400">Invoice no.</span><span className="font-bold text-slate-900 dark:text-white font-mono text-sm">{activeJob.invoiceNumber}</span></div>
                   ) : (
-                    <button onClick={() => { const count = jobs.filter(x=>x.invoiceNumber).length + 1; saveToDB(jobs.map(j=>j.id===activeJobId?{...j,invoiceNumber:`INV-${new Date().getFullYear()}-${String(count).padStart(3,'0')}`}:j)); showToast('Invoice number generated','success'); }} className="w-full py-2 rounded-xl border border-dashed border-indigo-700 text-indigo-400 text-xs font-black uppercase hover:bg-indigo-900/20 transition-colors">Generate Invoice Number</button>
+                    <button onClick={() => { const count = jobs.filter(x=>x.invoiceNumber).length + 1; saveToDB(jobs.map(j=>j.id===activeJobId?{...j,invoiceNumber:`INV-${new Date().getFullYear()}-${String(count).padStart(3,'0')}`}:j)); showToast('Invoice number generated','success'); }} className="w-full h-10 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 text-xs font-semibold hover:border-orange-400 hover:text-orange-500 transition-colors">+ Generate invoice number</button>
                   )}
                   {(() => {
                     const total = getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total;
@@ -3005,15 +3047,15 @@ ${weekSheets || '  No time entries this week.'}`;
                     const balance = total - paid;
                     return (
                       <>
-                        {total > 0 && <div className="flex items-center justify-between"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Due</span><span className="font-black text-white">{fmtAUD(total)}</span></div>}
+                        {total > 0 && <div className="flex items-center justify-between"><span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total due</span><span className="font-bold text-slate-900 dark:text-white text-sm">{fmtAUD(total)}</span></div>}
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex-shrink-0">Amount Paid</span>
-                          <div className="flex items-center gap-1 bg-slate-800 rounded-xl px-3 py-2 flex-1">
-                            <span className="text-slate-400 font-black text-sm">{getCC().symbol}</span>
-                            <input type="number" step="0.01" min="0" className="bg-transparent outline-none font-black text-white text-sm w-full" placeholder="0.00" value={activeJob.amountPaid || ''} onChange={e => saveAmountPaid(activeJobId, e.target.value)}/>
+                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex-shrink-0">Amount paid</span>
+                          <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 h-9 flex-1 max-w-[140px] border border-slate-200 dark:border-slate-700">
+                            <span className="text-slate-400 font-semibold text-sm">{getCC().symbol}</span>
+                            <input type="number" step="0.01" min="0" className="bg-transparent outline-none font-bold text-slate-900 dark:text-white text-sm w-full" placeholder="0.00" value={activeJob.amountPaid || ''} onChange={e => saveAmountPaid(activeJobId, e.target.value)}/>
                           </div>
                         </div>
-                        {total > 0 && <div className="flex items-center justify-between border-t border-slate-800 pt-3"><span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Balance</span><span className={`font-black text-lg ${balance <= 0 ? 'text-emerald-400' : 'text-amber-400'}`}>{balance <= 0 ? '✓ Paid' : fmtAUD(balance)}</span></div>}
+                        {total > 0 && <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-3"><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Balance</span><span className={`font-extrabold text-base ${balance <= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>{balance <= 0 ? '✓ Paid' : fmtAUD(balance)}</span></div>}
                       </>
                     );
                   })()}
@@ -3022,61 +3064,70 @@ ${weekSheets || '  No time entries this week.'}`;
             )}
 
             {activeJob?.showCosts && getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate).total > 0 && (
-              <div className="bg-slate-900 dark:bg-slate-950 rounded-3xl p-5 mb-5 border border-slate-800 shadow-lg">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2"><DollarSign size={16} className="text-orange-500"/><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cost Summary</span></div>
-                </div>
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-3"><DollarSign size={14} className="text-slate-400"/><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Cost Summary</span></div>
                 {(() => {
                   const qt = getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate);
                   return (
-                    <>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Labour</p><p className="font-black text-white text-sm">{fmtAUD(qt.labour)}</p></div>
-                        <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Materials</p><p className="font-black text-white text-sm">{fmtAUD(qt.mats)}</p></div>
-                        {activeJob.gstEnabled ? <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Subtotal</p><p className="font-black text-white text-sm">{fmtAUD(qt.subtotal)}</p></div> : <div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div>}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-sm"><span className="text-slate-500 dark:text-slate-400 font-medium">Labour</span><span className="font-semibold text-slate-900 dark:text-white">{fmtAUD(qt.labour)}</span></div>
+                      <div className="flex items-center justify-between text-sm"><span className="text-slate-500 dark:text-slate-400 font-medium">Materials</span><span className="font-semibold text-slate-900 dark:text-white">{fmtAUD(qt.mats)}</span></div>
+                      {activeJob.gstEnabled && (
+                        <>
+                          <div className="flex items-center justify-between text-sm border-t border-slate-100 dark:border-slate-800 pt-1.5"><span className="text-slate-500 dark:text-slate-400 font-medium">Subtotal</span><span className="font-semibold text-slate-900 dark:text-white">{fmtAUD(qt.subtotal)}</span></div>
+                          <div className="flex items-center justify-between text-sm"><span className="text-slate-500 dark:text-slate-400 font-medium">{getCC().taxLabel} ({getCC().taxRate}%)</span><span className="font-semibold text-slate-900 dark:text-white">{fmtAUD(qt.gst)}</span></div>
+                        </>
+                      )}
+                      {extraTaxRate > 0 && (
+                        <div className="flex items-center justify-between text-sm"><span className="text-slate-500 dark:text-slate-400 font-medium">{getCC().markupLabel} ({extraTaxRate}%)</span><span className="font-semibold text-slate-900 dark:text-white">{fmtAUD(qt.extra)}</span></div>
+                      )}
+                      <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-2 mt-2">
+                        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total{activeJob.gstEnabled ? ` inc. ${getCC().taxLabel}` : ''}</span>
+                        <span className="font-extrabold text-orange-500 text-xl">{fmtAUD(qt.total)}</span>
                       </div>
-                      {activeJob.gstEnabled && extraTaxRate === 0 && (<div className="grid grid-cols-2 gap-2 mt-2"><div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{getCC().taxLabel} ({getCC().taxRate}%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div><div className="bg-orange-500 rounded-xl p-3"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. {getCC().taxLabel}</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div></div>)}
-                      {extraTaxRate > 0 && (<div className={`grid mt-2 gap-2 ${activeJob.gstEnabled ? 'grid-cols-2' : 'grid-cols-2'}`}>{activeJob.gstEnabled && <div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{getCC().taxLabel} ({getCC().taxRate}%)</p><p className="font-black text-amber-400 text-sm">{fmtAUD(qt.gst)}</p></div>}<div className="bg-slate-800 dark:bg-slate-900 rounded-xl p-3"><p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{getCC().markupLabel} ({extraTaxRate}%)</p><p className="font-black text-purple-400 text-sm">{fmtAUD(qt.extra)}</p></div><div className="bg-orange-500 rounded-xl p-3 col-span-2"><p className="text-[10px] font-black text-orange-200 uppercase tracking-widest mb-1">Total inc. Tax</p><p className="font-black text-white text-lg">{fmtAUD(qt.total)}</p></div></div>)}
-                    </>
+                    </div>
                   );
                 })()}
               </div>
             )}
 
-            <div className="space-y-4 mb-6">
+            <div className="space-y-2 mb-6">
               {activeJob?.tasks.map((t, i) => {
                 const labour = (parseTimeToMinutes(t.time)/60)*(parseFloat(t.rate)||0);
                 const mats = parseFloat(t.materialsCost)||0;
                 const subtotal = labour + mats;
                 const showCosts = activeJob.showCosts;
                 return (
-                  <div key={t.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm pb-3">
-                    <div className="flex justify-between items-center px-4 py-2.5 border-b border-slate-100 dark:border-slate-700">
-                      <span className="font-black text-slate-400 dark:text-slate-500 text-[9px] tracking-widest uppercase">Entry {i+1}</span>
-                      <div className="flex gap-1.5">
-                        <button onClick={() => { setEditingTaskId(t.id); setTaskData({rate:'',materialsCost:'',images:[],...t}); setIsTaskFormOpen(true); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-blue-50 dark:hover:bg-blue-900/40 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors text-[10px] font-black uppercase tracking-wide"><Pencil size={11}/> Edit</button>
-                        <button onClick={() => showConfirm('Delete this log entry?', () => saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j)))} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-red-50 dark:hover:bg-red-900/40 text-slate-500 dark:text-slate-400 hover:text-red-500 transition-colors text-[10px] font-black uppercase tracking-wide"><Trash2 size={11}/> Del</button>
+                  <div key={t.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="px-4 pt-3.5 pb-3">
+                      <div className="flex justify-between items-start gap-2 mb-1">
+                        <h3 className="font-bold text-[15px] text-slate-900 dark:text-white leading-tight flex-1">{t.title}</h3>
+                        {t.time && <span className="text-orange-600 dark:text-orange-400 text-xs font-semibold flex-shrink-0 mt-0.5">{t.time}</span>}
                       </div>
-                    </div>
-                    <div className="px-4 pt-3 pb-1">
-                      <div className="flex justify-between items-start gap-2 mb-1.5">
-                        <h3 className="font-black text-base text-slate-900 dark:text-white leading-tight flex-1">{t.title}</h3>
-                        {t.time && <span className="bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-md text-[10px] font-black flex-shrink-0 mt-0.5">{t.time}</span>}
+                      {t.desc && <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mt-2 whitespace-pre-wrap">{t.desc}</p>}
+                      {showCosts && subtotal > 0 && (
+                        <div className="flex items-center gap-3 mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+                          {labour > 0 && <span>Labour <span className="font-semibold text-slate-700 dark:text-slate-300">{fmtAUD(labour)}</span></span>}
+                          {mats > 0 && <span>Mats <span className="font-semibold text-slate-700 dark:text-slate-300">{fmtAUD(mats)}</span></span>}
+                          <span className="ml-auto font-bold text-slate-900 dark:text-white">{fmtAUD(subtotal)}</span>
+                        </div>
+                      )}
+                      {t.images?.length > 0 && (<div className="flex gap-2 overflow-x-auto custom-scrollbar mt-3">{t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-lg border border-slate-200 dark:border-slate-700"/></div>)}</div>)}
+                      <div className="flex gap-1 mt-3 -mb-1">
+                        <button onClick={() => { setEditingTaskId(t.id); setTaskData({rate:'',materialsCost:'',images:[],...t}); setIsTaskFormOpen(true); }} className="flex items-center gap-1 px-2.5 h-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-xs font-semibold"><Pencil size={11}/> Edit</button>
+                        <button onClick={() => showConfirm('Delete this log entry?', () => saveToDB(jobs.map(j=>j.id===activeJobId?{...j,tasks:j.tasks.filter(tk=>tk.id!==t.id)}:j)))} className="flex items-center gap-1 px-2.5 h-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 transition-colors text-xs font-semibold"><Trash2 size={11}/> Delete</button>
                       </div>
-                      {t.desc && <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-3 whitespace-pre-wrap border-l-4 border-slate-200 dark:border-slate-600 pl-3">{t.desc}</p>}
-                      {showCosts && subtotal > 0 && (<div className="flex gap-1.5 mb-3 flex-wrap">{labour>0 && <span className="text-[10px] font-black bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-1 rounded-md">Labour {fmtAUD(labour)}</span>}{mats>0 && <span className="text-[10px] font-black bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-2 py-1 rounded-md">Mats {fmtAUD(mats)}</span>}<span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-2 py-1 rounded-md">Subtotal {fmtAUD(subtotal)}</span></div>)}
-                      {t.images?.length > 0 && (<div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar">{t.images.map((img,idx) => <div key={idx} className="h-20 w-28 flex-shrink-0"><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-600 shadow-sm"/></div>)}</div>)}
                     </div>
                   </div>
                 );
               })}
               {activeJob?.tasks.length===0 && (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                    <Plus size={28} className="text-slate-300 dark:text-slate-600"/>
+                  <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <Plus size={24} className="text-slate-400"/>
                   </div>
-                  <p className="text-slate-400 dark:text-slate-500 font-black text-sm uppercase tracking-widest">No entries yet</p>
-                  <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Tap <span className="font-black">Add Entry</span> below to log your first task</p>
+                  <p className="text-slate-600 dark:text-slate-400 font-semibold text-sm">No entries yet</p>
+                  <p className="text-slate-500 dark:text-slate-500 text-xs font-medium">Tap <span className="font-semibold">Add Entry</span> below</p>
                 </div>
               )}
             </div>
@@ -3084,7 +3135,7 @@ ${weekSheets || '  No time entries this week.'}`;
             <div className="flex justify-center mt-6 mb-24">
               <button
                 onClick={() => setIsTaskFormOpen(true)}
-                className={`flex items-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm shadow-2xl active:scale-95 transition-all text-white ${activeJob?.type === 'handover' ? 'bg-emerald-600 shadow-emerald-900/50' : 'bg-slate-900 dark:bg-slate-700 shadow-black/40'}`}
+                className={`flex items-center gap-2 h-12 px-7 rounded-2xl font-bold text-sm shadow-lg active:scale-95 transition-all text-white ${activeJob?.type === 'handover' ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-orange-500 hover:bg-orange-400'}`}
               >
                 <Plus size={18}/> Add Entry
               </button>
@@ -3094,22 +3145,29 @@ ${weekSheets || '  No time entries this week.'}`;
 
         {/* Route planning bar */}
         {selectionMode && (
-          <div className="fixed left-0 right-0 z-[45] bg-slate-950/95 backdrop-blur-md border-t border-slate-800 p-4 no-print flex justify-between items-center" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
-            <span className="text-white font-black text-sm">{selectedJobs.length} Stops Selected</span>
-            <button onClick={openGoogleMaps} disabled={selectedJobs.length===0} className={`px-6 py-3 rounded-2xl font-black text-sm transition-all ${selectedJobs.length>0?'bg-blue-600 hover:bg-blue-500 text-white shadow-xl':'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>Plan Route</button>
+          <div className="fixed left-0 right-0 z-[45] bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-4 py-3 no-print flex justify-between items-center" style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom))' }}>
+            <span className="text-white font-semibold text-sm">{selectedJobs.length} stop{selectedJobs.length!==1?'s':''} selected</span>
+            <button onClick={openGoogleMaps} disabled={selectedJobs.length===0} className={`h-11 px-5 rounded-xl font-bold text-sm transition-all ${selectedJobs.length>0?'bg-orange-500 hover:bg-orange-400 text-white':'bg-slate-800 text-slate-500 cursor-not-allowed'}`}>Plan Route</button>
           </div>
         )}
 
         {/* Bottom Nav */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 flex justify-around items-center px-2 pt-2 bottom-nav-safe z-50 no-print">
-          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='dashboard' && !selectionMode ? 'text-orange-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Home size={22}/><span className="text-[10px] font-bold mt-1">Home</span></button>
-          <button onClick={() => { setViewMode('dashboard'); setSelectionMode(!selectionMode); }} className={`flex flex-col items-center p-2 w-16 transition-colors ${selectionMode ? 'text-blue-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Map size={22}/><span className="text-[10px] font-bold mt-1">{selectionMode ? 'Done' : 'Route'}</span></button>
-          <button onClick={() => setViewMode('schedule')} className={`flex flex-col items-center p-2 w-16 transition-colors ${viewMode==='schedule' ? 'text-purple-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}><Calendar size={22}/><span className="text-[10px] font-bold mt-1">Schedule</span></button>
-          <button onClick={() => setShowSettings(true)} className="flex flex-col items-center p-2 w-16 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors relative">
-            <Settings size={22}/>
-            {(!apiKey || expiringCreds.length > 0) && <span className="absolute top-2 right-4 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-900"/>}
-            <span className="text-[10px] font-bold mt-1">Settings</span>
-          </button>
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-950/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 flex justify-around items-center px-2 pt-1.5 bottom-nav-safe z-50 no-print">
+          {[
+            { key: 'home', icon: Home, label: 'Home', active: viewMode==='dashboard' && !selectionMode, onClick: () => { setViewMode('dashboard'); setSelectionMode(false); } },
+            { key: 'route', icon: Map, label: selectionMode ? 'Done' : 'Route', active: selectionMode, onClick: () => { setViewMode('dashboard'); setSelectionMode(!selectionMode); } },
+            { key: 'schedule', icon: Calendar, label: 'Schedule', active: viewMode==='schedule', onClick: () => setViewMode('schedule') },
+            { key: 'settings', icon: Settings, label: 'Settings', active: false, badge: !apiKey || expiringCreds.length > 0, onClick: () => setShowSettings(true) },
+          ].map(item => {
+            const Icon = item.icon;
+            return (
+              <button key={item.key} onClick={item.onClick} className={`relative flex flex-col items-center justify-center w-16 h-14 rounded-xl transition-colors ${item.active ? 'text-orange-500' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}>
+                <Icon size={22} strokeWidth={item.active ? 2.4 : 2}/>
+                {item.badge && <span className="absolute top-1 right-3 w-2 h-2 bg-amber-400 rounded-full border border-white dark:border-slate-950"/>}
+                <span className="text-[10px] font-semibold mt-0.5">{item.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* JIM Live Voice Panel */}
@@ -3127,120 +3185,152 @@ ${weekSheets || '  No time entries this week.'}`;
         {isTaskFormOpen && (
           <div className="fixed inset-0 z-[100] bg-slate-900/90 dark:bg-slate-950/95 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4">
             <div className="bg-white dark:bg-slate-900 rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-lg p-5 sm:p-8 shadow-2xl border dark:border-slate-800 max-h-[95vh] flex flex-col animate-slide-up sm:animate-none pb-safe">
-              <div className="flex justify-between items-center mb-6 pb-2 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
-                <h2 className="text-xl font-black text-slate-900 dark:text-white">{editingTaskId ? 'Edit Entry' : 'New Entry'}</h2>
-                <button onClick={closeModal} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"><X size={20}/></button>
+              <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+                <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">{editingTaskId ? 'Edit Entry' : 'New Entry'}</h2>
+                <button onClick={closeModal} aria-label="Close" className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white"><X size={18}/></button>
               </div>
 
-              <div className="overflow-y-auto flex-1 custom-scrollbar pb-4 pr-1">
-                {/* Template Selection Accordion */}
-                <div className="mb-4">
-                  <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl font-black text-sm border border-slate-200 dark:border-slate-700 hover:border-indigo-400 text-slate-700 dark:text-white transition-colors">
-                    <span className="flex items-center gap-2"><Bookmark size={16} className="text-indigo-500"/>Use a Template</span>
-                    <ChevronDown size={16} className={`text-slate-400 transition-transform ${showTemplatePop?'rotate-180':''}`}/>
-                  </button>
-                  {showTemplatePop && (
-                    <div className="mt-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl max-h-48 overflow-y-auto p-2 w-full">
-                      {userTemplates.length === 0 && <p className="text-sm text-slate-400 p-2 text-center font-medium">No templates yet. Create one in Settings.</p>}
-                      {userTemplates.map((t, i) => (
-                        <button key={i} onClick={() => { setTaskData(prev=>({...prev,...t.data})); setShowTemplatePop(false); }} className="w-full text-left p-3 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-3">
-                          <Bookmark size={16} className="text-indigo-500 flex-shrink-0"/>
-                          <div className="min-w-0"><div className="font-bold text-sm truncate dark:text-white">{t.name}</div>{t.data.title && <div className="text-[10px] text-slate-400 truncate">{t.data.title}</div>}</div>
-                        </button>
+              <div className="overflow-y-auto flex-1 custom-scrollbar pr-1 -mr-1 space-y-4">
+
+                {/* Template chooser — quiet trigger */}
+                {userTemplates.length > 0 && (
+                  <div>
+                    <button onClick={() => setShowTemplatePop(!showTemplatePop)} className="w-full flex items-center justify-between h-10 px-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <span className="flex items-center gap-2"><Bookmark size={14} className="text-slate-400"/>Use a template</span>
+                      <ChevronDown size={14} className={`text-slate-400 transition-transform ${showTemplatePop?'rotate-180':''}`}/>
+                    </button>
+                    {showTemplatePop && (
+                      <div className="mt-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-h-48 overflow-y-auto p-1">
+                        {userTemplates.map((t, i) => (
+                          <button key={i} onClick={() => { setTaskData(prev=>({...prev,...t.data})); setShowTemplatePop(false); }} className="w-full text-left p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2.5">
+                            <Bookmark size={14} className="text-slate-400 flex-shrink-0"/>
+                            <div className="min-w-0 flex-1"><div className="font-semibold text-sm truncate dark:text-white">{t.name}</div>{t.data.title && <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{t.data.title}</div>}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Title — single clean input with mic */}
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">Title</label>
+                  <div className="relative">
+                    <input placeholder="What did you do?" className="w-full h-11 pl-3.5 pr-11 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-semibold dark:text-white dark:placeholder-slate-500 text-sm border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all" value={taskData.title} onChange={e=>setTaskData(p=>({...p,title:e.target.value}))}/>
+                    <button type="button" onClick={() => toggleVoice('taskTitle', (val) => setTaskData(p => ({...p, title: typeof val === 'function' ? val(p.title) : val})))} aria-label="Dictate title" className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${listeningField==='taskTitle'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={14}/></button>
+                  </div>
+                </div>
+
+                {/* Time + Photos — paired row */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">Time</label>
+                    <input placeholder="2h 30m" className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-semibold dark:text-white dark:placeholder-slate-500 text-sm border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all" value={taskData.time} onChange={e=>setTaskData(p=>({...p,time:e.target.value}))}/>
+                    {taskData.time && parseTimeToMinutes(taskData.time) > 0 && <p className="text-[10px] text-orange-500 font-semibold mt-1 ml-1">= {fmtMins(parseTimeToMinutes(taskData.time))}</p>}
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">Photos {taskData.images.length > 0 && <span className="text-orange-500 normal-case">· {taskData.images.length}</span>}</label>
+                    <label className="w-full h-11 bg-slate-50 dark:bg-slate-800 rounded-xl cursor-pointer flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-700 gap-2 border border-slate-200 dark:border-slate-700 transition-colors text-sm font-semibold text-slate-600 dark:text-slate-300">
+                      <ImageIcon size={15}/> Add
+                      <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Photo grid — right after photos input */}
+                {taskData.images.length > 0 && (
+                  <div>
+                    <div className="img-preview-grid">
+                      {taskData.images.map((img,i) => (
+                        <div key={i} className="relative w-full aspect-[4/3] group cursor-pointer" onClick={() => setEditingImageIdx(i)}>
+                          <img src={img} className="w-full h-full object-cover rounded-xl border border-slate-200 dark:border-slate-700"/>
+                          <div className="absolute inset-0 bg-slate-900/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white drop-shadow-md" size={22}/></div>
+                          <button onClick={e=>{e.stopPropagation();setTaskData(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}));}} aria-label="Remove photo" className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-slate-900 hover:bg-red-500 text-white rounded-full flex items-center justify-center shadow-md z-10 transition-colors"><X size={12}/></button>
+                        </div>
                       ))}
                     </div>
-                  )}
+                    <p className="text-[10px] text-slate-400 font-medium mt-1.5 text-center">Tap a photo to annotate</p>
+                  </div>
+                )}
+
+                {/* Description — primary content area */}
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1.5">Description</label>
+                  <div className="relative">
+                    <textarea placeholder="Full details…" className="w-full p-3.5 pr-3.5 pb-11 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium h-32 resize-none dark:text-white dark:placeholder-slate-500 custom-scrollbar border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
+                    <div className="absolute bottom-1.5 right-1.5 flex gap-1">
+                      <button type="button" onClick={handleProfessionalize} disabled={isProfessionalizing} aria-label="Polish with AI" className="flex items-center gap-1 h-8 px-2.5 rounded-lg text-xs font-semibold text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-950/40 transition-colors disabled:opacity-50">
+                        {isProfessionalizing ? <div className="w-3 h-3 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"/> : <Wand2 size={13}/>} Polish
+                      </button>
+                      <button type="button" onClick={() => toggleVoice('taskDesc', (val) => setTaskData(p => ({...p, desc: typeof val === 'function' ? val(p.desc) : val})))} aria-label="Dictate description" className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${listeningField==='taskDesc'?'bg-red-500 text-white animate-pulse':'text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Mic size={14}/></button>
+                    </div>
+                  </div>
+                  <button onClick={handleAiSuggest} disabled={isAiSuggesting} className={`w-full mt-2 flex items-center justify-center gap-2 h-10 rounded-xl font-semibold text-xs transition-all active:scale-95 ${isAiSuggesting ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 cursor-wait' : 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 dark:hover:bg-purple-950/50 text-purple-700 dark:text-purple-300'}`}>{isAiSuggesting ? <><JimMascot size={14} state="thinking"/> JIM is thinking…</> : <><Sparkles size={13}/> Ask JIM to draft this</>}</button>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus-within:ring-2 focus-within:ring-orange-400 overflow-hidden transition-shadow">
-                    <input placeholder="Task / Item Title" className="w-full p-3 bg-transparent outline-none font-bold dark:text-white dark:placeholder-slate-500 text-sm" value={taskData.title} onChange={e=>setTaskData(p=>({...p,title:e.target.value}))}/>
-                    <div className="flex justify-end bg-slate-100 dark:bg-slate-700/50 px-2 py-1.5 border-t border-slate-200 dark:border-slate-700">
-                      <button type="button" onClick={() => toggleVoice('taskTitle', (val) => setTaskData(p => ({...p, title: typeof val === 'function' ? val(p.title) : val})))} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest transition-colors ${listeningField==='taskTitle'?'bg-red-500 text-white animate-pulse':'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-600'}`}>
-                        <Mic size={12}/> Dictate
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <div className="flex-1 relative">
-                      <input placeholder="Time (e.g. 2h 30m)" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-black dark:text-white dark:placeholder-slate-500 text-sm border border-transparent dark:border-slate-700" value={taskData.time} onChange={e=>setTaskData(p=>({...p,time:e.target.value}))}/>
-                      {taskData.time && <div className="absolute -bottom-4 left-3 text-[9px] text-orange-500 font-black">= {fmtMins(parseTimeToMinutes(taskData.time))}</div>}
-                    </div>
-                    <label className="flex-shrink-0 bg-slate-100 dark:bg-slate-800 px-4 rounded-xl cursor-pointer flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 gap-2 border border-transparent dark:border-slate-700"><ImageIcon className="text-slate-600 dark:text-slate-400" size={16}/><span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase">Photos</span><input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload}/></label>
-                  </div>
-
-                  {activeJob?.showCosts && (
-                    <div className="flex flex-col gap-2 mt-3">
-                      <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                          <input placeholder="Rate/hr" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm ${rateError?'bg-red-50 dark:bg-red-900/20 border-2 border-red-500':'bg-slate-50 dark:bg-slate-800 border-transparent dark:border-slate-700'} dark:text-white dark:placeholder-slate-500`} value={taskData.rate} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,rate:v}));validateRate(v);}} onBlur={e=>validateRate(e.target.value)}/>
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 font-black uppercase">/hr</span>
-                        </div>
-                        <div className="flex-1 relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">$</span>
-                          <div className="flex items-center gap-1">
-                            <input placeholder="Materials $" className={`w-full pl-6 pr-8 p-3 rounded-xl outline-none font-black text-sm border ${matError?'bg-red-50 dark:bg-red-900/20 border-red-500':'bg-slate-50 dark:bg-slate-800 border-transparent dark:border-slate-700'} dark:text-white dark:placeholder-slate-500`} value={taskData.materialsCost} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,materialsCost:v}));validateMat(v);}} onBlur={e=>validateMat(e.target.value)}/>
-                            <label title="Scan receipt with camera" className={`p-2.5 rounded-lg transition-colors cursor-pointer border dark:border-slate-700 ${isScanningReceipt ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
-                              <Camera size={16}/>
-                              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleScanReceipt}/>
-                            </label>
-                            {userMaterials.length > 0 && (
-                              <button onClick={() => setShowMaterialPop(!showMaterialPop)} className={`p-2.5 rounded-lg transition-colors border dark:border-slate-700 ${showMaterialPop ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'}`}><Package size={16}/></button>
-                            )}
-                          </div>
-                        </div>
+                {/* Costs section — only when enabled */}
+                {activeJob?.showCosts && (
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                    <div className="flex items-center gap-2"><DollarSign size={13} className="text-slate-400"/><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Costs</span></div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">{getCC().symbol}</span>
+                        <input placeholder="Rate" className={`w-full h-11 pl-7 pr-11 rounded-xl outline-none font-semibold text-sm border focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all ${rateError?'bg-red-50 dark:bg-red-950/20 border-red-500':'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'} dark:text-white dark:placeholder-slate-500`} value={taskData.rate} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,rate:v}));validateRate(v);}} onBlur={e=>validateRate(e.target.value)}/>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-semibold">/hr</span>
                       </div>
-                      {showMaterialPop && userMaterials.length > 0 && (
-                        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl max-h-48 overflow-y-auto p-2 w-full">
-                          {userMaterials.map((m, i) => (
-                            <button key={i} onClick={() => { setTaskData(p=>({...p,materials:m.name,materialsCost:m.price})); setShowMaterialPop(false); }} className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-left">
-                              <span className="font-medium text-sm dark:text-white">{m.name}</span>
-                              <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{fmtAUD(parseFloat(m.price))}</span>
-                            </button>
-                          ))}
+                      <div className="flex gap-1">
+                        <div className="flex-1 relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-sm">{getCC().symbol}</span>
+                          <input placeholder="Materials" className={`w-full h-11 pl-7 pr-3 rounded-xl outline-none font-semibold text-sm border focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all ${matError?'bg-red-50 dark:bg-red-950/20 border-red-500':'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'} dark:text-white dark:placeholder-slate-500`} value={taskData.materialsCost} onChange={e=>{const v=e.target.value;setTaskData(p=>({...p,materialsCost:v}));validateMat(v);}} onBlur={e=>validateMat(e.target.value)}/>
                         </div>
-                      )}
+                        <label title="Scan receipt" className={`w-11 h-11 rounded-xl transition-colors cursor-pointer flex items-center justify-center border ${isScanningReceipt ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:border-amber-900/60 animate-pulse' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}>
+                          <Camera size={15}/>
+                          <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleScanReceipt}/>
+                        </label>
+                        {userMaterials.length > 0 && (
+                          <button onClick={() => setShowMaterialPop(!showMaterialPop)} aria-label="Pick from saved materials" className={`w-11 h-11 rounded-xl transition-colors flex items-center justify-center border ${showMaterialPop ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-900/60' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'}`}><Package size={15}/></button>
+                        )}
+                      </div>
                     </div>
-                  )}
+                    {showMaterialPop && userMaterials.length > 0 && (
+                      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-h-48 overflow-y-auto p-1">
+                        {userMaterials.map((m, i) => (
+                          <button key={i} onClick={() => { setTaskData(p=>({...p,materials:m.name,materialsCost:m.price})); setShowMaterialPop(false); }} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left">
+                            <span className="font-medium text-sm dark:text-white truncate pr-2">{m.name}</span>
+                            <span className="font-semibold text-sm text-slate-700 dark:text-slate-300 flex-shrink-0">{fmtAUD(parseFloat(m.price))}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <input placeholder="Materials used" className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
+                    <input placeholder={activeJob?.type==='handover'?'Notes / delays':'Tools used'} className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
 
-                  {activeJob?.showCosts && (() => { const hrs=parseTimeToMinutes(taskData.time)/60; const labour=hrs*(parseFloat(taskData.rate)||0); const mats=parseFloat(taskData.materialsCost)||0; const total=labour+mats; return total>0 ? (<div className="bg-slate-900 dark:bg-slate-800 rounded-xl px-4 py-2 flex justify-between items-center"><div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{labour>0&&<span className="mr-3">Labour {fmtAUD(labour)}</span>}{mats>0&&<span>Mats {fmtAUD(mats)}</span>}</div><div className="text-white font-black text-sm">{fmtAUD(total)}</div></div>) : null; })()}
-
-                  {taskData.images.length > 0 && (
-                    <div className="mt-4 img-preview-grid">
-                      {taskData.images.map((img,i) => (<div key={i} className="relative w-full aspect-[4/3] group cursor-pointer" onClick={() => setEditingImageIdx(i)}><img src={img} className="w-full h-full object-cover rounded-xl border dark:border-slate-700 shadow-sm"/><div className="absolute inset-0 bg-slate-900/50 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><Edit3 className="text-white drop-shadow-md" size={24}/></div><button onClick={e=>{e.stopPropagation();setTaskData(p=>({...p,images:p.images.filter((_,idx)=>idx!==i)}));}} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md z-10"><X size={12}/></button></div>))}
-                      <div className="col-span-full text-[10px] text-center text-slate-400 font-bold uppercase mt-1">Tap photo to annotate</div>
-                    </div>
-                  )}
-
-                  <input placeholder="Materials Used" className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-transparent dark:border-slate-700 dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
-                  <input placeholder={activeJob?.type==='handover'?'Notes / Delays':'Tools Used'} className="w-full p-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-transparent dark:border-slate-700 dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
-
-                  <div className="border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 focus-within:ring-2 focus-within:ring-orange-400 overflow-hidden transition-shadow">
-                    <textarea placeholder="Full details…" className="w-full p-3 bg-transparent outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-500 custom-scrollbar" value={taskData.desc} onChange={e=>setTaskData(p=>({...p,desc:e.target.value}))}/>
-
-                    <div className="flex justify-end gap-2 bg-slate-100 dark:bg-slate-700/50 px-2 py-1.5 border-t border-slate-200 dark:border-slate-700">
-                      <button type="button" onClick={handleProfessionalize} disabled={isProfessionalizing} className="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/40 transition-colors">
-                        {isProfessionalizing ? <div className="w-3 h-3 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"/> : <Wand2 size={12}/>} Polish
-                      </button>
-                      <button type="button" onClick={() => toggleVoice('taskDesc', (val) => setTaskData(p => ({...p, desc: typeof val === 'function' ? val(p.desc) : val})))} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest transition-colors ${listeningField==='taskDesc'?'bg-red-500 text-white animate-pulse':'text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-600'}`}>
-                        <Mic size={12}/> Dictate
-                      </button>
-                    </div>
+                    {(() => { const hrs=parseTimeToMinutes(taskData.time)/60; const labour=hrs*(parseFloat(taskData.rate)||0); const mats=parseFloat(taskData.materialsCost)||0; const total=labour+mats; return total>0 ? (
+                      <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400 px-1">
+                        <div className="flex gap-3">
+                          {labour>0 && <span>Labour <span className="font-semibold text-slate-700 dark:text-slate-300">{fmtAUD(labour)}</span></span>}
+                          {mats>0 && <span>Mats <span className="font-semibold text-slate-700 dark:text-slate-300">{fmtAUD(mats)}</span></span>}
+                        </div>
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">{fmtAUD(total)}</span>
+                      </div>
+                    ) : null; })()}
                   </div>
+                )}
 
-                  <button onClick={handleAiSuggest} disabled={isAiSuggesting} className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 bg-purple-600 hover:bg-purple-500 text-white shadow-md shadow-purple-900/20 ${isAiSuggesting ? 'opacity-70 cursor-wait' : ''}`}>{isAiSuggesting ? <><JimMascot size={16} state="thinking"/> Ask JIM…</> : <><Sparkles size={14}/> Ask JIM</>}</button>
+                {/* Tools/Notes when costs disabled — show outside costs block */}
+                {!activeJob?.showCosts && (
+                  <input placeholder={activeJob?.type==='handover'?'Notes / delays':'Tools used'} className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
+                )}
 
-                  <div className="flex gap-2 pb-2">
-                    <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 border border-transparent dark:border-slate-700 transition-colors uppercase"><Bookmark size={14}/> Template</button>
-                    {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (<button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-1.5 p-3 rounded-xl font-black text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-amber-50 hover:text-amber-600 border border-transparent dark:border-slate-700 transition-colors uppercase"><Package size={14}/> Material</button>)}
-                  </div>
+                {/* Save as template / material */}
+                <div className="flex gap-2 pt-2 pb-1">
+                  <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><Bookmark size={13}/> Save as template</button>
+                  {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (<button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><Package size={13}/> Save material</button>)}
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
-                <button onClick={handleSaveTask} className={`w-full text-white p-4 rounded-2xl font-black text-base shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 hover:opacity-90 ${activeJob?.type==='handover'?'bg-emerald-600':'bg-slate-900 dark:bg-slate-700'}`}><Save size={18}/> Save Entry</button>
+              <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 flex-shrink-0">
+                <button onClick={handleSaveTask} className={`w-full text-white h-12 rounded-2xl font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition-all active:scale-95 ${activeJob?.type==='handover'?'bg-emerald-600 hover:bg-emerald-500':'bg-orange-500 hover:bg-orange-400'}`}><Save size={16}/> Save Entry</button>
               </div>
             </div>
           </div>
