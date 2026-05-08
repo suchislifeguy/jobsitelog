@@ -1513,12 +1513,12 @@
 
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className={`p-4 bg-slate-50 rounded-xl border ${!t.materials ? 'print:hidden' : ''}`}>
-                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">Materials</label>
-                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)} placeholder="Materials"/>
+                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Materials Used' : 'Materials Needed'}</label>
+                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)} placeholder={job.type==='handover' ? 'Materials Used' : 'Materials Needed'}/>
                       </div>
                       <div className={`p-4 bg-slate-50 rounded-xl border ${!t.tools ? 'print:hidden' : ''}`}>
-                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}</label>
-                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)} placeholder={job.type==='handover' ? 'Notes/Delays' : 'Tools Used'}/>
+                        <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{job.type==='handover' ? 'Tools Used' : 'Tools Needed'}</label>
+                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)} placeholder={job.type==='handover' ? 'Tools Used' : 'Tools Needed'}/>
                       </div>
 
                       {showCosts && labour > 0 && (
@@ -3339,6 +3339,12 @@ ${weekSheets || '  No time entries this week.'}`;
                   <button onClick={handleAiSuggest} disabled={isAiSuggesting} className={`w-full mt-2 flex items-center justify-center gap-2 h-10 rounded-xl font-semibold text-xs transition-all active:scale-95 ${isAiSuggesting ? 'bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 cursor-wait' : 'bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/30 dark:hover:bg-purple-950/50 text-purple-700 dark:text-purple-300'}`}>{isAiSuggesting ? <><JimMascot size={14} state="thinking"/> JIM is thinking…</> : <><Sparkles size={13}/> Ask JIM to draft this</>}</button>
                 </div>
 
+                {/* Materials & Tools — always visible, separate from costs */}
+                <div className="space-y-2">
+                  <input placeholder={activeJob?.type==='handover' ? 'Materials used' : 'Materials needed'} className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
+                  <input placeholder={activeJob?.type==='handover' ? 'Tools used' : 'Tools needed'} className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
+                </div>
+
                 {/* Costs section — only when enabled */}
                 {activeJob?.showCosts && (
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
@@ -3373,8 +3379,6 @@ ${weekSheets || '  No time entries this week.'}`;
                         ))}
                       </div>
                     )}
-                    <input placeholder="Materials used" className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
-                    <input placeholder={activeJob?.type==='handover'?'Notes / delays':'Tools used'} className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
 
                     {(() => { const hrs=parseTimeToMinutes(taskData.time)/60; const labour=hrs*(parseFloat(taskData.rate)||0); const mats=parseFloat(taskData.materialsCost)||0; const total=labour+mats; return total>0 ? (
                       <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400 px-1">
@@ -3386,11 +3390,6 @@ ${weekSheets || '  No time entries this week.'}`;
                       </div>
                     ) : null; })()}
                   </div>
-                )}
-
-                {/* Tools/Notes when costs disabled — show outside costs block */}
-                {!activeJob?.showCosts && (
-                  <input placeholder={activeJob?.type==='handover'?'Notes / delays':'Tools used'} className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
                 )}
 
                 {/* Save as template / material */}
