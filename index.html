@@ -2897,6 +2897,19 @@ ${won.map(fmt).join('\n')}`;
       }
       saveToDB(jobs.map(x=>x.id===id?{...x,...updates}:x));
     };
+    const revertStatus = (id) => {
+      const j = jobs.find(x=>x.id===id); if (!j) return;
+      const cur = j.status || 'draft';
+      const i = HAPPY_PATH.indexOf(cur);
+      if (i <= 0) return;
+      const prev = HAPPY_PATH[i-1];
+      const updates = { status: prev };
+      const tsField = STATUS_TIMESTAMP[cur];
+      if (tsField) updates[tsField] = null;
+      if (cur === 'invoiced') updates.invoiceNumber = null;
+      saveToDB(jobs.map(x=>x.id===id?{...x,...updates}:x));
+      showToast(`Reverted to ${getStatus(prev).label}`, 'info');
+    };
     const rejectJob = (id, reason, note = '') => {
       const j = jobs.find(x=>x.id===id); if (!j) return;
       if (!['draft','sent','approved'].includes(j.status || 'draft')) return;
@@ -3391,17 +3404,26 @@ ${won.map(fmt).join('\n')}`;
                   <div className="flex flex-wrap items-stretch gap-1.5">
                     {(() => {
                       const s = activeJob?.status || 'draft';
-                      if (s === 'paid') return <span className={`${actionBtnClass} ${getStatus('paid').cls}`}><Check size={13}/> Paid</span>;
                       if (s === 'rejected') return (
                         <button onClick={() => reopenJob(activeJobId)} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300`}>
                           ↺ Reopen
                         </button>
                       );
+                      const canRevert = HAPPY_PATH.indexOf(s) > 0;
                       return (
                         <>
-                          <button onClick={() => advanceStatus(activeJobId)} className={`${actionBtnClass} ${getStatus(s).cls}`}>
-                            {NEXT_ACTION_BTN[s] || 'Advance'}
-                          </button>
+                          {s === 'paid' ? (
+                            <span className={`${actionBtnClass} ${getStatus('paid').cls}`}><Check size={13}/> Paid</span>
+                          ) : (
+                            <button onClick={() => advanceStatus(activeJobId)} className={`${actionBtnClass} ${getStatus(s).cls}`}>
+                              {NEXT_ACTION_BTN[s] || 'Advance'}
+                            </button>
+                          )}
+                          {canRevert && (
+                            <button onClick={() => revertStatus(activeJobId)} title={`Revert to ${getStatus(HAPPY_PATH[HAPPY_PATH.indexOf(s)-1]).label}`} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300`}>
+                              <Undo size={13}/> Undo
+                            </button>
+                          )}
                           {['draft','sent','approved'].includes(s) && (
                             <button onClick={() => setRejectingJobId(activeJobId)} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 hover:border-red-300`}>
                               <X size={13}/> Reject
@@ -3415,7 +3437,7 @@ ${won.map(fmt).join('\n')}`;
                       <DollarSign size={13}/> Costs {activeJob.showCosts ? 'on' : 'off'}
                     </button>
 
-                    {getCC().taxRate > 0 && (
+                    {getCC().taxRate > 0 && activeJob.showCosts && (
                       <button onClick={() => toggleGST(activeJobId)} className={`${actionBtnClass} ${activeJob.gstEnabled ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
                         <Receipt size={13}/> {getCC().taxLabel} {activeJob.gstEnabled ? 'on' : 'off'}
                       </button>
