@@ -206,7 +206,7 @@
     MapPinned, Navigation, LocateFixed, AlertTriangle, Receipt, Home, Info,
     Download, Upload, Settings, FileText, Bot, Mic, ShieldAlert, Lock,
     Bookmark, Package, PlusCircle, Calendar, Building2, CalendarPlus, Award,
-    ShieldCheck, BadgeCheck, FileCheck, Camera, Wand2, Play, Square, Phone, Wallet, Timer, FileDown, Users, TrendingUp, CreditCard, MicOff, Radio
+    ShieldCheck, BadgeCheck, FileCheck, Camera, Wand2, Play, Square, Phone, Wallet, Timer, FileDown, Users, TrendingUp, CreditCard, MicOff, Radio, Mail, MessageSquare, Send
   } from 'lucide-react';
 
   const JimMascot = ({ size = 36, state = 'idle' }) => {
@@ -1147,11 +1147,12 @@
     const [addr, setAddr] = useState('');
     const [client, setClient] = useState('');
     const [phone, setPhone] = useState('');
+    const [email, setEmail] = useState('');
     const [showClientSuggestions, setShowClientSuggestions] = useState(false);
 
     const existingClients = useMemo(() => {
       const map = {};
-      (jobs||[]).forEach(j => { if (j.clientName) { const k = j.clientName.toLowerCase(); if (!map[k]) map[k] = { name: j.clientName, phone: j.clientPhone||'' }; } });
+      (jobs||[]).forEach(j => { if (j.clientName) { const k = j.clientName.toLowerCase(); if (!map[k]) map[k] = { name: j.clientName, phone: j.clientPhone||'', email: j.clientEmail||'' }; } });
       return Object.values(map);
     }, [jobs]);
 
@@ -1164,7 +1165,7 @@
 
     const handleFiles = (e) => { setFiles(prev => [...prev, ...Array.from(e.target.files)]); e.target.value = ''; };
     const removeFile = (index) => setFiles(prev => prev.filter((_,i) => i!==index));
-    const createManual = () => { if (!addr.trim()) return showToast('Address is required', 'error'); onSave(addr.trim(), client.trim(), phone.trim(), [], dueDate); };
+    const createManual = () => { if (!addr.trim()) return showToast('Address is required', 'error'); onSave(addr.trim(), client.trim(), phone.trim(), [], dueDate, email.trim()); };
 
     const createWithAI = async () => {
       if (!apiKey) { showToast('Please save a Gemini API key in Settings first.', 'error'); return; }
@@ -1217,7 +1218,7 @@
           }
         }
 
-        const textPrompt = `You are a data extraction AI. Extract job details from the attached files (if any) AND the following source text.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "clientPhone", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
+        const textPrompt = `You are a data extraction AI. Extract job details from the attached files (if any) AND the following source text.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "clientPhone", "clientEmail", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
 
         const resData = await smartFetchAI(
           'heavy',
@@ -1230,7 +1231,7 @@
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
         const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
-        onSave(json.address || addr, json.clientName || client, json.clientPhone || phone, tasks, json.dueDate || dueDate);
+        onSave(json.address || addr, json.clientName || client, json.clientPhone || phone, tasks, json.dueDate || dueDate, json.clientEmail || email);
         showToast('Successfully imported via AI!', 'success');
       } catch (err) { console.error("AI Import Error details:", err); showToast(`AI import failed: ${err.message}`, 'error'); }
       finally { setIsImporting(false); }
@@ -1275,10 +1276,10 @@
                   {showClientSuggestions && clientSuggestions.length > 0 && (
                     <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 mt-1 overflow-hidden">
                       {clientSuggestions.slice(0,5).map((c,i) => (
-                        <button key={i} type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setClient(c.name); if (c.phone) setPhone(c.phone); setShowClientSuggestions(false); }}
+                        <button key={i} type="button" onMouseDown={e => e.preventDefault()} onClick={() => { setClient(c.name); if (c.phone) setPhone(c.phone); if (c.email) setEmail(c.email); setShowClientSuggestions(false); }}
                           className="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-100 dark:border-slate-700 last:border-0 transition-colors">
                           <p className="font-bold text-sm dark:text-white">{c.name}</p>
-                          {c.phone && <p className="text-[10px] text-slate-400">{c.phone}</p>}
+                          {(c.phone || c.email) && <p className="text-[10px] text-slate-400 truncate">{c.phone}{c.phone && c.email ? ' · ' : ''}{c.email}</p>}
                         </button>
                       ))}
                     </div>
@@ -1289,6 +1290,11 @@
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Client Phone</label>
                 <input className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-200 dark:border-slate-700 text-sm" placeholder="04xx xxx xxx" value={phone} onChange={e => setPhone(e.target.value)} />
               </div>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Client Email</label>
+              <input type="email" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none font-medium dark:text-white dark:placeholder-slate-500 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 border border-slate-200 dark:border-slate-700 text-sm" placeholder="client@example.com" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
 
             <div>
@@ -1371,10 +1377,12 @@
           pagebreak: { mode: ['css', 'legacy'] },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
+        const totalLabel = totals.total > 0 ? `${fmtAUD(totals.total)}${job.gstEnabled ? ` (inc. ${getCC().taxLabel})` : ''}` : '';
+        const shareText = `${docLabel} for ${header.address}${totalLabel ? ` — ${totalLabel}` : ''}\n\nFrom ${biz.name || 'JIM'}`;
         const pdfBlob = await window.html2pdf().set(opt).from(element).output('blob');
         const file = new File([pdfBlob], `${job.clientName || 'Job_Report'}.pdf`, { type: 'application/pdf' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: `${docLabel} - ${biz.name || 'JIM'}` });
+          await navigator.share({ files: [file], title: `${docLabel} - ${biz.name || 'JIM'}`, text: shareText });
         } else {
           window.html2pdf().set(opt).from(element).save();
           showToast('Downloaded PDF', 'success');
@@ -1383,20 +1391,58 @@
       finally { setIsGeneratingPDF(false); }
     };
 
+    const composeBody = () => {
+      const docName = job.type === 'handover' ? 'completion report' : 'quotation';
+      const totalLine = totals.total > 0 ? `Total: ${fmtAUD(totals.total)}${job.gstEnabled ? ` (inc. ${getCC().taxLabel})` : ''}` : '';
+      return [
+        `Hi ${header.clientName || 'there'},`,
+        '',
+        `Please find your ${docName} for ${header.address}.`,
+        totalLine,
+        header.projectNotes ? `\n${header.projectNotes}` : '',
+        '',
+        'Regards,',
+        biz.name || '',
+        biz.phone || '',
+      ].filter(s => s !== '' || true).join('\n');
+    };
+
+    const handleEmail = () => {
+      const docName = job.type === 'handover' ? 'Completion Report' : 'Quotation';
+      const subject = encodeURIComponent(`${docName} — ${header.address}${biz.name ? ` (${biz.name})` : ''}`);
+      const body = encodeURIComponent(composeBody());
+      const to = job.clientEmail || '';
+      window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+    };
+
+    const handleSMS = () => {
+      if (!job.clientPhone) { showToast('Add a client phone number first', 'error'); return; }
+      const docName = job.type === 'handover' ? 'invoice' : 'quote';
+      const totalPart = totals.total > 0 ? ` is ${fmtAUD(totals.total)}` : ' is ready';
+      const msg = `Hi ${header.clientName || ''}, your ${docName} for ${header.address}${totalPart}. From ${biz.name || 'your tradie'}`;
+      window.location.href = `sms:${job.clientPhone}?body=${encodeURIComponent(msg)}`;
+    };
+
     return createPortal(
       <div id="print-container" className="print-preview-overlay fixed inset-0 z-[500] bg-slate-100 dark:bg-slate-900 p-4 sm:p-8 overflow-y-auto pb-safe">
         <div className="max-w-3xl mx-auto">
-          <div className="flex flex-wrap justify-between items-center mb-6 no-print gap-3">
-            <h2 className="text-xl font-black text-slate-800 dark:text-white">Preview & Export</h2>
-            <div className="flex flex-wrap items-center gap-2">
-              <button onClick={() => setSignatureEnabled(!signatureEnabled)} className={`px-4 py-2 rounded-xl font-black flex items-center gap-2 text-sm transition-colors border ${signatureEnabled ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700'}`}>
-                <Edit3 size={15}/> Signature
+          <div className="flex flex-wrap justify-between items-center mb-5 no-print gap-2">
+            <div className="flex items-center gap-2">
+              <button onClick={onClose} aria-label="Back" className="w-9 h-9 flex items-center justify-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors"><ChevronRight size={16} className="rotate-180"/></button>
+              <h2 className="text-lg font-extrabold text-slate-800 dark:text-white">Preview</h2>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button onClick={() => setSignatureEnabled(!signatureEnabled)} className={`h-9 px-3 rounded-lg font-semibold flex items-center gap-1.5 text-xs transition-colors border ${signatureEnabled ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/60' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'}`}>
+                <Edit3 size={13}/> Sign
               </button>
-              <button onClick={() => window.print()} className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-sm border dark:border-slate-700 text-sm"><Printer size={15}/> Print</button>
-              <button onClick={handleSharePDF} disabled={isGeneratingPDF} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-sm text-sm">
-                {isGeneratingPDF ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/> : <Share2 size={15}/>} Share PDF
+              <button onClick={() => window.print()} className="h-9 px-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold flex items-center gap-1.5 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"><Printer size={13}/> Print</button>
+              <button onClick={handleEmail} className="h-9 px-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold flex items-center gap-1.5 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"><Mail size={13}/> Email</button>
+              {job.clientPhone && (
+                <button onClick={handleSMS} className="h-9 px-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold flex items-center gap-1.5 text-xs transition-colors hover:bg-slate-50 dark:hover:bg-slate-700"><MessageSquare size={13}/> SMS</button>
+              )}
+              <button onClick={handleSharePDF} disabled={isGeneratingPDF} className="h-9 px-3.5 bg-orange-500 hover:bg-orange-400 text-white rounded-lg font-bold flex items-center gap-1.5 text-xs transition-colors shadow-sm disabled:opacity-60">
+                {isGeneratingPDF ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"/> : <Send size={13}/>} Send PDF
               </button>
-              <button onClick={onClose} className="bg-slate-800 text-white px-4 py-2 rounded-xl font-black text-sm">Close</button>
             </div>
           </div>
 
@@ -2099,7 +2145,7 @@
     const [filterType, setFilterType] = useState('all');
     const [sortBy, setSortBy] = useState('created_desc');
     const [isEditingHeader, setIsEditingHeader] = useState(false);
-    const [headerDraft, setHeaderDraft] = useState({ address:'', clientName:'', clientRef:'', dueDate:'', projectNotes:'', projectPhotos:[] });
+    const [headerDraft, setHeaderDraft] = useState({ address:'', clientName:'', clientPhone:'', clientEmail:'', clientRef:'', dueDate:'', projectNotes:'', projectPhotos:[] });
     const [isLoading, setIsLoading] = useState(true);
     const [listeningField, setListeningField] = useState(null);
     const recognitionRef = useRef(null);
@@ -2201,10 +2247,13 @@
       const map = {};
       jobs.forEach(j => {
         const key = j.clientName || '—';
-        if (!map[key]) map[key] = { name: key, phone: j.clientPhone||'', jobs: [], totalValue: 0, unpaidCount: 0 };
+        if (!map[key]) map[key] = { name: key, phone: j.clientPhone||'', email: j.clientEmail||'', jobs: [], totalValue: 0, unpaidCount: 0, lastContact: 0 };
         map[key].jobs.push(j);
+        if (!map[key].phone && j.clientPhone) map[key].phone = j.clientPhone;
+        if (!map[key].email && j.clientEmail) map[key].email = j.clientEmail;
         const total = getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate).total;
         map[key].totalValue += total;
+        if (j.createdAt > map[key].lastContact) map[key].lastContact = j.createdAt;
         if (['sent','approved','invoiced','overdue'].includes(j.status)) map[key].unpaidCount++;
       });
       return Object.values(map).sort((a,b) => b.totalValue - a.totalValue);
@@ -2610,9 +2659,9 @@ ${weekSheets || '  No time entries this week.'}`;
       reader.readAsText(file);
     };
 
-    const handleCreateJob = (address, clientName, clientPhone, tasks = [], dueDate = '') => {
+    const handleCreateJob = (address, clientName, clientPhone, tasks = [], dueDate = '', clientEmail = '') => {
       const now = Date.now();
-      const newJob = { id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now.toString(), date: new Date(now).toISOString(), createdAt: now, type: newJobModal, address, clientName, clientPhone, clientRef: '', dueDate: dueDate || '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false, showCosts: newJobModal === 'handover' ? false : true, invoiceNumber: '', amountPaid: 0 };
+      const newJob = { id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : now.toString(), date: new Date(now).toISOString(), createdAt: now, type: newJobModal, address, clientName, clientPhone, clientEmail, clientRef: '', dueDate: dueDate || '', projectNotes: '', projectPhotos: [], tasks: tasks.map(t => ({ ...t, id: Date.now() + Math.random() })), status: 'draft', gstEnabled: false, showCosts: newJobModal === 'handover' ? false : true, invoiceNumber: '', amountPaid: 0 };
       saveToDB([...jobs, newJob]); setNewJobModal(null); showToast('Project Created', 'success');
     };
     const cycleStatus = (id) => {
@@ -2628,8 +2677,8 @@ ${weekSheets || '  No time entries this week.'}`;
     const saveAmountPaid = (id, amount) => saveToDB(jobs.map(j=>j.id===id?{...j,amountPaid:parseFloat(amount)||0}:j));
     const toggleGST = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,gstEnabled:!j.gstEnabled}:j));
     const toggleCosts = (id) => saveToDB(jobs.map(j=>j.id===id?{...j,showCosts:!j.showCosts}:j));
-    const startEditHeader = () => { setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] }); setIsEditingHeader(true); };
-    const saveHeaderEdit = () => { if (!headerDraft.address.trim()) return; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientRef:headerDraft.clientRef, dueDate:headerDraft.dueDate, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j)); setIsEditingHeader(false); showToast('Details Updated', 'success'); };
+    const startEditHeader = () => { setHeaderDraft({ address: activeJob.address, clientName: activeJob.clientName, clientPhone: activeJob.clientPhone||'', clientEmail: activeJob.clientEmail||'', clientRef: activeJob.clientRef||'', dueDate: activeJob.dueDate||'', projectNotes: activeJob.projectNotes||'', projectPhotos: activeJob.projectPhotos||[] }); setIsEditingHeader(true); };
+    const saveHeaderEdit = () => { if (!headerDraft.address.trim()) return; saveToDB(jobs.map(j => j.id===activeJobId ? { ...j, address:headerDraft.address.trim(), clientName:headerDraft.clientName, clientPhone:headerDraft.clientPhone, clientEmail:headerDraft.clientEmail, clientRef:headerDraft.clientRef, dueDate:headerDraft.dueDate, projectNotes:headerDraft.projectNotes, projectPhotos:headerDraft.projectPhotos } : j)); setIsEditingHeader(false); showToast('Details Updated', 'success'); };
     const handleProjectPhotoUpload = async (e) => { try { const c = await Promise.all(Array.from(e.target.files).map(compressImage)); setHeaderDraft(d => ({...d,projectPhotos:[...d.projectPhotos,...c]})); } catch { showToast('One or more images could not be processed.', 'error'); } };
 
     const handleSaveTask = () => {
@@ -2854,29 +2903,42 @@ ${weekSheets || '  No time entries this week.'}`;
             </div>
 
             {filterType === 'clients' ? (
-              <div className="grid gap-3">
+              <div className="grid gap-2">
                 {clientsData.length === 0 && (
                   <div className="flex flex-col items-center py-16 gap-3">
-                    <JimMascot size={40} state="empty"/>
-                    <p className="text-slate-500 dark:text-slate-400 font-black text-sm uppercase tracking-widest">No Clients Yet</p>
+                    <JimMascot size={48} state="empty"/>
+                    <p className="text-slate-600 dark:text-slate-400 font-semibold text-sm">No clients yet</p>
                   </div>
                 )}
-                {clientsData.map((c, i) => (
-                  <div key={i} onClick={() => { setFilterType('all'); setSearchQ(c.name === '—' ? '' : c.name); }}
-                    className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-4 flex items-center gap-4 cursor-pointer hover:border-orange-400 transition-all shadow-sm">
-                    <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
-                      <span className="font-black text-orange-600 dark:text-orange-400 text-sm">{(c.name || '?')[0].toUpperCase()}</span>
+                {clientsData.map((c, i) => {
+                  const hasContact = c.phone || c.email;
+                  return (
+                    <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+                      <div onClick={() => { setFilterType('all'); setSearchQ(c.name === '—' ? '' : c.name); }} className="p-3.5 flex items-center gap-3 cursor-pointer">
+                        <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-950/40 flex items-center justify-center flex-shrink-0">
+                          <span className="font-bold text-orange-600 dark:text-orange-400 text-sm">{(c.name || '?')[0].toUpperCase()}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-slate-900 dark:text-white truncate text-[15px] leading-tight">{c.name}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                            {c.jobs.length} job{c.jobs.length!==1?'s':''}
+                            {c.unpaidCount > 0 && <span className="text-amber-600 dark:text-amber-400 font-semibold"> · {c.unpaidCount} unpaid</span>}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="font-extrabold text-sm text-slate-900 dark:text-white whitespace-nowrap">{fmtAUD(c.totalValue)}</p>
+                        </div>
+                      </div>
+                      {hasContact && (
+                        <div className="flex gap-1 px-3 pb-3 -mt-1">
+                          {c.phone && <a href={`tel:${c.phone}`} onClick={e=>e.stopPropagation()} className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 text-xs font-semibold transition-colors"><Phone size={12}/> Call</a>}
+                          {c.phone && <a href={`sms:${c.phone}`} onClick={e=>e.stopPropagation()} className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 text-xs font-semibold transition-colors"><MessageSquare size={12}/> SMS</a>}
+                          {c.email && <a href={`mailto:${c.email}`} onClick={e=>e.stopPropagation()} className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:text-orange-500 dark:hover:text-orange-400 text-xs font-semibold transition-colors"><Mail size={12}/> Email</a>}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-black text-slate-900 dark:text-white truncate">{c.name}</p>
-                      <p className="text-[10px] text-slate-400 font-medium">{c.jobs.length} job{c.jobs.length!==1?'s':''}{c.phone && ` · ${c.phone}`}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-black text-sm text-slate-900 dark:text-white">{fmtAUD(c.totalValue)}</p>
-                      {c.unpaidCount > 0 && <p className="text-[10px] font-black text-amber-500">{c.unpaidCount} unpaid</p>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
             <div className="grid gap-2">
@@ -2973,6 +3035,7 @@ ${weekSheets || '  No time entries this week.'}`;
                     <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Name" value={headerDraft.clientName} onChange={e=>setHeaderDraft(d=>({...d,clientName:e.target.value}))}/>
                     <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Phone" value={headerDraft.clientPhone || ''} onChange={e=>setHeaderDraft(d=>({...d,clientPhone:e.target.value}))}/>
                   </div>
+                  <input type="email" className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Email" value={headerDraft.clientEmail || ''} onChange={e=>setHeaderDraft(d=>({...d,clientEmail:e.target.value}))}/>
                   <input className="w-full font-bold bg-slate-50 dark:bg-slate-700 rounded-xl px-4 py-3 mb-3 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white text-slate-600 dark:text-slate-300 text-sm" placeholder="Client Ref / CTS Number" value={headerDraft.clientRef} onChange={e=>setHeaderDraft(d=>({...d,clientRef:e.target.value}))}/>
                   <div className="mb-3"><label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Due Date</label><input type="date" className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none font-medium text-sm dark:text-white" value={headerDraft.dueDate} onChange={e=>setHeaderDraft(d=>({...d,dueDate:e.target.value}))}/></div>
                   <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-700 rounded-xl outline-none text-sm font-medium h-24 resize-none dark:text-white dark:placeholder-slate-400 mb-3 custom-scrollbar" placeholder="Project notes…" value={headerDraft.projectNotes} onChange={e=>setHeaderDraft(d=>({...d,projectNotes:e.target.value}))}/>
@@ -2989,7 +3052,8 @@ ${weekSheets || '  No time entries this week.'}`;
                     <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white leading-tight">{activeJob?.address}</h2>
                     <p className="text-slate-600 dark:text-slate-400 font-semibold text-sm mt-1">{activeJob?.clientName}</p>
                     <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
-                      {activeJob?.clientPhone && <p className="text-slate-500 dark:text-slate-400 text-xs font-medium flex items-center gap-1"><Phone size={11}/>{activeJob.clientPhone}</p>}
+                      {activeJob?.clientPhone && <a href={`tel:${activeJob.clientPhone}`} className="text-slate-500 dark:text-slate-400 hover:text-orange-500 text-xs font-medium flex items-center gap-1 transition-colors"><Phone size={11}/>{activeJob.clientPhone}</a>}
+                      {activeJob?.clientEmail && <a href={`mailto:${activeJob.clientEmail}`} className="text-slate-500 dark:text-slate-400 hover:text-orange-500 text-xs font-medium flex items-center gap-1 truncate max-w-[180px] transition-colors"><Mail size={11}/>{activeJob.clientEmail}</a>}
                       {activeJob?.clientRef && <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">Ref: {activeJob.clientRef}</p>}
                       {activeJob?.dueDate && <p className="text-amber-600 dark:text-amber-400 text-xs font-semibold flex items-center gap-1"><Calendar size={11}/>Due {formatLocal(activeJob.dueDate)}</p>}
                     </div>
