@@ -406,9 +406,10 @@
     if (isNaN(d.getTime())) return '';
     if (style === 'iso-date') return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     if (style === 'iso-datetime') return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    if (style === 'short') return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: '2-digit' });
-    if (style === 'datetime') return d.toLocaleString('en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
-    return d.toLocaleDateString('en-AU');
+    const loc = getCC().locale;
+    if (style === 'short') return d.toLocaleDateString(loc, { day: 'numeric', month: 'short', year: '2-digit' });
+    if (style === 'datetime') return d.toLocaleString(loc, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+    return d.toLocaleDateString(loc);
   };
 
   const parseTimeToMinutes = (str) => {
@@ -911,9 +912,9 @@
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Materials $" value={form.materialsCost} onChange={e=>setForm({...form,materialsCost:e.target.value})}/>
-                  <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Materials list" value={form.materials} onChange={e=>setForm({...form,materials:e.target.value})}/>
+                  <textarea rows={3} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white resize-y" placeholder={"Materials — one per line\n2x M10 bolts\n6m copper pipe, 1/2\""} value={form.materials} onChange={e=>setForm({...form,materials:e.target.value})}/>
                 </div>
-                <input className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Tools" value={form.tools} onChange={e=>setForm({...form,tools:e.target.value})}/>
+                <textarea rows={3} className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white resize-y" placeholder={"Tools — one per line\nDrill\nLevel"} value={form.tools} onChange={e=>setForm({...form,tools:e.target.value})}/>
                 <textarea className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl h-24 resize-none text-sm outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 dark:text-white" placeholder="Description" value={form.desc} onChange={e=>setForm({...form,desc:e.target.value})}/>
               </div>
             )}
@@ -1289,7 +1290,9 @@
           }
         }
 
-        const textPrompt = `You are a data extraction AI. Extract job details from the attached files (if any) AND the following source text.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "clientPhone", "clientEmail", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate, materialsCost, materials, tools, desc).`;
+        const cc = getCC();
+        const today = new Date().toISOString().slice(0,10);
+        const textPrompt = `You are a data extraction AI for a ${cc.name} tradie.\nToday: ${today}. Currency: ${cc.currency} (${cc.symbol}). Tax: ${cc.taxLabel}.\n\nExtract job details from the attached files (if any) AND the source text below.\n\nSource Text:\n"""\n${additionalText || 'No additional text provided.'}\n"""\n\nRules:\n- If a field isn't explicit in the source, return empty string. Never invent or guess client details, prices, or dates.\n- Resolve relative dates ("next Tuesday", "tomorrow") against today's date above.\n- materials and tools must be newline-separated lists, one item per line. Do not use commas to separate items.\n\nReturn ONLY a valid JSON object with keys: "address", "clientName", "clientPhone", "clientEmail", "dueDate" (ISO YYYY-MM-DD or empty), "tasks" (array of objects with keys: title, time, rate (numeric ${cc.currency}/hr), materialsCost (numeric ${cc.currency}), materials (string, items separated by \\n), tools (string, items separated by \\n), desc).`;
 
         const resData = await smartFetchAI(
           'heavy',
@@ -1301,7 +1304,8 @@
 
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-        const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: String(t.materials||''), tools: String(t.tools||''), desc: t.desc||'', images:[] }));
+        const toListString = (v) => Array.isArray(v) ? v.filter(Boolean).join('\n') : String(v||'');
+        const tasks = (json.tasks || []).map(t => ({ title: t.title||'', time: t.time||'', rate: String(t.rate||''), materialsCost: String(t.materialsCost||''), materials: toListString(t.materials), tools: toListString(t.tools), desc: t.desc||'', images:[] }));
         onSave(json.address || addr, json.clientName || client, json.clientPhone || phone, tasks, json.dueDate || dueDate, json.clientEmail || email);
         showToast('Successfully imported via AI!', 'success');
       } catch (err) { console.error("AI Import Error details:", err); showToast(`AI import failed: ${err.message}`, 'error'); }
@@ -1585,11 +1589,11 @@
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className={`p-4 bg-slate-50 rounded-xl border ${!t.materials ? 'print:hidden' : ''}`}>
                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{isCompletionDoc(job) ? 'Materials Used' : 'Materials Needed'}</label>
-                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.materials} onChange={e => updateTask(idx, 'materials', e.target.value)} placeholder={isCompletionDoc(job) ? 'Materials Used' : 'Materials Needed'}/>
+                        <PrintEditableDiv value={t.materials} onChange={v => updateTask(idx, 'materials', v)} className="text-[12px] font-bold text-slate-600 bg-transparent" placeholder={isCompletionDoc(job) ? 'Materials Used' : 'Materials Needed'}/>
                       </div>
                       <div className={`p-4 bg-slate-50 rounded-xl border ${!t.tools ? 'print:hidden' : ''}`}>
                         <label className="text-[10px] font-black uppercase text-slate-400 block mb-1">{isCompletionDoc(job) ? 'Tools Used' : 'Tools Needed'}</label>
-                        <input className="text-[12px] font-bold text-slate-600 bg-transparent border-none outline-none w-full" value={t.tools} onChange={e => updateTask(idx, 'tools', e.target.value)} placeholder={isCompletionDoc(job) ? 'Tools Used' : 'Tools Needed'}/>
+                        <PrintEditableDiv value={t.tools} onChange={v => updateTask(idx, 'tools', v)} className="text-[12px] font-bold text-slate-600 bg-transparent" placeholder={isCompletionDoc(job) ? 'Tools Used' : 'Tools Needed'}/>
                       </div>
 
                       {showCosts && labour > 0 && (
@@ -2159,7 +2163,8 @@
      FLOATING JIM (phone call only)
   ════════════════════════════════════════════ */
   const FloatingJimMascot = ({ status }) => {
-    const mascotState = status === 'error' ? 'error' : status === 'speaking' ? 'thinking' : status === 'listening' ? 'wave' : 'idle';
+    const mascotState = status === 'error' ? 'error' : (status === 'speaking' || status === 'thinking') ? 'thinking' : status === 'listening' ? 'wave' : 'idle';
+    const isThinking = status === 'thinking';
     const [pos, setPos] = useState({ x: 16, y: 90 });
     useEffect(() => {
       const move = () => {
@@ -2174,11 +2179,12 @@
           y: Math.floor(minY + Math.random() * (maxY - minY))
         });
       };
-      const id = setInterval(move, 2500);
+      move();
+      const id = setInterval(move, isThinking ? 1200 : 2500);
       return () => clearInterval(id);
-    }, []);
+    }, [isThinking]);
     return (
-      <div style={{ position: 'fixed', left: pos.x, top: pos.y, transition: 'left 1.4s ease-in-out, top 1.4s ease-in-out', zIndex: 590, pointerEvents: 'none' }}>
+      <div style={{ position: 'fixed', left: pos.x, top: pos.y, transition: `left ${isThinking ? 0.7 : 1.4}s ease-in-out, top ${isThinking ? 0.7 : 1.4}s ease-in-out`, zIndex: 590, pointerEvents: 'none' }}>
         <JimMascot size={56} state={mascotState}/>
       </div>
     );
@@ -2400,6 +2406,7 @@
 
     const buildJimContext = () => {
       const biz = businessProfile || {};
+      const cc = getCC();
       const NEXT_ACTION_DESC = {
         draft:        'Finish the quote and send it',
         sent:         'Follow up with the client',
@@ -2423,7 +2430,7 @@
         const phase = phaseOf(j);
         const status = j.status || 'draft';
         const taskLines = (j.tasks || []).map(t =>
-          `      • ${t.title}${t.time ? ` (${t.time})` : ''}${t.rate ? ` @ $${t.rate}/hr` : ''}${t.materialsCost ? ` + $${t.materialsCost} mats` : ''}${t.materials ? `: ${t.materials}` : ''}${t.tools ? ` | tools: ${t.tools}` : ''}`
+          `      • ${t.title}${t.time ? ` (${t.time})` : ''}${t.rate ? ` @ ${cc.symbol}${t.rate}/hr` : ''}${t.materialsCost ? ` + ${cc.symbol}${t.materialsCost} mats` : ''}${t.materials ? `: ${String(t.materials).split('\n').filter(Boolean).join(', ')}` : ''}${t.tools ? ` | tools: ${String(t.tools).split('\n').filter(Boolean).join(', ')}` : ''}`
         ).join('\n');
         const dSinceCreated = daysSince(j.createdAt);
         let stageDetail = '';
@@ -2437,11 +2444,11 @@
         }
         else if (status === 'rejected' && j.rejectedAt) stageDetail = ` — lost ${daysSince(j.rejectedAt)}d ago`;
         return [
-          `  [${status.toUpperCase()}${stageDetail}] ${j.address || 'Unknown site'}${j.createdAt ? ` — created ${new Date(j.createdAt).toLocaleDateString('en-AU')}` : ''}`,
+          `  [${status.toUpperCase()}${stageDetail}] ${j.address || 'Unknown site'}${j.createdAt ? ` — created ${new Date(j.createdAt).toLocaleDateString(cc.locale)}` : ''}`,
           `    Phase: ${phase} | Next: ${NEXT_ACTION_DESC[status] || ''}`,
           `    Client: ${j.clientName || '—'}${j.clientPhone ? ` | Ph: ${j.clientPhone}` : ''}`,
-          qt.total > 0 ? `    Total: $${qt.total.toFixed(2)} (excl GST: $${qt.subtotal.toFixed(2)})${j.invoiceNumber ? ` | Invoice: ${j.invoiceNumber}` : ''}` : '',
-          paid > 0 ? `    Paid: $${paid.toFixed(2)} | Balance owing: $${balance.toFixed(2)}` : '',
+          qt.total > 0 ? `    Total: ${cc.symbol}${qt.total.toFixed(2)} (excl ${cc.taxLabel}: ${cc.symbol}${qt.subtotal.toFixed(2)})${j.invoiceNumber ? ` | Invoice: ${j.invoiceNumber}` : ''}` : '',
+          paid > 0 ? `    Paid: ${cc.symbol}${paid.toFixed(2)} | Balance owing: ${cc.symbol}${balance.toFixed(2)}` : '',
           status === 'rejected' ? `    Rejection: ${getRejectionLabel(j.rejectionReason)}${j.rejectionNote ? ` — "${j.rejectionNote.slice(0,140)}"` : ''}` : '',
           j.projectNotes ? `    Notes: ${j.projectNotes.slice(0, 120)}${j.projectNotes.length > 120 ? '...' : ''}` : '',
           taskLines ? `    Tasks:\n${taskLines}` : '    Tasks: none',
@@ -2454,7 +2461,7 @@
         .sort((a, b) => new Date(a.start) - new Date(b.start))
         .map(a => {
           const j = jobs.find(x => x.id === a.jobId);
-          return `  • ${new Date(a.start).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })} ${new Date(a.start).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}: ${a.title}${j ? ` — ${j.address}` : ''}`;
+          return `  • ${new Date(a.start).toLocaleDateString(cc.locale, { weekday: 'short', day: 'numeric', month: 'short' })} ${new Date(a.start).toLocaleTimeString(cc.locale, { hour: '2-digit', minute: '2-digit' })}: ${a.title}${j ? ` — ${j.address}` : ''}`;
         }).join('\n');
 
       const weekStart = now - (new Date().getDay() || 7) * 24*60*60*1000;
@@ -2466,19 +2473,31 @@
           return `  • ${t.date}: ${t.category} — ${Math.floor(mins/60)}h${mins % 60 ? ` ${mins % 60}m` : ''}${j ? ` at ${j.address}` : ''}${t.notes ? ` (${t.notes})` : ''}`;
         }).join('\n');
 
-      return `You are JIM, a blunt Aussie tradie assistant. Never start with "G'day" or any greeting — get straight to the answer. 1-2 short sentences max unless more detail is asked for. Use "mate" occasionally but sparingly. Be direct, specific, and reference actual job data when relevant.
+      const activeBlock = (viewMode === 'detail' && activeJob) ? (() => {
+        const aqt = getQuoteTotals(activeJob.tasks, activeJob.gstEnabled, extraTaxRate);
+        const aStatus = activeJob.status || 'draft';
+        return `\nACTIVE CONTEXT: User is currently viewing this job — tailor advice to it unless they explicitly ask about another job.\n  Address: ${activeJob.address || '—'}\n  Client: ${activeJob.clientName || '—'}\n  Status: ${aStatus} (${phaseOf(activeJob)})\n  Total: ${cc.symbol}${aqt.total.toFixed(2)} | Tasks: ${(activeJob.tasks||[]).length}\n`;
+      })() : '';
+
+      return `You are JIM, a blunt no-fluff tradie assistant for a ${cc.name} tradie. Never start with "G'day", "Hi", or any greeting — get straight to the answer. 1-2 short sentences max unless more detail is asked for. Be direct, specific, and reference actual job data when relevant.
+
+GROUND RULES:
+- Use ${cc.symbol} for money and refer to tax as "${cc.taxLabel}".
+- Never invent client names, addresses, totals, or dates — only use what's in the data below.
+- Don't recommend specific dollar amounts for quotes — that's the user's call.
+- Trade conventions, materials, tools, and slang should match ${cc.name}.
 
 PER-STAGE GUIDANCE: jobs move quote→work→invoice. Tailor advice to each job's phase:
 - Quoting (draft, sent): suggest tools to bring for measure-up — tape, level, laser, notepad, camera. Nudge follow-ups on sent quotes that have gone cold.
-- Working (approved, in_progress): suggest a shopping list of materials to pick up (concrete, timber, fixings, etc.) and the tools to bring on site.
-- Invoicing (completed, invoiced, paid): nudge the user to send the invoice once completed; chase if invoiced > 30 days.
+- Working (approved, in_progress): suggest a shopping list of materials to pick up and the tools to bring on site.
+- Invoicing (completed, invoiced, paid): nudge to send the invoice once completed; chase if invoiced > 30 days.
 - Lost (rejected): only analyse patterns when explicitly asked.
 
-BUSINESS: ${biz.name || 'Not set'} | ABN: ${biz.abn || '—'} | Ph: ${biz.phone || '—'}
-TODAY: ${new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-
+BUSINESS: ${biz.name || 'Not set'} | Reg #: ${biz.abn || '—'} | Ph: ${biz.phone || '—'} | Country: ${cc.name}
+TODAY: ${new Date().toLocaleDateString(cc.locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+${activeBlock}
 REVENUE SNAPSHOT:
-  Pipeline: $${revenueStats.pipeline.toFixed(2)} (${revenueStats.pipelineCount} quotes) | Booked: $${revenueStats.booked.toFixed(2)} (${revenueStats.bookedCount} jobs) | Owed: $${revenueStats.owed.toFixed(2)} (overdue $${revenueStats.overdueAmt.toFixed(2)}) | Banked: $${revenueStats.banked.toFixed(2)} | Lost: ${revenueStats.lostCount} quotes / $${revenueStats.lost.toFixed(2)}${revenueStats.winRate != null ? ` | Win rate: ${revenueStats.winRate}%` : ''}
+  Pipeline: ${cc.symbol}${revenueStats.pipeline.toFixed(2)} (${revenueStats.pipelineCount} quotes) | Booked: ${cc.symbol}${revenueStats.booked.toFixed(2)} (${revenueStats.bookedCount} jobs) | Owed: ${cc.symbol}${revenueStats.owed.toFixed(2)} (overdue ${cc.symbol}${revenueStats.overdueAmt.toFixed(2)}) | Banked: ${cc.symbol}${revenueStats.banked.toFixed(2)} | Lost: ${revenueStats.lostCount} quotes / ${cc.symbol}${revenueStats.lost.toFixed(2)}${revenueStats.winRate != null ? ` | Win rate: ${revenueStats.winRate}%` : ''}
 
 ALL JOBS (${jobs.length} total):
 ${jobDetails || '  No jobs yet.'}
@@ -2498,11 +2517,12 @@ ${weekSheets || '  No time entries this week.'}`;
       setIsAnalyzingLost(true);
       const fmt = (j) => {
         const qt = getQuoteTotals(j.tasks, j.gstEnabled, extraTaxRate);
-        const tasks = (j.tasks || []).map(t => `${t.title}${t.materials ? ` [${t.materials}]` : ''}`).join('; ');
+        const tasks = (j.tasks || []).map(t => `${t.title}${t.materials ? ` [${String(t.materials).split('\n').filter(Boolean).join(', ')}]` : ''}`).join('; ');
         return `- ${j.address || 'site'} — total $${qt.total.toFixed(0)} | client: ${j.clientName || '—'} | tasks: ${tasks || 'none'}` +
           (j.status === 'rejected' ? ` | reason: ${getRejectionLabel(j.rejectionReason)}${j.rejectionNote ? ` (${j.rejectionNote})` : ''}` : '');
       };
-      const prompt = `You are JIM, a blunt Aussie tradie. Compare these REJECTED quotes against the ones the user has WON. Find concrete patterns that correlate with losing — price ranges, job types, scope, response time, client type. Be specific. 3 to 5 short bullet points. No greeting, no fluff.
+      const cc = getCC();
+      const prompt = `You are JIM, a blunt no-fluff tradie advising a ${cc.name} tradie. Compare these REJECTED quotes against the ones the user has WON. Find concrete patterns that correlate with losing — price ranges (${cc.symbol}), job types, scope, response time, client type. Be specific. 3 to 5 short bullet points. No greeting, no fluff. Currency is ${cc.symbol}; tax is ${cc.taxLabel}.
 
 REJECTED (${lost.length}):
 ${lost.map(fmt).join('\n')}
@@ -2577,7 +2597,7 @@ ${won.map(fmt).join('\n')}`;
       const recognition = new SpeechRecognition();
       recognition.continuous = false;  // IMPORTANT: false means one utterance per trigger
       recognition.interimResults = false;
-      recognition.lang = 'en-AU';
+      recognition.lang = getCC().locale;
 
       let isProcessing = false;
       let isSpeaking = false;
@@ -2727,9 +2747,29 @@ ${won.map(fmt).join('\n')}`;
       setIsGenerating(true);
       try {
         const job = activeJob;
+        const cc = getCC();
+        const biz = businessProfile || {};
         const qt = getQuoteTotals(job.tasks, job.gstEnabled, extraTaxRate);
         const docType = isCompletionDoc(job) ? 'Completion Invoice' : 'Quotation';
-        const prompt = `You are a professional Australian trade document writer. Generate a formal ${docType}. Return ONLY a valid JSON object with: "summary" (opening paragraphs, use \\n\\n for breaks), "tasks" (array of {title, desc}), "footer" (closing paragraph). Job: Address: ${job.address}, Client: ${job.clientName || 'the client'}, Tasks: ${JSON.stringify(job.tasks.map((t,i)=>({index:i+1,title:t.title,time:t.time,rate:t.rate,materialsCost:t.materialsCost,materials:t.materials,desc:t.desc})))}, Total: $${qt.total.toFixed(2)}. Extra instructions: ${customPrompt || 'None'}`;
+        const taxLine = job.gstEnabled ? `Total includes ${cc.taxLabel} at ${cc.taxRate}%.` : `${cc.taxLabel} not applied.`;
+        const prompt = `You are a professional ${cc.name} trade document writer. Generate a formal ${docType} suitable for a ${cc.name} client. Currency: ${cc.symbol} (${cc.currency}). Tax: ${cc.taxLabel}. ${taxLine}
+
+Business: ${biz.name || 'the contractor'}${biz.abn ? ` (Reg # ${biz.abn})` : ''}${biz.phone ? `, ${biz.phone}` : ''}.
+Job: Address: ${job.address}, Client: ${job.clientName || 'the client'}.
+Total: ${cc.symbol}${qt.total.toFixed(2)}.
+
+Tasks (use these exactly — do not invent items):
+${JSON.stringify(job.tasks.map((t,i)=>({index:i+1,title:t.title,time:t.time,rate:t.rate,materialsCost:t.materialsCost,materials:t.materials,desc:t.desc})))}
+
+Rules:
+- Use ${cc.name} English, terms, and conventions.
+- Do not invent prices, dates, or scope items not in the data above.
+- "summary" is a short opening paragraph addressing the client. Use \\n\\n for line breaks.
+- "footer" is a short closing paragraph (payment expectations or thanks).
+
+Extra instructions from the tradie: ${customPrompt || 'None'}
+
+Return ONLY a valid JSON object with: "summary", "tasks" (array of {title, desc}), "footer".`;
 
         const resData = await smartFetchAI(
           'heavy',
@@ -2770,7 +2810,20 @@ ${won.map(fmt).join('\n')}`;
       if (!taskData.title.trim() && !taskData.desc.trim()) { showToast('Enter at least a title or description first.', 'error'); return; }
       if (!apiKey) { showToast('Please add your Gemini API key in Settings first.', 'error'); return; }
       setIsAiSuggesting(true);
-      const prompt = `You are a construction trade assistant. Return ONLY a valid JSON object with keys: "title", "time" (e.g. "2h 30m"), "rate" (AUD/hr), "materialsCost", "materials" (comma-separated), "tools" (comma-separated), "desc" (short factual). Task: Title: ${taskData.title || 'Not provided'}, Description: ${taskData.desc || 'Not provided'}`;
+      const cc = getCC();
+      const prompt = `You are a ${cc.name} construction trade assistant. Suggest realistic values for this task. Currency is ${cc.currency} (${cc.symbol}). Use ${cc.name} trade terminology, supplier names, and material conventions.
+
+Task so far:
+  Title: ${taskData.title || 'Not provided'}
+  Description: ${taskData.desc || 'Not provided'}
+
+Rules:
+- materials and tools must be newline-separated (one item per line). Do NOT separate with commas — items often contain commas (e.g. sizes, colours).
+- rate is numeric ${cc.currency}/hr.
+- materialsCost is numeric ${cc.currency} (lump-sum estimate).
+- desc is a short factual sentence, not a paragraph.
+
+Return ONLY a valid JSON object with keys: "title", "time" (e.g. "2h 30m"), "rate", "materialsCost", "materials" (string with \\n between items), "tools" (string with \\n between items), "desc".`;
       try {
         const resData = await smartFetchAI(
           'light',
@@ -2781,7 +2834,10 @@ ${won.map(fmt).join('\n')}`;
         );
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-        setTaskData(prev => ({ ...prev, title: json.title||prev.title, time: json.time||prev.time, rate: json.rate||prev.rate, materialsCost: json.materialsCost||prev.materialsCost, materials: json.materials||prev.materials, tools: json.tools||prev.tools, desc: json.desc||prev.desc }));
+        const toListString = (v) => Array.isArray(v) ? v.filter(Boolean).join('\n') : String(v||'');
+        const aiMaterials = toListString(json.materials);
+        const aiTools = toListString(json.tools);
+        setTaskData(prev => ({ ...prev, title: json.title||prev.title, time: json.time||prev.time, rate: json.rate||prev.rate, materialsCost: json.materialsCost||prev.materialsCost, materials: aiMaterials||prev.materials, tools: aiTools||prev.tools, desc: json.desc||prev.desc }));
         showToast('Suggestions applied!', 'success');
       } catch (err) { showToast(`AI suggest failed: ${err.message}`, 'error'); }
       finally { setIsAiSuggesting(false); }
@@ -2792,7 +2848,8 @@ ${won.map(fmt).join('\n')}`;
       if (!apiKey) return showToast('Add Gemini API Key in settings', 'error');
       setIsProfessionalizing(true);
       try {
-        const prompt = `Rewrite this rough field note into a professional, concise client-facing description. Return ONLY the rewritten text, no quotes or intro: "${taskData.desc}"`;
+        const cc = getCC();
+        const prompt = `Rewrite this rough field note into a professional, concise client-facing description for a ${cc.name} trade quote. Keep the same length range (1-3 sentences). Use ${cc.name} English. Do not add scope, prices, or details that aren't in the original. Return ONLY the rewritten text — no quotes, no intro: "${taskData.desc}"`;
         const resData = await smartFetchAI(
           'light',
           [{ parts: [{ text: prompt }] }],
@@ -2812,7 +2869,15 @@ ${won.map(fmt).join('\n')}`;
       setIsScanningReceipt(true);
       try {
         const base64Data = await compressImage(file);
-        const textPrompt = `You are an OCR JSON extraction tool. Read this receipt. Return ONLY a valid JSON object. Format: {"cost": 123.45, "items": "Hammer, Nails"}`;
+        const cc = getCC();
+        const textPrompt = `You are an OCR JSON extraction tool reading a ${cc.name} trade-supply receipt. Currency: ${cc.currency} (${cc.symbol}). Tax: ${cc.taxLabel}.
+
+Rules:
+- "cost" is the FINAL grand total on the receipt (tax-inclusive if ${cc.taxLabel} is shown).
+- "items" is a newline-separated list (one item per line). Do NOT separate with commas — product names often contain commas (sizes, colours).
+- If a value isn't visible on the receipt, return empty string or 0. Never invent.
+
+Return ONLY a valid JSON object. Format: {"cost": 123.45, "items": "Hammer\\nNails 75mm box of 100"}`;
 
         const resData = await smartFetchAI(
           'light',
@@ -2824,7 +2889,8 @@ ${won.map(fmt).join('\n')}`;
 
         const raw = resData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const json = JSON.parse(raw.replace(/```json\n?|```/g, '').trim());
-        setTaskData(prev => ({ ...prev, materialsCost: json.cost ? String(json.cost) : prev.materialsCost, materials: prev.materials ? prev.materials + (json.items ? ', ' + json.items : '') : (json.items || '') }));
+        const newItems = Array.isArray(json.items) ? json.items.filter(Boolean).join('\n') : String(json.items || '');
+        setTaskData(prev => ({ ...prev, materialsCost: json.cost ? String(json.cost) : prev.materialsCost, materials: prev.materials ? prev.materials + (newItems ? '\n' + newItems : '') : newItems }));
         showToast('Receipt scanned successfully!', 'success');
       } catch (err) { showToast(`Receipt scan failed: ${err.message}`, 'error'); }
       finally { setIsScanningReceipt(false); }
@@ -3049,18 +3115,20 @@ ${won.map(fmt).join('\n')}`;
       );
     }
 
+    const jimBusy = jimLiveOpen || isGenerating || isAiSuggesting || isScanningReceipt || isProfessionalizing || isAnalyzingLost;
+
     return (
       <div className="min-h-screen nav-spacing relative">
         {toast && <ToastMessage message={toast.message} type={toast.type} onClose={() => setToast(null)}/>}
         {confirmDialog && <ConfirmDialog message={confirmDialog.message} confirmLabel={confirmDialog.confirmLabel} danger={confirmDialog.danger} onConfirm={() => { confirmDialog.onConfirm(); dismissConfirm(); }} onCancel={dismissConfirm}/>}
-        {jimLiveOpen && <FloatingJimMascot status={jimLiveStatus}/>}
+        {jimBusy && <FloatingJimMascot status={jimLiveOpen ? jimLiveStatus : 'thinking'}/>}
 
         {/* Top Header */}
         <header className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-md text-slate-900 dark:text-white px-4 h-14 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center no-print overflow-hidden">
           <div className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1" onClick={() => { setViewMode('dashboard'); setSelectionMode(false); }}>
             {businessProfile?.logo
               ? <img src={businessProfile.logo} className="h-9 w-9 object-contain rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 flex-shrink-0" alt=""/>
-              : <JimMascot size={36} state="idle"/>}
+              : jimBusy ? <div className="h-9 w-9 flex-shrink-0"/> : <JimMascot size={36} state="idle"/>}
             <div className="min-w-0">
               <h1 className="font-extrabold text-lg tracking-tight truncate leading-none">{viewMode === 'detail' ? 'Job Details' : (businessProfile?.name || 'JIM')}</h1>
               {!businessProfile?.name && viewMode !== 'detail' && (
@@ -3401,11 +3469,13 @@ ${won.map(fmt).join('\n')}`;
                     );
                   })()}
 
-                  <div className="flex flex-wrap items-stretch gap-1.5">
+                  <div className="flex flex-col gap-1.5">
+                  {/* Status row — Advance flex-1 absorbs label-length changes; Undo/Reject stay put */}
+                  <div className="flex items-stretch gap-1.5">
                     {(() => {
                       const s = activeJob?.status || 'draft';
                       if (s === 'rejected') return (
-                        <button onClick={() => reopenJob(activeJobId)} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300`}>
+                        <button onClick={() => reopenJob(activeJobId)} className={`${actionBtnClass} flex-1 min-w-0 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300`}>
                           ↺ Reopen
                         </button>
                       );
@@ -3413,51 +3483,53 @@ ${won.map(fmt).join('\n')}`;
                       return (
                         <>
                           {s === 'paid' ? (
-                            <span className={`${actionBtnClass} ${getStatus('paid').cls}`}><Check size={13}/> Paid</span>
+                            <span className={`${actionBtnClass} flex-1 min-w-0 ${getStatus('paid').cls}`}><Check size={13}/> Paid</span>
                           ) : (
-                            <button onClick={() => advanceStatus(activeJobId)} className={`${actionBtnClass} ${getStatus(s).cls}`}>
-                              {NEXT_ACTION_BTN[s] || 'Advance'}
+                            <button onClick={() => advanceStatus(activeJobId)} className={`${actionBtnClass} flex-1 min-w-0 ${getStatus(s).cls}`}>
+                              <span className="truncate">{NEXT_ACTION_BTN[s] || 'Advance'}</span>
                             </button>
                           )}
                           {canRevert && (
-                            <button onClick={() => revertStatus(activeJobId)} title={`Revert to ${getStatus(HAPPY_PATH[HAPPY_PATH.indexOf(s)-1]).label}`} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300`}>
-                              <Undo size={13}/> Undo
+                            <button onClick={() => revertStatus(activeJobId)} title={`Revert to ${getStatus(HAPPY_PATH[HAPPY_PATH.indexOf(s)-1]).label}`} aria-label="Undo status" className={`${actionBtnClass} flex-shrink-0 w-10 px-0 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300`}>
+                              <Undo size={14}/>
                             </button>
                           )}
                           {['draft','sent','approved'].includes(s) && (
-                            <button onClick={() => setRejectingJobId(activeJobId)} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 hover:border-red-300`}>
+                            <button onClick={() => setRejectingJobId(activeJobId)} title="Reject quote" className={`${actionBtnClass} flex-shrink-0 bg-white dark:bg-slate-900 border-red-200 dark:border-red-900/40 text-red-600 dark:text-red-400 hover:border-red-300`}>
                               <X size={13}/> Reject
                             </button>
                           )}
                         </>
                       );
                     })()}
+                  </div>
 
-                    <button onClick={() => toggleCosts(activeJobId)} className={`${actionBtnClass} ${activeJob.showCosts ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
+                  {/* Doc settings row — Costs always shown, GST conditionally to the right; both flex-1 so widths stay equal */}
+                  <div className="flex items-stretch gap-1.5">
+                    <button onClick={() => toggleCosts(activeJobId)} className={`${actionBtnClass} flex-1 min-w-0 ${activeJob.showCosts ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
                       <DollarSign size={13}/> Costs {activeJob.showCosts ? 'on' : 'off'}
                     </button>
-
                     {getCC().taxRate > 0 && activeJob.showCosts && (
-                      <button onClick={() => toggleGST(activeJobId)} className={`${actionBtnClass} ${activeJob.gstEnabled ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
+                      <button onClick={() => toggleGST(activeJobId)} className={`${actionBtnClass} flex-1 min-w-0 ${activeJob.gstEnabled ? 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900/60 text-orange-600 dark:text-orange-400' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500'}`}>
                         <Receipt size={13}/> {getCC().taxLabel} {activeJob.gstEnabled ? 'on' : 'off'}
                       </button>
                     )}
-
-                    <button onClick={() => openTimeEntryForJob(activeJobId)} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300`}>
-                      <Timer size={13}/> Log Time
-                    </button>
-
-                    {activeJob.clientPhone && (
-                      <a href={`sms:${activeJob.clientPhone}?body=${encodeURIComponent(`Hi ${activeJob.clientName||''}, this is ${businessProfile?.name || 'your tradie'}. I'm on my way to ${activeJob.address} now. ETA is about __ mins.`)}`} className={`${actionBtnClass} bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300`}>
-                        <Phone size={13}/> SMS ETA
-                      </a>
-                    )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-1.5 mt-1">
+                  {/* Utility grid — 2x2 on mobile, 4x1 on tablet+. Fixed columns so positions never shift. */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     <button onClick={startEditHeader} className="h-12 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"><Pencil size={14}/> Edit</button>
                     <button onClick={() => openAppointmentForJob(activeJobId)} className="h-12 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"><CalendarPlus size={14}/> Schedule</button>
+                    <button onClick={() => openTimeEntryForJob(activeJobId)} className="h-12 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors"><Timer size={14}/> Log Time</button>
                     <button onClick={() => setShowAIAssistModal(true)} className="h-12 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-950/50 rounded-xl text-xs font-semibold text-purple-700 dark:text-purple-400 flex items-center justify-center gap-1.5 transition-colors"><Sparkles size={14}/> Ask JIM</button>
+                  </div>
+
+                  {/* SMS ETA — its own row so its absence/presence never shifts other buttons */}
+                  {activeJob.clientPhone && (
+                    <a href={`sms:${activeJob.clientPhone}?body=${encodeURIComponent(`Hi ${activeJob.clientName||''}, this is ${businessProfile?.name || 'your tradie'}. I'm on my way to ${activeJob.address} now. ETA is about __ mins.`)}`} className={`${actionBtnClass} w-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300`}>
+                      <Phone size={13}/> SMS ETA to {activeJob.clientName || 'client'}
+                    </a>
+                  )}
                   </div>
                 </div>
               )}
@@ -3703,8 +3775,8 @@ ${won.map(fmt).join('\n')}`;
 
                 {/* Materials & Tools — always visible, separate from costs */}
                 <div className="space-y-2">
-                  <input placeholder={activeJob && isCompletionDoc(activeJob) ? 'Materials used' : 'Materials needed'} className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
-                  <input placeholder={activeJob && isCompletionDoc(activeJob) ? 'Tools used' : 'Tools needed'} className="w-full h-11 px-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
+                  <textarea rows={3} placeholder={(activeJob && isCompletionDoc(activeJob) ? 'Materials used' : 'Materials needed') + ' — one per line'} className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500 resize-y" value={taskData.materials} onChange={e=>setTaskData(p=>({...p,materials:e.target.value}))}/>
+                  <textarea rows={3} placeholder={(activeJob && isCompletionDoc(activeJob) ? 'Tools used' : 'Tools needed') + ' — one per line'} className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 rounded-xl outline-none text-sm font-medium border border-slate-200 dark:border-slate-700 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/40 transition-all dark:text-white dark:placeholder-slate-500 resize-y" value={taskData.tools} onChange={e=>setTaskData(p=>({...p,tools:e.target.value}))}/>
                 </div>
 
                 {/* Costs section — only when enabled */}
@@ -3734,7 +3806,7 @@ ${won.map(fmt).join('\n')}`;
                     {showMaterialPop && userMaterials.length > 0 && (
                       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl max-h-48 overflow-y-auto p-1">
                         {userMaterials.map((m, i) => (
-                          <button key={i} onClick={() => { setTaskData(p=>({...p,materials:m.name,materialsCost:m.price})); setShowMaterialPop(false); }} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left">
+                          <button key={i} onClick={() => { setTaskData(p=>({...p, materials: p.materials ? p.materials + '\n' + m.name : m.name, materialsCost: String(((parseFloat(p.materialsCost)||0) + (parseFloat(m.price)||0)).toFixed(2)) })); setShowMaterialPop(false); }} className="w-full flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left">
                             <span className="font-medium text-sm dark:text-white truncate pr-2">{m.name}</span>
                             <span className="font-semibold text-sm text-slate-700 dark:text-slate-300 flex-shrink-0">{fmtAUD(parseFloat(m.price))}</span>
                           </button>
@@ -3757,7 +3829,7 @@ ${won.map(fmt).join('\n')}`;
                 {/* Save as template / material */}
                 <div className="flex gap-2 pt-2 pb-1">
                   <button onClick={handleSaveAsTemplate} className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><Bookmark size={13}/> Save as template</button>
-                  {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && (<button onClick={handleSaveMaterial} className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><Package size={13}/> Save material</button>)}
+                  {String(taskData.materials||'').trim() && String(taskData.materialsCost||'').trim() && !String(taskData.materials||'').includes('\n') && (<button onClick={handleSaveMaterial} title="Save this single material to your library" className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl text-xs font-semibold bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"><Package size={13}/> Save material</button>)}
                 </div>
               </div>
 
